@@ -1,0 +1,111 @@
+
+filename_mapping_functions:
+- name: "sixty_four_uppercase_hexadecimal"
+  type: "HEX"
+  args: [64]
+- name: "six_lowercase_alphanumeric"
+  type: "ALNUM"
+  args: [6, true]
+- name: "eight_lowercase_alphanumeric_with_underscore"
+  type: "ALNUM"
+  args: [8, true, "_"]
+- name: "fifteen_digits"
+  type: "DIGITS"
+  args: [15]
+- name: "four_digits"
+  type: "DIGITS"
+  args: [4]
+
+renamers:
+
+- name: "Ideogram files"
+  function: "rename_by_ctime"
+  mappings:
+  - search_patterns: "{{is_id_filename}}"
+    rename_tag: "idg_"
+  locations:
+  - root: "{{USER_HOME}}\\Downloads"
+    exclude_dirs: ["Telegram Desktop"]
+  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+  - root: "D:\\img"
+    exclude_dirs: ["_controlnet\\expressions", "_controlnet\\symbols"]
+
+- name: "Temp SDWebui files"
+  function: "rename_by_ctime"
+  mappings:
+  - search_patterns: "tmp{{eight_lowercase_alphanumeric_with_underscore}}.png"
+    rename_tag: "SDWebui_"
+  locations:
+  - root: "{{USER_HOME}}\\Downloads"
+    exclude_dirs: ["Telegram Desktop"]
+  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+
+- name: "Imgsrc files"
+  function: "rename_by_ctime"
+  mappings:
+  - search_patterns: "imgsrc.ru_"
+    rename_tag: "is_"
+  locations:
+  - root: "{{USER_HOME}}\\Downloads"
+    exclude_dirs: ["Telegram Desktop"]
+  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+
+- name: "My Stable Diffusion output"
+  function: "rename_by_ctime"
+  mappings:
+  - search_patterns: ["AnimateDiff", "AnimDiff"]
+    rename_tag: "AD_"
+  - search_patterns: ["ComfyUI", "output__", "upscaled__", "comfyui-clora-depth"]
+    rename_tag: "CUI_"
+  - search_patterns: ["InstantLoRA_", "Instant_LoRA", "*Instant_LoRA_", "ILoRA__"]
+    rename_tag: "ILoRA_"
+  - search_patterns: "ELLA__"
+    rename_tag: "ELLA_"
+  - search_patterns: "Renoiser"
+    rename_tag: "RN_"
+  - search_patterns: "[0-9]{{four_digits}}-"
+    rename_tag:  "SDWebui_"
+  - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
+    rename_tag: "hexstring_"
+  - search_patterns: "{{six_lowercase_alphanumeric}}.png"
+    rename_tag: "CBox_"
+  locations:
+  - root: "{{USER_HOME}}\\ComfyUI\\output"
+  - root: "{{USER_HOME}}\\stable-diffusion-webui\\log\\images"
+  - root: "D:\\stable-diffusion-webui\\log\\images"
+
+- name: "Other Stable Diffusion output (A1111)"
+  function: "rename_by_ctime"
+  mappings:
+  - search_patterns: ["[0-9]{{four_digits}}-", "0{{four_digits}}.", "0{{four_digits}}_"]
+    rename_tag: "SDWebui_"
+  locations:
+  - root: "{{USER_HOME}}\\Downloads"
+  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+  - root: "D:\\img"
+
+- name: "Other Stable Diffusion output"
+  function: "rename_by_ctime"
+  mappings:
+  - search_patterns: ["AnimateDiff", "AnimDiff"]
+    rename_tag: "AD_"
+  - search_patterns: "ComfyUI"
+    rename_tag: "CUI_"
+  - search_patterns: ["Instant_LoRA", "*Instant_LoRA_"]
+    rename_tag: "ILoRA_"
+  - search_patterns: "Renoiser"
+    rename_tag: "RN_"
+  - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
+    rename_tag: "hexstring_"
+  - search_patterns: "{{six_lowercase_alphanumeric}}.png"
+    rename_tag: "CBox_"
+  locations:
+  - root: "{{USER_HOME}}\\Downloads"
+    exclude_dirs: ["Telegram Desktop"]
+  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+  - root: "D:\\img"
+    exclude_dirs: [
+      "_controlnet\\expressions",
+      "_controlnet\\symbols"
+    ]
+  
