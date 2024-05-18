@@ -9,9 +9,6 @@ filename_mapping_functions:
 - name: "eight_lowercase_alphanumeric_with_underscore"
   type: "ALNUM"
   args: [8, true, "_"]
-- name: "fifteen_digits"
-  type: "DIGITS"
-  args: [15]
 - name: "four_digits"
   type: "DIGITS"
   args: [4]
@@ -40,16 +37,6 @@ renamers:
     exclude_dirs: ["Telegram Desktop"]
   - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
 
-- name: "Imgsrc files"
-  function: "rename_by_ctime"
-  mappings:
-  - search_patterns: "imgsrc.ru_"
-    rename_tag: "is_"
-  locations:
-  - root: "{{USER_HOME}}\\Downloads"
-    exclude_dirs: ["Telegram Desktop"]
-  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
-
 - name: "My Stable Diffusion output"
   function: "rename_by_ctime"
   mappings:
@@ -59,16 +46,10 @@ renamers:
     rename_tag: "CUI_"
   - search_patterns: ["InstantLoRA_", "Instant_LoRA", "*Instant_LoRA_", "ILoRA__"]
     rename_tag: "ILoRA_"
-  - search_patterns: "ELLA__"
-    rename_tag: "ELLA_"
-  - search_patterns: "Renoiser"
-    rename_tag: "RN_"
   - search_patterns: "[0-9]{{four_digits}}-"
     rename_tag:  "SDWebui_"
   - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
     rename_tag: "hexstring_"
-  - search_patterns: "{{six_lowercase_alphanumeric}}.png"
-    rename_tag: "CBox_"
   locations:
   - root: "{{USER_HOME}}\\ComfyUI\\output"
   - root: "{{USER_HOME}}\\stable-diffusion-webui\\log\\images"
@@ -93,8 +74,6 @@ renamers:
     rename_tag: "CUI_"
   - search_patterns: ["Instant_LoRA", "*Instant_LoRA_"]
     rename_tag: "ILoRA_"
-  - search_patterns: "Renoiser"
-    rename_tag: "RN_"
   - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
     rename_tag: "hexstring_"
   - search_patterns: "{{six_lowercase_alphanumeric}}.png"
