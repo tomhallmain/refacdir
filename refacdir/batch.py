@@ -1,237 +1,260 @@
 from enum import Enum
-from glob import glob
-import re
-import sys
 import yaml
 
+from refacdir.backup.backup_manager import BackupManager
+from refacdir.backup.backup_mapping import BackupMode, BackupMapping
+
 from refacdir.batch_renamer import BatchRenamer, Location
-import custom_file_name_search_funcs
+from refacdir.directory_observer import DirectoryObserver, media_file_types
+from refacdir.duplicate_remover import DuplicateRemover
+from refacdir.utils import Utils
+from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 
 
-class StringFunction(Enum):
-    REP = "rep"
-    DIGITS = "digits"
-    HEX = "hex"
-    ALNUM = "alnum"
-
-    def __call__(self, *args):
-        if self == StringFunction.REP:
-            return self.rep(*args)
-        elif self == StringFunction.DIGITS:
-            return self.digits(*args)
-        elif self == StringFunction.HEX:
-            return self.hex(*args)
-        elif self == StringFunction.ALNUM:
-            return self.alnum(*args)
-
-    @staticmethod
-    def rep(s="", n=1):
-        return s * n
-
-    @staticmethod
-    def digits(n=1):
-        return "[0-9]" * n
-
-    @staticmethod
-    def hex(n=1, lower=False, extra_chars=""):
-        chars = "0-9a-f" if lower else "0-9A-F"
-        return f"[{chars}{extra_chars}]" * n
-
-    @staticmethod
-    def alnum(n=1, lower=False, extra_chars=""):
-        if lower == True:
-            chars = "0-9a-z"
-        elif lower == False:
-            chars = "0-9A-Z"
-        elif lower is None:
-            chars = "0-9A-Za-z"
-        return f"[{chars}{extra_chars}]" * n
+class ActionType(Enum):
+    BACKUP = 'BACKUP'
+    RENAMER = 'RENAMER'
+    DUPLICATE_REMOVER = 'DUPLICATE_REMOVER'
+    DIRECTORY_OBSERVER = 'DIRECTORY_OBSERVER'
 
 
-class StringFunctionCall:
-    def __init__(self, name, _function, *args):
-        self.name = name
-        self._function = _function
-        self._args = args[0]
-    
-    def __call__(self):
-        return self._function(*self._args)
+class BatchJob:
+    def __init__(self, configurations=[], test=True, skip_confirm=False):
+        self.configurations = configurations
+        self.duplicate_remover_count = 0
+        self.rename_count = 0
+        self.backup_count = 0
+        self.directory_observer_count = 0
+        self.duplicate_remover_failure_count = 0
+        self.renamer_failure_count = 0
+        self.backup_failure_count = 0
+        self.directory_observer_failure_count = 0
+        self.failures = []
+        self.test = test
+        self.skip_confirm = skip_confirm
+        self.cancelled = False
+        
+        temp_full_path_example = None
+        for config in configurations:
+            if config.endswith("config_example.yaml"):
+                temp_full_path_example = config
 
-    def __str__(self):
-        return f"{self.name}({', '.join(map(str, self._args))})"
+        if temp_full_path_example:
+            if len(self.configurations) == 1:
+                raise Exception("Excluded example config file! Please change name of config_example.yaml to ensure it is included.")
+            self.configurations.remove(temp_full_path_example)
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, StringFunctionCall) and \
-               other._function == self._function and \
-               other._args == self._args
+    def run(self):
+        try:
+            for config in self.configurations:
+                self.run_config_file(config)
+        except KeyboardInterrupt:
+            print("Exiting prematurely at user request...")
+            self.cancelled = True
 
-    def __hash__(self) -> int:
-        return hash(str(self))
-
-
-class FilenameMappingDefinition:
-    NAMED_FUNCTIONS = {}
-    GENERATED_PATTERNS = {}
-
-    def __init__(self, pattern, function_calls=[]):
-        if not pattern or pattern == "":
-            raise Exception("Pattern not provided to FilenameMappingDefinition")
-        self.pattern = pattern
-        self.function_calls = function_calls
-
-    def compile(self):
-        if "{{" in self.pattern:
-            temp = str(self.pattern)
-            while "{{" in temp:
-                count = 0
-                for group in re.findall("{{(.*?)}}", temp):
-                    if isinstance(group, tuple):
-                        group = group[0]
-                    subpattern = self.generate_subpattern(group, count)
-                    if callable(subpattern):
-                        return subpattern # This should be a function to search for files with more complex logic
-                        # TODO replace this with some string identifier in the pattern to avoid regex in this case
-                    else:
-                        temp = temp.replace(f"{{{{{group}}}}}", subpattern)
-                    count += 1
-            return temp
-        else:
-            if len(self.function_calls) > 0:
-                print(f"Warning - Functions defined for {self.pattern} but placement not defined.")
-            return self.pattern
-
-    def generate_subpattern(self, func_name="", index=0):
-        if func_name in FilenameMappingDefinition.NAMED_FUNCTIONS:
-            function_call = FilenameMappingDefinition.NAMED_FUNCTIONS[func_name]
-        elif len(self.function_calls) > int(index):
-            function_call = self.function_calls[int(index)]
-        else:
-            if not func_name or func_name.strip() == "":
-                raise Exception("Not enough arguments provided to generate subpattern")
-            try:
-                # If the function is not defined in the config then it may be in custom file name search functions.
-                return getattr(custom_file_name_search_funcs, func_name)
-            except Exception as e:
-                raise Exception(f"Function {func_name} not found in config filename_mapping_functions or in custom_file_name_search_funcs.py: {e}")
-        return FilenameMappingDefinition.call_from_cache(function_call)
-
-    @staticmethod
-    def call_from_cache(function_call):
-        if function_call in FilenameMappingDefinition.GENERATED_PATTERNS:
-            return FilenameMappingDefinition.GENERATED_PATTERNS[function_call]
-        else:
-            res = function_call()
-            FilenameMappingDefinition.GENERATED_PATTERNS[function_call] = res
-            return res
-
-    @staticmethod
-    def add_named_function(function_call):
-        FilenameMappingDefinition.NAMED_FUNCTIONS[function_call.name] = function_call
-
-    @staticmethod
-    def add_named_functions(funcs_list):
-        for func in funcs_list:
-            function_call = StringFunctionCall(
-                func["name"],
-                StringFunction[func["type"]],
-                func["args"],
-            )
-            FilenameMappingDefinition.add_named_function(function_call=function_call)
-
-    @staticmethod
-    def compiled(pattern, funcs=[]):
-        definition = FilenameMappingDefinition(pattern, funcs)
-        return definition.compile()
-
-
-def construct_mappings(mappings_list):
-    mappings = {}
-    for mapping in mappings_list:
-        search_pattern = mapping["search_patterns"]
-        funcs = mapping["funcs"] if "funcs" in mapping else []
-        rename_tag = mapping["rename_tag"]
-        if isinstance(search_pattern, str):
-            mappings[FilenameMappingDefinition.compiled(search_pattern, funcs)] = rename_tag
-        elif isinstance(search_pattern, list):
-            for pattern in mapping["search_patterns"]:
-                mappings[FilenameMappingDefinition.compiled(pattern, funcs)] = rename_tag
-        else:
-            raise Exception(f"Invalid search pattern type {type(search_pattern)}")
-    return mappings
-
-def construct_batch_renamer(yaml_dict={}, test=True, skip_confirm=False):
-    name = yaml_dict["name"]
-    mappings = construct_mappings(yaml_dict["mappings"])
-    locations = [Location.construct(location) for location in yaml_dict["locations"]]
-    renamer_function = yaml_dict["function"]
-    test = yaml_dict["test"] if "test" in yaml_dict else test
-    skip_confirm = yaml_dict["skip_confirm"] if "skip_confirm" in yaml_dict else skip_confirm
-    renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm)
-    return renamer, renamer_function
-
-def main(test=True, skip_confirm=False):
-    configurations = glob("configs\\*.yaml", recursive=False)
-    failed_count = 0
-    count = 0
-    failures = []
-
-    if "config_example.yaml" in configurations:
-        configurations.remove("config_example.yaml")
-
-    for config in configurations:
-        print(f"Running renames for {config}")
-        with open(config,'r') as f:
+    def run_config_file(self, config):
+        print(f"Running actions for {config}")
+        with open(config, 'r') as f:
             try:
                 config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
             except yaml.YAMLError as e:
-                failed_count += 1
                 print(f"Error loading {config}: {e}")
-                failures.append(f"Config {config} failed to load: {e}")
+                self.failures.append(f"Config {config} failed to load: {e}")
+                return
+
+            if "actions" not in config_wrapper:
+                print(f"Error loading {config}: No actions found in config file!")
+                self.failures.append(f"Config {config} failed to load: No actions found in config file!")
+                return
+
+            FilenameMappingDefinition.add_named_functions(Utils.get_from_dict(config_wrapper, "filename_mapping_functions", []))
+            FiletypesDefinition.add_named_definitions(Utils.get_from_dict(config_wrapper, "filetype_definitions", []))
+
+            for i in range(len(config_wrapper["actions"])):
+                action = config_wrapper["actions"][i]
+                if not self.run_action(config, action, i):
+                    return # If we fail to run an action then we stop running the config file
+
+    def log_results(self):
+        print(f"{self.duplicate_remover_count} duplicate remover job(s) completed")
+        print(f"{self.rename_count} rename(s) completed")
+        print(f"{self.backup_count} backup manager(s) completed")
+        print(f"{self.directory_observer_count} directory observer(s) completed")
+        if len(self.failures) > 0:
+            print(f"{self.duplicate_remover_failure_count} duplicate remover job(s) failed")
+            print(f"{self.renamer_failure_count} renames(s) failed")
+            print(f"{self.backup_failure_count} backup manager(s) failed")
+            print(f"{self.directory_observer_failure_count} directory observer(s) failed")
+            for failure in self.failures:
+                print(failure)
+        elif not self.cancelled:
+            print("All operations completed successfully")
+
+    def run_action(self, config, action, idx):
+        try:
+            action_type_string = action["type"]
+            action_type = ActionType[action_type_string]
+            if action_type == ActionType.RENAMER:
+                return self.run_renamers(config, action["mappings"])
+            elif action_type == ActionType.BACKUP:
+                return self.run_backups(config, action["mappings"])
+            elif action_type == ActionType.DIRECTORY_OBSERVER:
+                return self.run_directory_observers(config, action["mappings"])
+            elif action_type == ActionType.DUPLICATE_REMOVER:
+                return self.run_duplicate_removers(config, action["mappings"])
+            else:  # Action type is not a rename or backup, so we don't know what to do with it
+                raise ValueError("Invalid action type")
+        except KeyError as e:
+            self.failures.append(f"Invalid action configuration in {config} index {idx}: {e}")
+            return False
+        except Exception as e:
+            self.failures.append(f"Failed to run action index {idx} in {config}: {e}")
+            return False
+
+    def run_duplicate_removers(self, config, duplicate_removers):
+        for _duplicate_remover in duplicate_removers:
+            self.duplicate_remover_count += 1
+            try:
+                duplicate_remover = self.construct_duplicate_remover(_duplicate_remover)
+            except Exception as e:
+                self.duplicate_remover_failure_count += 1
+                if "name" in _duplicate_remover:
+                    name = _duplicate_remover["name"]
+                    error = f"Error in {config} duplicate remover {name}:  {e}"
+                else:
+                    error = f"Error in {config} duplicate remover {self.duplicate_remover_count-1}:  {e}"
+                self.failures.append(error)
                 continue
-            FilenameMappingDefinition.add_named_functions(config_wrapper["filename_mapping_functions"])
-            renamer_count = -1
-            for _renamer in config_wrapper["renamers"]:
-                renamer_count += 1
-                try:
-                    renamer, renamer_function = construct_batch_renamer(_renamer, test=test, skip_confirm=skip_confirm)
-                except KeyError as e:
-                    failed_count += 1
-                    if "name" in _renamer:
-                        name = _renamer["name"]
-                        error = f"Error in {config} renamer {name}:  {e}"
-                    else:
-                        error = f"Error in {config} renamer {renamer_count}:  {e}"
-                    failures.append(error)
-                    print(error)
-                    continue
-                try:
-                    renamer.execute(renamer_function)
-                    count += 1
-                except Exception as e:
-                    failed_count += 1
-                    if "name" in _renamer:
-                        name = _renamer["name"]
-                        error = f"{config} renamer {name} failed:  {e}"
-                    else:
-                        error = f"{config} renamer {renamer_count} failed:  {e}"
-                    failures.append(error)
-                    print(error)                        
+            try:
+                duplicate_remover.run()
+            except Exception as e:
+                self.duplicate_remover_failure_count += 1
+                error = f"{config} duplicate remover {duplicate_remover.name} failed:  {e}"
+                self.failures.append(error)
+                print(error)
+        return self.duplicate_remover_failure_count == 0
 
-    print(f"{count} renames completed")
-    if failed_count > 0:
-        print(f"{failed_count} renames failed")
-        for failure in failures:
-            print(failure)
-    else:
-        print("All renames completed successfully")
+    def run_renamers(self, config, renamers):
+        for _renamer in renamers:
+            self.rename_count += 1
+            try:
+                renamer, renamer_function = self.construct_batch_renamer(_renamer)
+            except KeyError as e:
+                self.renamer_failure_count += 1
+                if "name" in _renamer:
+                    name = _renamer["name"]
+                    error = f"Error in {config} renamer {name}:  {e}"
+                else:
+                    error = f"Error in {config} renamer {self.rename_count-1}:  {e}"
+                self.failures.append(error)
+                print(error)
+                continue
+            try:
+                renamer.execute(renamer_function)
+            except Exception as e:
+                self.renamer_failure_count += 1
+                error = f"{config} renamer {renamer.name} failed:  {e}"
+                self.failures.append(error)
+                print(error)
+        return self.renamer_failure_count == 0
+
+    def run_backups(self, config, backups):
+        for _backup in backups:
+            self.backup_count += 1
+            try:
+                backup_manager = self.construct_backup_manager(_backup)
+            except Exception as e:
+                self.backup_failure_count += 1
+                if "name" in _backup:
+                    name = _backup["name"]
+                    error = f"Error in {config} backup {name}:  {e}"
+                else:
+                    error = f"Error in {config} backup {self.backup_count-1}:  {e}"
+                self.failures.append(error)
+                continue
+            try:
+                backup_manager.run_backup()
+            except Exception as e:
+                self.backup_failure_count += 1
+                error = f"{config} backup {backup_manager.name} failed:  {e}"
+                self.failures.append(error)
+                print(error)
+        return self.backup_failure_count == 0
+    
+    def run_directory_observers(self, config, directory_observers):
+        for _directory_observer in directory_observers:
+            self.directory_observer_count += 1
+            try:
+                directory_observer = self.construct_directory_observer(_directory_observer)
+            except Exception as e:
+                self.directory_observer_failure_count += 1
+                if "name" in _directory_observer:
+                    name = _directory_observer["name"]
+                    error = f"Error in {config} directory observer {name}:  {e}"
+                else:
+                    error = f"Error in {config} directory observer {self.directory_observer_count-1}:  {e}"
+                self.failures.append(error)
+                continue
+            try:
+                directory_observer.observe()
+                directory_observer.log()
+            except Exception as e:
+                self.directory_observer_failure_count += 1
+                error = f"{config} directory observer {directory_observer.name} failed:  {e}"
+                self.failures.append(error)
+                print(error)
+        return self.directory_observer_failure_count == 0
+
+    def construct_duplicate_remover(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        source_dir = Location.construct(yaml_dict["source_dir"]).root
+        recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
+        select_for_folder_depth = Utils.get_from_dict(yaml_dict, "select_for_folder_depth", None)
+        exclude_dirs = Utils.get_from_dict(yaml_dict, "exclude_dirs", [])
+        preferred_delete_dirs = Utils.get_from_dict(yaml_dict, "preferred_delete_dirs", [])
+        return DuplicateRemover(name, source_dir, select_for_folder_depth=select_for_folder_depth,
+                                recursive=recursive, exclude_dirs=exclude_dirs, preferred_delete_dirs=preferred_delete_dirs)
+
+    def construct_batch_renamer(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        mappings = FilenameMappingDefinition.construct_mappings(yaml_dict["mappings"])
+        locations = [Location.construct(location) for location in yaml_dict["locations"]]
+        renamer_function = yaml_dict["function"]
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm)
+        return renamer, renamer_function
+
+    def construct_backup_manager(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        test = Utils.get_from_dict(yaml_dict, "test", False)
+        overwrite = Utils.get_from_dict(yaml_dict, "overwrite", False)
+        warn_duplicates = Utils.get_from_dict(yaml_dict, "warn_duplicates", False)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        mappings = []
+
+        for mapping in yaml_dict["backup_mappings"]:
+            name = mapping["name"]
+            source_dir = Location.construct(mapping["source_dir"]).root
+            target_dir = Location.construct(mapping["target_dir"]).root
+            file_types = FiletypesDefinition.get_definitions(mapping["file_types"])
+            if "mode" in mapping:
+                mode = BackupMode[mapping["mode"]]
+            else:
+                mode = BackupMode.PUSH
+            exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(mapping, "exclude_dirs", [])]
+            exclude_removal_dirs = [Location.construct(location).root for location in Utils.get_from_dict(mapping, "exclude_removal_dirs", [])]
+            mappings.append(BackupMapping(name=name, source_dir=source_dir, target_dir=target_dir, file_types=file_types, mode=mode,
+                                          exclude_dirs=exclude_dirs, exclude_removal_dirs=exclude_removal_dirs))
+
+        return BackupManager(name, mappings=mappings, test=test, overwrite=overwrite, warn_duplicates=warn_duplicates, skip_confirm=skip_confirm)
+
+    def construct_directory_observer(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        sortable_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "sortable_dirs", [])]
+        extra_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "extra_dirs", [])]
+        file_types = FiletypesDefinition.get_definitions(Utils.get_from_dict(yaml_dict, "file_types", media_file_types))
+        return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, file_types=file_types)
 
 
-if __name__ == "__main__":
-    test = False # TODO update to False
-    skip_confirm = False
-    if len(sys.argv) > 1:
-        if "test".startswith(sys.argv[1].lower()):
-            test = True
-        if "skip_confirm".startswith(sys.argv[1].lower()):
-            skip_confirm = True
-    main(test=test, skip_confirm=skip_confirm)
+

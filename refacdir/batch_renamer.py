@@ -1,6 +1,7 @@
 import os
 
 from refacdir.file_renamer import FileRenamer
+from refacdir.utils import Utils
 
 
 class Location:
@@ -79,14 +80,14 @@ class BatchRenamer:
         if self.test:
             print(f"\n|=============== TESTING BATCH RENAME PROCESS: {self.name} (no change to be made) ===============|")
         elif not self.found_files():
-            print(f"{self.name} - No files found for {_desc} {self.locations}")
+            print(f"{self.name} - No files found for {_desc} {Utils.stringify_list(self.locations, do_print=False)}")
             return
         else:
             print(f"\n|=============== BATCH RENAME PROCESS STARTED: {self.name} ===============|")
         print(f"About to {_desc} locations:")
-        print(self.locations)
+        Utils.stringify_list(self.locations)
         print("with mapping patterns:")
-        print(self.mappings)
+        Utils.stringify_dict(self.mappings)
 
         if not self.test:
             if not self.skip_confirm:

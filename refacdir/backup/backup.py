@@ -1,5 +1,5 @@
-from backup.backup_manager import BackupManager
-from backup.backup_mapping import BackupMode, BackupMapping
+from refacdir.backup.backup_manager import BackupManager
+from refacdir.backup.backup_mapping import BackupMode, BackupMapping
 
 visual_media_file_types = [".png", ".mp4", ".mpg", ".mpeg", ".mov", ".gif", ".jpg", ".jpeg", ".tiff", ".webp", ".webm", ".bmp"]
 

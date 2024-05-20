@@ -1,5 +1,6 @@
 
 filename_mapping_functions:
+
 - name: "sixty_four_uppercase_hexadecimal"
   type: "HEX"
   args: [64]
@@ -13,78 +14,146 @@ filename_mapping_functions:
   type: "DIGITS"
   args: [4]
 
-renamers:
 
-- name: "Ideogram files"
-  function: "rename_by_ctime"
+filetype_definitions:
+
+- name: "visual_media_file_types"
+  extensions: [".png", ".mp4", ".mpg", ".mpeg", ".mov", ".gif", ".jpg", ".jpeg", ".tiff", ".webp", ".webm", ".bmp"]
+
+- name: "media_file_types"
+  extensions: [".bmp", ".gif", ".jpeg", ".jpg", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".png", ".tiff", ".webm", ".webp"]
+
+
+actions:
+
+
+- type: "DUPLICATE_REMOVER"
   mappings:
-  - search_patterns: "{{is_id_filename}}"
-    rename_tag: "idg_"
-  locations:
-  - root: "{{USER_HOME}}\\Downloads"
+  - name: "Downloads duplicates cleaner"
+    source_dir: "{{USER_HOME}}\\Downloads"
+    select_for_folder_depth: false
+    match_dir: false
+    recursive: true
     exclude_dirs: ["Telegram Desktop"]
-  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
-  - root: "D:\\img"
-    exclude_dirs: ["_controlnet\\expressions", "_controlnet\\symbols"]
+    preferred_delete_dirs: ["d"]
 
-- name: "Temp SDWebui files"
-  function: "rename_by_ctime"
-  mappings:
-  - search_patterns: "tmp{{eight_lowercase_alphanumeric_with_underscore}}.png"
-    rename_tag: "SDWebui_"
-  locations:
-  - root: "{{USER_HOME}}\\Downloads"
-    exclude_dirs: ["Telegram Desktop"]
-  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
 
-- name: "My Stable Diffusion output"
-  function: "rename_by_ctime"
+- type: "RENAMER"
   mappings:
-  - search_patterns: ["AnimateDiff", "AnimDiff"]
-    rename_tag: "AD_"
-  - search_patterns: ["ComfyUI", "output__", "upscaled__", "comfyui-clora-depth"]
-    rename_tag: "CUI_"
-  - search_patterns: ["InstantLoRA_", "Instant_LoRA", "*Instant_LoRA_", "ILoRA__"]
-    rename_tag: "ILoRA_"
-  - search_patterns: "[0-9]{{four_digits}}-"
-    rename_tag:  "SDWebui_"
-  - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
-    rename_tag: "hexstring_"
-  locations:
-  - root: "{{USER_HOME}}\\ComfyUI\\output"
-  - root: "{{USER_HOME}}\\stable-diffusion-webui\\log\\images"
-  - root: "D:\\stable-diffusion-webui\\log\\images"
 
-- name: "Other Stable Diffusion output (A1111)"
-  function: "rename_by_ctime"
-  mappings:
-  - search_patterns: ["[0-9]{{four_digits}}-", "0{{four_digits}}.", "0{{four_digits}}_"]
-    rename_tag: "SDWebui_"
-  locations:
-  - root: "{{USER_HOME}}\\Downloads"
-  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
-  - root: "D:\\img"
+  - name: "Ideogram files"
+    function: "rename_by_ctime"
+    mappings:
+    - search_patterns: "{{is_id_filename}}"
+      rename_tag: "idg_"
+    locations:
+    - root: "{{USER_HOME}}\\Downloads"
+      exclude_dirs: ["Telegram Desktop"]
+    - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+    - root: "D:\\img"
+      exclude_dirs: ["_controlnet\\expressions", "_controlnet\\symbols"]
 
-- name: "Other Stable Diffusion output"
-  function: "rename_by_ctime"
+  - name: "Temp SDWebui files"
+    function: "rename_by_ctime"
+    mappings:
+    - search_patterns: "tmp{{eight_lowercase_alphanumeric_with_underscore}}.png"
+      rename_tag: "SDWebui_"
+    locations:
+    - root: "{{USER_HOME}}\\Downloads"
+      exclude_dirs: ["Telegram Desktop"]
+    - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+
+  - name: "My Stable Diffusion output"
+    function: "rename_by_ctime"
+    mappings:
+    - search_patterns: ["AnimateDiff", "AnimDiff"]
+      rename_tag: "AD_"
+    - search_patterns: "[0-9]{{four_digits}}-"
+      rename_tag:  "SDWebui_"
+    - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
+      rename_tag: "hexstring_"
+    locations:
+    - root: "{{USER_HOME}}\\ComfyUI\\output"
+    - root: "{{USER_HOME}}\\stable-diffusion-webui\\log\\images"
+    - root: "D:\\stable-diffusion-webui\\log\\images"
+
+  - name: "Other Stable Diffusion output (A1111)"
+    function: "rename_by_ctime"
+    mappings:
+    - search_patterns: ["[0-9]{{four_digits}}-", "0{{four_digits}}.", "0{{four_digits}}_"]
+      rename_tag: "SDWebui_"
+    locations:
+    - root: "{{USER_HOME}}\\Downloads"
+    - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+    - root: "D:\\img"
+
+  - name: "Other Stable Diffusion output"
+    function: "rename_by_ctime"
+    mappings:
+    - search_patterns: ["AnimateDiff", "AnimDiff"]
+      rename_tag: "AD_"
+    - search_patterns: "ComfyUI"
+      rename_tag: "CUI_"
+    - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
+      rename_tag: "hexstring_"
+    - search_patterns: "{{six_lowercase_alphanumeric}}.png"
+      rename_tag: "CBox_"
+    locations:
+    - root: "{{USER_HOME}}\\Downloads"
+      exclude_dirs: ["Telegram Desktop"]
+    - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
+    - root: "D:\\img"
+      exclude_dirs: [
+        "_controlnet\\expressions",
+        "_controlnet\\symbols"
+      ]
+
+
+
+- type: "BACKUP"
   mappings:
-  - search_patterns: ["AnimateDiff", "AnimDiff"]
-    rename_tag: "AD_"
-  - search_patterns: "ComfyUI"
-    rename_tag: "CUI_"
-  - search_patterns: ["Instant_LoRA", "*Instant_LoRA_"]
-    rename_tag: "ILoRA_"
-  - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
-    rename_tag: "hexstring_"
-  - search_patterns: "{{six_lowercase_alphanumeric}}.png"
-    rename_tag: "CBox_"
-  locations:
-  - root: "{{USER_HOME}}\\Downloads"
-    exclude_dirs: ["Telegram Desktop"]
-  - root: "{{USER_HOME}}\\img\\img_temps\\_to_review"
-  - root: "D:\\img"
-    exclude_dirs: [
-      "_controlnet\\expressions",
-      "_controlnet\\symbols"
+
+  - name: "Image backups"
+    warn_duplicates: false
+    overwrite: false
+    test: false
+    skip_confirm: true
+    backup_mappings:
+
+    - name: "Stable Diffusion Backups"
+      source_dir: "{{USER_HOME}}\\stable-diffusion-webui\\log\\images"
+      target_dir: "D:\\stable-diffusion-webui\\log\\images"
+      mode: "PUSH_AND_REMOVE"
+      will_run: false
+      file_types: "{{visual_media_file_types}}"
+      exclude_dirs: [
+      ]
+      exclude_removal_dirs: [
+        "{{USER_HOME}}\\stable-diffusion-webui\\log\\images\\Deoldified",
+        "{{USER_HOME}}\\stable-diffusion-webui\\log\\images\\historical",
+        "{{USER_HOME}}\\stable-diffusion-webui\\log\\images\\other",
+        "{{USER_HOME}}\\stable-diffusion-webui\\log\\images\\tests",
+      ]
+
+    - name: "Other Images Mirror"
+      source_dir: "{{USER_HOME}}\\img"
+      target_dir: "D:\\img"
+      mode: "MIRROR"
+      will_run: true
+      file_types: "{{visual_media_file_types}}"
+      exclude_dirs: [
+      ]
+      exclude_removal_dirs: [
+      ]
+
+- type: "DIRECTORY_OBSERVER"
+  mappings:
+
+  - name: "Directory Observer"
+    file_types: "{{media_file_types}}"
+    sortable_dirs: [
+      "{{USER_HOME}}\\content",
     ]
-  
+    extra_dirs: [
+      "{{USER_HOME}}\\Downloads"
+    ]

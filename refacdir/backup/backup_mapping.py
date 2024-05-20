@@ -20,7 +20,7 @@ def remove_file(path):
 #        os.remove(path)
 
 
-from backup.utils import move, copy
+from refacdir.utils import Utils
 
 def exception_as_dict(ex):
     return dict(type=ex.__class__.__name__,
@@ -69,7 +69,11 @@ class BackupSourceData:
 
 class BackupMapping:
 
-    def __init__(self, source_dir, target_dir, file_types=[], mode=BackupMode.PUSH, exclude_dirs=[], exclude_removal_dirs=[], will_run=True):
+    def __init__(self, name="BackupMapping", source_dir=None, target_dir=None, file_types=[],
+                 mode=BackupMode.PUSH, exclude_dirs=[], exclude_removal_dirs=[], will_run=True):
+        self.name = name
+        if source_dir is None or target_dir is None:
+            raise ValueError("Source and target directories must be specified")
         self.source_dir = os.path.normpath(source_dir)
         self.target_dir = os.path.normpath(target_dir)
         self.file_types = file_types
@@ -162,7 +166,7 @@ class BackupMapping:
 
 # Uncovered case.. renamed directory in source. Probably need to come up with a way to test that directories are highly similar by their contents to accomodate this
 
-    def _move_file(self, source_path, external_source=None, move_func=move, test=True):
+    def _move_file(self, source_path, external_source=None, move_func=Utils.move, test=True):
         target_path = self._build_target_path(source_path)
         self._create_dirs(target_path, test=test)
         try:
@@ -210,7 +214,7 @@ class BackupMapping:
         all_hashes.remove(_hash)
         return _hash in all_hashes
 
-    def _ensure_files(self, source_hash, source_files, move_func=move, test=True):
+    def _ensure_files(self, source_hash, source_files, move_func=Utils.move, test=True):
         if not source_hash in self._target_hash_dict.values():
             for source_path in source_files:
                 print("Hash not found")
@@ -228,7 +232,7 @@ class BackupMapping:
                         for fp, _hash in self._target_hash_dict.items():
                             if _hash == source_hash and not fp in self.modified_target_files and os.path.exists(fp):
                                 self._move_file(source_path, external_source=fp, move_func=move_func, test=test)
-                                if move_func == move:
+                                if move_func == Utils.move:
                                     # Need to remove file in source also here because we did not remove it using shutil due to modified call
                                     self._remove_source_file(source_path, target_path, test=test)
                                 found_hash = True
@@ -236,10 +240,10 @@ class BackupMapping:
                         if not found_hash:
                             print("Unable to move file in external because it was previously modified, but it will be moved anyway.")
                             self._move_file(source_path, move_func=move_func, test=test)
-                elif move_func == move:
+                elif move_func == Utils.move:
                     self._remove_source_file(source_path, target_path, test=test)
 
-    def push(self, move_func=move, test=True):
+    def push(self, move_func=Utils.move, test=True):
         # Create any new directories first (even if empty)
         print("PUSHING DIRECTORIES TO EXTERNAL DRIVE")
         new_dirs = list(set(self._source_dirs) - set(self._target_dirs))
@@ -287,7 +291,7 @@ class BackupMapping:
 
     def backup(self, test=True):
         if self.is_push_mode():
-            move_func = move if self.mode == BackupMode.PUSH_AND_REMOVE else copy
+            move_func = Utils.move if self.mode == BackupMode.PUSH_AND_REMOVE else Utils.copy
             self.push(move_func=move_func, test=test)
         elif self.is_mirror_mode():
             self._source_data.save() # The source data will only matter if we are not removing source files.

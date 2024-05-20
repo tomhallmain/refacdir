@@ -188,7 +188,6 @@ class FileRenamer:
     def found_files(self, mappings={}, recursive=False):
         for item in mappings:
             if callable(item):
-                print("mapping key was callable!")
                 test_func = item
                 pattern = FileRenamer.get_glob_pattern(recursive=recursive)
                 for f in glob.glob(pattern, recursive=recursive, root_dir=self.root):

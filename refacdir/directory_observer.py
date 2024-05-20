@@ -1,5 +1,8 @@
 import glob
+import json
 import os
+
+media_file_types = [".bmp", ".gif", ".jpeg", ".jpg", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".png", ".tiff", ".webm", ".webp"]
 
 def print_table(table, divider="  "):
     max_field_lengths = []
@@ -88,15 +91,16 @@ class DirData:
     def has_file_type(self, ext):
         return ext in self.dict and self.dict[ext] > 0
 
-class StateObserver:
+class DirectoryObserver:
     UNSORTED = "_unsorted"
-    def __init__(self, sortable_dirs=[], extra_dirs=[], file_types=[]):
+    def __init__(self, name, sortable_dirs=[], extra_dirs=[], file_types=[]):
+        self.name = name
         self.dir_data = {}
         self.total_file_count = 0
         self.total_file_count_types = 0
 
         for d in sortable_dirs:
-            sort_dir = os.path.join(d, StateObserver.UNSORTED)
+            sort_dir = os.path.join(d, DirectoryObserver.UNSORTED)
             if not os.path.isdir(sort_dir):
                 raise Exception("Invalid directory provided: " + d)
             self.dir_data[sort_dir] = DirData(sort_dir)
@@ -160,26 +164,19 @@ class StateObserver:
         rows.sort(key=lambda row: row[len(row)-1], reverse=True)
         rows.insert(0, header)
         print_table(rows)
-        
-    
+
 
 if __name__ == "__main__":
-    sortable_dirs = [
-            "C:\\Users\\tehal\\content",
-            "D:\\dump2\\porn",
-            "D:\\img\\_controlnet",
-            "D:\\img\\sfw",
-            "D:\\img\\nsfw",
-            ]
-    extra_dirs = [
-            "C:\\Users\\tehal\\Downloads\\d"
-            ]
-
-    state_observer = StateObserver(
-            sortable_dirs=sortable_dirs,
-            extra_dirs=extra_dirs,
-            file_types=[".jpg", ".jpeg", ".png", ".tiff", ".webp", ".gif", ".webm", ".mov", ".mp4", ".mkv", ".mp3"]
-            )
+    observed_dirs_json = json.load(open("observed_directories.json"))
+    sortable_dirs = observed_dirs_json["sortable_dirs"]
+    extra_dirs = observed_dirs_json["extra_dirs"]
+    file_types = observed_dirs_json["file_types"] if "file_types" in observed_dirs_json else media_file_types
+    state_observer = DirectoryObserver(
+        name="StateObserver",
+        sortable_dirs=sortable_dirs,
+        extra_dirs=extra_dirs,
+        file_types=file_types
+    )
     state_observer.observe()
     state_observer.log()
 
