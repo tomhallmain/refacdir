@@ -49,7 +49,7 @@ def main():
         # manager.clean()
         manager.confirm_backups()
         manager.set_test(False)
-        manager.run_backup()
+        manager.run()
     except KeyboardInterrupt:
         pass
 

@@ -5,7 +5,7 @@ import yaml
 from refacdir.backup.backup_manager import BackupManager
 from refacdir.backup.backup_mapping import BackupMode, BackupMapping
 
-from refacdir.batch_renamer import BatchRenamer, Location
+from refacdir.batch_renamer import BatchRenamer, Location, DirectoryFlattener
 from refacdir.directory_observer import DirectoryObserver, media_file_types
 from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.utils import Utils
@@ -13,24 +13,29 @@ from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 
 
 class ActionType(Enum):
+    # NOTE action type values must not be changed without also updating the func names of BatchJob
     BACKUP = 'BACKUP'
     RENAMER = 'RENAMER'
     DUPLICATE_REMOVER = 'DUPLICATE_REMOVER'
     DIRECTORY_OBSERVER = 'DIRECTORY_OBSERVER'
+    DIRECTORY_FLATTENER = 'DIRECTORY_FLATTENER'
+
+    def get_varname(self):
+        return self.value.lower()
+
+    def __str__(self) -> str:
+        return self.value.lower().replace('_', ' ')
 
 
 class BatchJob:
     def __init__(self, configurations=[], test=True, skip_confirm=False):
         self.cwd = os.getcwd()
         self.configurations = configurations
-        self.duplicate_remover_count = 0
-        self.rename_count = 0
-        self.backup_count = 0
-        self.directory_observer_count = 0
-        self.duplicate_remover_failure_count = 0
-        self.renamer_failure_count = 0
-        self.backup_failure_count = 0
-        self.directory_observer_failure_count = 0
+        self.counts_map = {}
+        self.failure_counts_map = {}
+        for action_type in ActionType.__members__.values():
+            self.counts_map[action_type] = 0
+            self.failure_counts_map[action_type] = 0
         self.failures = []
         self.test = test
         self.skip_confirm = skip_confirm
@@ -56,7 +61,6 @@ class BatchJob:
             self.cancelled = True
 
     def run_config_file(self, config):
-        print(f"Running actions for {config}")
         with open(config, 'r') as f:
             try:
                 config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
@@ -74,6 +78,8 @@ class BatchJob:
                 self.failures.append(f"Config {config} failed to load: No actions found in config file!")
                 return
 
+            print(f"Running actions for {config}")
+
             FilenameMappingDefinition.add_named_functions(Utils.get_from_dict(config_wrapper, "filename_mapping_functions", []))
             FiletypesDefinition.add_named_definitions(Utils.get_from_dict(config_wrapper, "filetype_definitions", []))
 
@@ -83,15 +89,15 @@ class BatchJob:
                     return # If we fail to run an action then we stop running the config file
 
     def log_results(self):
-        print(f"{self.duplicate_remover_count} duplicate remover job(s) completed")
-        print(f"{self.rename_count} rename(s) completed")
-        print(f"{self.backup_count} backup manager(s) completed")
-        print(f"{self.directory_observer_count} directory observer(s) completed")
+        for action_type in ActionType.__members__.values():
+            count_action_type = self.counts_map[action_type]
+            if count_action_type > 0:
+                print(f"{count_action_type} {action_type} job(s) completed")
         if len(self.failures) > 0:
-            print(f"{self.duplicate_remover_failure_count} duplicate remover job(s) failed")
-            print(f"{self.renamer_failure_count} renames(s) failed")
-            print(f"{self.backup_failure_count} backup manager(s) failed")
-            print(f"{self.directory_observer_failure_count} directory observer(s) failed")
+            for action_type in ActionType.__members__.values():
+                count_action_type = self.failure_counts_map[action_type]
+                if count_action_type > 0:
+                    print(f"{count_action_type} {action_type} job(s) failed")
             for failure in self.failures:
                 print(failure)
         elif not self.cancelled:
@@ -103,14 +109,8 @@ class BatchJob:
             action_type = ActionType[action_type_string]
             if action_type == ActionType.RENAMER:
                 return self.run_renamers(config, action["mappings"])
-            elif action_type == ActionType.BACKUP:
-                return self.run_backups(config, action["mappings"])
-            elif action_type == ActionType.DIRECTORY_OBSERVER:
-                return self.run_directory_observers(config, action["mappings"])
-            elif action_type == ActionType.DUPLICATE_REMOVER:
-                return self.run_duplicate_removers(config, action["mappings"])
-            else:  # Action type is not a rename or backup, so we don't know what to do with it
-                raise ValueError("Invalid action type")
+            else:
+                return self.run_multi_action(config, action_type, action["mappings"])
         except KeyError as e:
             self.failures.append(f"Invalid action configuration in {config} index {idx}: {e}")
             return False
@@ -118,99 +118,56 @@ class BatchJob:
             self.failures.append(f"Failed to run action index {idx} in {config}: {e}")
             return False
 
-    def run_duplicate_removers(self, config, duplicate_removers):
-        for _duplicate_remover in duplicate_removers:
-            self.duplicate_remover_count += 1
+    def run_multi_action(self, config, action_type, actions):
+        constructor_func_name = f"construct_{action_type.get_varname()}"
+        for _action in actions:
+            self.counts_map[action_type] += 1
             try:
-                duplicate_remover = self.construct_duplicate_remover(_duplicate_remover)
+                constructor_func = getattr(self, constructor_func_name)
+                action = constructor_func(_action)
             except Exception as e:
-                self.duplicate_remover_failure_count += 1
-                if "name" in _duplicate_remover:
-                    name = _duplicate_remover["name"]
-                    error = f"Error in {config} duplicate remover {name}:  {e}"
+                self.failure_counts_map[action_type] += 1
+                if "name" in _action:
+                    name = _action["name"]
+                    error = f"Error in {config} {action_type} {name}:  {e}"
                 else:
-                    error = f"Error in {config} duplicate remover {self.duplicate_remover_count-1}:  {e}"
+                    _action_index = self.counts_map[action_type] - 1
+                    error = f"Error in {config} {action_type} {_action_index}:  {e}"
                 self.failures.append(error)
                 continue
             try:
-                duplicate_remover.run()
+                action.run()
             except Exception as e:
-                self.duplicate_remover_failure_count += 1
-                error = f"{config} duplicate remover {duplicate_remover.name} failed:  {e}"
+                self.failure_counts_map[action_type] += 1
+                error = f"{config} {action_type} {action.name} failed:  {e}"
                 self.failures.append(error)
                 print(error)
-        return self.duplicate_remover_failure_count == 0
+        return self.failure_counts_map[action_type] == 0
 
     def run_renamers(self, config, renamers):
         for _renamer in renamers:
-            self.rename_count += 1
+            self.counts_map[ActionType.RENAMER] += 1
             try:
                 renamer, renamer_function = self.construct_batch_renamer(_renamer)
             except KeyError as e:
-                self.renamer_failure_count += 1
+                self.failure_counts_map[ActionType.RENAMER] += 1
                 if "name" in _renamer:
                     name = _renamer["name"]
                     error = f"Error in {config} renamer {name}:  {e}"
                 else:
-                    error = f"Error in {config} renamer {self.rename_count-1}:  {e}"
+                    rename_index = self.counts_map[ActionType.RENAMER] - 1
+                    error = f"Error in {config} renamer {rename_index}:  {e}"
                 self.failures.append(error)
                 print(error)
                 continue
             try:
                 renamer.execute(renamer_function)
             except Exception as e:
-                self.renamer_failure_count += 1
+                self.failure_counts_map[ActionType.RENAMER] += 1
                 error = f"{config} renamer {renamer.name} failed:  {e}"
                 self.failures.append(error)
                 print(error)
-        return self.renamer_failure_count == 0
-
-    def run_backups(self, config, backups):
-        for _backup in backups:
-            self.backup_count += 1
-            try:
-                backup_manager = self.construct_backup_manager(_backup)
-            except Exception as e:
-                self.backup_failure_count += 1
-                if "name" in _backup:
-                    name = _backup["name"]
-                    error = f"Error in {config} backup {name}:  {e}"
-                else:
-                    error = f"Error in {config} backup {self.backup_count-1}:  {e}"
-                self.failures.append(error)
-                continue
-            try:
-                backup_manager.run_backup()
-            except Exception as e:
-                self.backup_failure_count += 1
-                error = f"{config} backup {backup_manager.name} failed:  {e}"
-                self.failures.append(error)
-                print(error)
-        return self.backup_failure_count == 0
-    
-    def run_directory_observers(self, config, directory_observers):
-        for _directory_observer in directory_observers:
-            self.directory_observer_count += 1
-            try:
-                directory_observer = self.construct_directory_observer(_directory_observer)
-            except Exception as e:
-                self.directory_observer_failure_count += 1
-                if "name" in _directory_observer:
-                    name = _directory_observer["name"]
-                    error = f"Error in {config} directory observer {name}:  {e}"
-                else:
-                    error = f"Error in {config} directory observer {self.directory_observer_count-1}:  {e}"
-                self.failures.append(error)
-                continue
-            try:
-                directory_observer.observe()
-                directory_observer.log()
-            except Exception as e:
-                self.directory_observer_failure_count += 1
-                error = f"{config} directory observer {directory_observer.name} failed:  {e}"
-                self.failures.append(error)
-                print(error)
-        return self.directory_observer_failure_count == 0
+        return self.failure_counts_map[ActionType.RENAMER] == 0
 
     def construct_duplicate_remover(self, yaml_dict={}):
         name = yaml_dict["name"]
@@ -231,10 +188,23 @@ class BatchJob:
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
         make_dirs = Utils.get_from_dict(yaml_dict, "make_dirs", True)
-        renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm, recursive=recursive, make_dirs=make_dirs)
+        find_unused_filenames = Utils.get_from_dict(yaml_dict, "find_unused_filenames", False)
+        renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm,
+                               recursive=recursive, make_dirs=make_dirs, find_unused_filenames=find_unused_filenames)
         return renamer, renamer_function
 
-    def construct_backup_manager(self, yaml_dict={}):
+    def construct_directory_flattener(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        location = Utils.get_from_dict(yaml_dict, "location", None)
+        if not location:
+            raise Exception("No location found for directory flattener config!")
+        search_patterns = Utils.get_from_dict(yaml_dict, "search_patterns", [])
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        renamer = DirectoryFlattener(name, location, search_patterns, test=test, skip_confirm=skip_confirm)
+        return renamer
+
+    def construct_backup(self, yaml_dict={}):
         name = yaml_dict["name"]
         test = Utils.get_from_dict(yaml_dict, "test", False)
         overwrite = Utils.get_from_dict(yaml_dict, "overwrite", False)

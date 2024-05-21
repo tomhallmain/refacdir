@@ -30,13 +30,14 @@ def alpha_basename_part(basename):
 class FileRenamer:
     FILE_EXISTS_MESSAGE = "Cannot create a file when that file already exists"
     
-    def __init__(self, root=".", test=False, log_changes=True, preserve_alpha=True, exclude_dirs=[]):
+    def __init__(self, root=".", test=False, log_changes=True, preserve_alpha=True, exclude_dirs=[], find_unused_filenames=False):
         if not os.path.isdir(root):
             raise Exception(f"Invalid root directory {root}")
         self.root = root
         self.test = test
         self.log_changes = log_changes
         self.preserve_alpha = preserve_alpha
+        self.find_unused_filenames = find_unused_filenames
         self.exclude_dirs = []
         self.check_exclusions = len(exclude_dirs) > 0
         for d in exclude_dirs:
@@ -83,6 +84,33 @@ class FileRenamer:
             failures.append(filename)
         return count
 
+    def get_unique_filename(self, rename_dir, new_filename):
+        attempts = 1
+        basename, ext = os.path.splitext(os.path.basename(new_filename))
+        while True:
+            if not os.path.exists(os.path.join(rename_dir, f"{basename}_{attempts}{ext}")):
+                return f"{basename}_{attempts}{ext}"
+            attempts += 1
+            if attempts > 99999:
+                raise Exception("Unable to find a unique filename: " + new_filename)
+
+    def rename_by_func_unique_filename(self, rename_func, filename, failures, count):
+        attempts = 0
+        increment = 0
+        positive = False
+        while True:
+            attempts += 1
+            positive = not positive
+            if positive:
+                increment += 1
+            try:
+                new_filename = rename_func(filename, increment=increment, positive=positive)
+                count = self.rename_file(filename, new_filename, count, None, failures)
+                return count
+            except Exception as e:
+                if not FileRenamer.FILE_EXISTS_MESSAGE in str(e) or attempts > 9999:
+                    raise e
+
     def rename_by_func(self, glob_exp, rename_base, recursive=False, rename_func=lambda x: x):
         count = 0
         cwd = os.getcwd()
@@ -110,20 +138,7 @@ class FileRenamer:
                 if not FileRenamer.FILE_EXISTS_MESSAGE in str(e0):
                     raise e0
                 print(f"Exact time for new filename \"{new_filename}\" matches another file, will try to find a close value.")
-                resolved = False
-                increment = 0
-                positive = False
-                while count < 50 and not resolved:
-                    positive = not positive
-                    if positive:
-                        increment += 1
-                    try:
-                        new_filename = rename_func(filename, increment=increment, positive=positive)
-                        count = self.rename_file(filename, new_filename, count, None, failures)
-                        resolved = True
-                    except Exception as e1:
-                        if not FileRenamer.FILE_EXISTS_MESSAGE in str(e1):
-                            raise e0            
+                count = self.rename_by_func_unique_filename(rename_func, filename, failures, count)
 
     def os_stat_rename_func(self, attr, rename_base):
         def rename_func(filename, increment=0, positive=True):
@@ -183,11 +198,19 @@ class FileRenamer:
                 continue
             if test_func and not test_func(filename):
                 continue
+            if self.root == target_dir and os.path.dirname(filename) == "":
+                continue # Implies we are moving a file to the directory it is already in, so skip
             if not make_dirs and ("/" in filename or "\\" in filename):
                 new_filename = os.path.basename(filename)
             else:
                 new_filename = filename
-            count = self.rename_file(filename, new_filename, count, target_dir, failures)
+            try:
+                count = self.rename_file(filename, new_filename, count, target_dir, failures)
+            except OSError as e:
+                if not FileRenamer.FILE_EXISTS_MESSAGE in str(e) or not self.find_unused_filenames:
+                    raise e
+                new_filename = self.get_unique_filename(target_dir, new_filename)
+                count = self.rename_file(filename, new_filename, count, target_dir, failures)
 
         os.chdir(cwd)
         if self.log_changes:

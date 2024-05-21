@@ -101,6 +101,16 @@ actions:
       ]
 
 
+- type: "DIRECTORY_FLATTENER"
+  mappings:
+
+  - name: "Flatten Downloads into root folder"
+    test: false
+    search_patterns: "{{any_file}}"
+    location:
+      root: "{{USER_HOME}}\\Downloads"
+
+
 
 - type: "BACKUP"
   mappings:

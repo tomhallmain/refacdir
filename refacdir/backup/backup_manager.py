@@ -17,7 +17,10 @@ class BackupManager:
             if mapping.will_run:
                 mapping.clean()
 
-    def run_backup(self):
+    def run(self):
+        self.run_backups()
+
+    def run_backups(self):
         print("TESTING BACKUPS" if self.test else "RUNNING BACKUPS")
         print("The following backups will be run:")
         for mapping in self.backup_mappings:

@@ -6,6 +6,10 @@ import re
 # Add any custom filename search functions here to gather files for the BatchRenamers as set in the config YAML.
 
 
+def any_file(filename):
+    return True
+
+
 def random_selection(filename, chance=0.2):
     return random.random() <= chance
 

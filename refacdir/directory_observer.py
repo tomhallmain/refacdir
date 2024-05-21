@@ -115,6 +115,10 @@ class DirectoryObserver:
 
         DirData.set_file_types(file_types)
 
+    def run(self):
+        self.observe()
+        self.log()
+
     def observe(self):
         # Gather data
         for dir_data in self.dir_data.values():

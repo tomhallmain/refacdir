@@ -1,6 +1,7 @@
 import os
 
 from refacdir.file_renamer import FileRenamer
+from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils import Utils
 
 
@@ -24,6 +25,29 @@ class Location:
         else:
             return f"{self.root} (excluding dirs: {self.exclude_dirs})"
 
+
+class DirectoryFlattener:
+    """
+    Take all files in recursive directories and flatten them into the base directory.
+    """
+    def __init__(self, name, location, search_patterns=[], test=True, skip_confirm=False):
+        self.name = name
+        self.location = Location.construct(location)
+        if search_patterns is None or len(search_patterns) == 0:
+            mappings_list = [{"search_patterns": [lambda f: True], "rename_tag": self.location.root}]
+        else:
+            mappings_list = [{"search_patterns": search_patterns, "rename_tag": self.location.root}]
+        mappings = FilenameMappingDefinition.construct_mappings(mappings_list)
+        self.batch_renamer = BatchRenamer("DirectoryFlattener", mappings, [self.location], test=test,
+                                          skip_confirm=skip_confirm, recursive=True, make_dirs=False, find_unused_filenames=True)
+
+    def run(self):
+        self.flatten()
+
+    def flatten(self):
+        self.batch_renamer.move_files()
+
+
 class BatchRenamer:
     DESCRIPTIONS = {
         "batch_move_files": "move files to target specified in mappings from",
@@ -31,7 +55,8 @@ class BatchRenamer:
         "batch_rename_by_mtime": "rename files by mtime at",
     }
 
-    def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True, preserve_alpha=False, make_dirs=False):
+    def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True,
+                 preserve_alpha=False, make_dirs=False, find_unused_filenames=False):
         self.name = name
         self.mappings = mappings
         self.locations = locations
@@ -40,16 +65,20 @@ class BatchRenamer:
         self.recursive = recursive
         self.preserve_alpha = preserve_alpha
         self.make_dirs = make_dirs
+        self.find_unused_filenames = find_unused_filenames
 
     def _get_renamer(self, location):
         if isinstance(location, Location):
-            file_renamer = FileRenamer(root=location.root, test=self.test, preserve_alpha=self.preserve_alpha, exclude_dirs=location.exclude_dirs)
+            file_renamer = FileRenamer(root=location.root, test=self.test, preserve_alpha=self.preserve_alpha,
+                                       exclude_dirs=location.exclude_dirs, find_unused_filenames=self.find_unused_filenames)
         elif isinstance(location, str):
-            file_renamer = FileRenamer(root=location, test=self.test, preserve_alpha=self.preserve_alpha)
+            file_renamer = FileRenamer(root=location, test=self.test, preserve_alpha=self.preserve_alpha,
+                                       find_unused_filenames=self.find_unused_filenames)
         elif isinstance(location, dict):
             root = location["root"]
             exclude_dirs = location["exclude_dirs"]
-            file_renamer = FileRenamer(root=root, test=self.test, preserve_alpha=self.preserve_alpha, exclude_dirs=exclude_dirs)
+            file_renamer = FileRenamer(root=root, test=self.test, preserve_alpha=self.preserve_alpha, exclude_dirs=exclude_dirs,
+                                       find_unused_filenames=self.find_unused_filenames)
         else:
             raise Exception(f"Invalid location provided: {location}")
         return file_renamer
