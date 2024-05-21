@@ -1,4 +1,5 @@
 from enum import Enum
+import os
 import yaml
 
 from refacdir.backup.backup_manager import BackupManager
@@ -20,6 +21,7 @@ class ActionType(Enum):
 
 class BatchJob:
     def __init__(self, configurations=[], test=True, skip_confirm=False):
+        self.cwd = os.getcwd()
         self.configurations = configurations
         self.duplicate_remover_count = 0
         self.rename_count = 0
@@ -47,6 +49,7 @@ class BatchJob:
     def run(self):
         try:
             for config in self.configurations:
+                os.chdir(self.cwd)
                 self.run_config_file(config)
         except KeyboardInterrupt:
             print("Exiting prematurely at user request...")
@@ -60,6 +63,10 @@ class BatchJob:
             except yaml.YAMLError as e:
                 print(f"Error loading {config}: {e}")
                 self.failures.append(f"Config {config} failed to load: {e}")
+                return
+
+            if "will_run" in config_wrapper and config_wrapper["will_run"] == False:
+                print(f"{config} is set to will run = False, skipping...")
                 return
 
             if "actions" not in config_wrapper:
@@ -222,7 +229,9 @@ class BatchJob:
         renamer_function = yaml_dict["function"]
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
-        renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm)
+        recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
+        make_dirs = Utils.get_from_dict(yaml_dict, "make_dirs", True)
+        renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm, recursive=recursive, make_dirs=make_dirs)
         return renamer, renamer_function
 
     def construct_backup_manager(self, yaml_dict={}):
@@ -237,6 +246,7 @@ class BatchJob:
             name = mapping["name"]
             source_dir = Location.construct(mapping["source_dir"]).root
             target_dir = Location.construct(mapping["target_dir"]).root
+            will_run = Utils.get_from_dict(mapping, "will_run", True)
             file_types = FiletypesDefinition.get_definitions(mapping["file_types"])
             if "mode" in mapping:
                 mode = BackupMode[mapping["mode"]]
@@ -245,7 +255,7 @@ class BatchJob:
             exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(mapping, "exclude_dirs", [])]
             exclude_removal_dirs = [Location.construct(location).root for location in Utils.get_from_dict(mapping, "exclude_removal_dirs", [])]
             mappings.append(BackupMapping(name=name, source_dir=source_dir, target_dir=target_dir, file_types=file_types, mode=mode,
-                                          exclude_dirs=exclude_dirs, exclude_removal_dirs=exclude_removal_dirs))
+                                          exclude_dirs=exclude_dirs, exclude_removal_dirs=exclude_removal_dirs, will_run=will_run))
 
         return BackupManager(name, mappings=mappings, test=test, overwrite=overwrite, warn_duplicates=warn_duplicates, skip_confirm=skip_confirm)
 

@@ -31,7 +31,7 @@ class BatchRenamer:
         "batch_rename_by_mtime": "rename files by mtime at",
     }
 
-    def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True, preserve_alpha=False):
+    def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True, preserve_alpha=False, make_dirs=False):
         self.name = name
         self.mappings = mappings
         self.locations = locations
@@ -39,6 +39,7 @@ class BatchRenamer:
         self.skip_confirm = skip_confirm
         self.recursive = recursive
         self.preserve_alpha = preserve_alpha
+        self.make_dirs = make_dirs
 
     def _get_renamer(self, location):
         if isinstance(location, Location):
@@ -100,6 +101,6 @@ class BatchRenamer:
         for location in self.locations:
             file_renamer = self._get_renamer(location)
             operation = getattr(file_renamer, _func)
-            operation(self.mappings, recursive=self.recursive)
+            operation(self.mappings, recursive=self.recursive, make_dirs=self.make_dirs)
 
         print(f"|=============== BATCH RENAME PROCESS COMPLETE: {self.name} ===============|\n\n")

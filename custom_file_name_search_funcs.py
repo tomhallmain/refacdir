@@ -1,9 +1,13 @@
 import os
+import random
 import re
 
 
 # Add any custom filename search functions here to gather files for the BatchRenamers as set in the config YAML.
 
+
+def random_selection(filename, chance=0.2):
+    return random.random() <= chance
 
 def is_id_filename(filename, fixed_length=22):
     file_basename = os.path.basename(filename)

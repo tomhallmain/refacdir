@@ -58,22 +58,27 @@ class FileRenamer:
 
     def rename_file(self, filename, new_filename, count, target_dir, failures):
         rename_dir = target_dir if target_dir else os.path.dirname(filename)
-        new_filename = os.path.join(rename_dir, new_filename)
+        new_filename_full_path = os.path.join(rename_dir, new_filename)
+        made_dirs = False
+        if target_dir is not None and ("/" in new_filename or "\\" in new_filename):
+            os.makedirs(os.path.dirname(new_filename_full_path), exist_ok=True)
+            made_dirs = True
         try:
             if not self.test:
-                os.rename(filename, new_filename)
+                os.rename(filename, new_filename_full_path)
             count += 1
             if self.log_changes:
                 if self.test:
-                    print(f"TEST rename {filename} to {new_filename}")
-                elif filename == new_filename:
+                    print(f"TEST rename {filename} to {new_filename_full_path}")
+                elif target_dir is not None:
                     print(f"moved {filename} to {target_dir}")
                 else:
-                    print(f"renamed {filename} to {new_filename}")
+                    print(f"renamed {filename} to {new_filename_full_path}")
         except OSError as e:
             if FileRenamer.FILE_EXISTS_MESSAGE in str(e):
-                raise e
-            print(f"Failed to rename {filename} to {new_filename}")
+                if not made_dirs:
+                    raise e
+            print(f"Failed to rename {filename} to {new_filename_full_path}")
             print(e)
             failures.append(filename)
         return count
@@ -155,7 +160,7 @@ class FileRenamer:
         """
         self.rename_by_func(glob_exp, rename_base, recursive=recursive, rename_func=self.os_stat_rename_func("st_mtime", rename_base))
 
-    def move_files(self, glob_exp, target_dir, recursive=False):
+    def move_files(self, glob_exp, target_dir, recursive=False, make_dirs=False):
         """
         Move all files matching given glob expression to target directory
         """
@@ -178,7 +183,11 @@ class FileRenamer:
                 continue
             if test_func and not test_func(filename):
                 continue
-            count = self.rename_file(filename, filename, count, target_dir, failures)
+            if not make_dirs and ("/" in filename or "\\" in filename):
+                new_filename = os.path.basename(filename)
+            else:
+                new_filename = filename
+            count = self.rename_file(filename, new_filename, count, target_dir, failures)
 
         os.chdir(cwd)
         if self.log_changes:
@@ -214,7 +223,7 @@ class FileRenamer:
             else:
                 print(f"\nBatch rename at {self.root} with mappings: {mappings}")
 
-    def batch_rename_by_mtime(self, mappings={}, recursive=False):
+    def batch_rename_by_mtime(self, mappings={}, recursive=False, make_dirs=False):
         """
         Provide a dictionary of str mappings between glob expressions and rename bases.
         """
@@ -222,7 +231,7 @@ class FileRenamer:
         for pattern in mappings:
             self.rename_by_mtime(pattern, mappings[pattern], recursive=recursive)
 
-    def batch_rename_by_ctime(self, mappings={}, recursive=False):
+    def batch_rename_by_ctime(self, mappings={}, recursive=False, make_dirs=False):
         """
         Provide a dictionary of str mappings between glob expressions and rename bases.
         """
@@ -230,13 +239,13 @@ class FileRenamer:
         for pattern in mappings:
             self.rename_by_ctime(pattern, mappings[pattern], recursive=recursive)
 
-    def batch_move_files(self, mappings={}, recursive=False):
+    def batch_move_files(self, mappings={}, recursive=False, make_dirs=False):
         """
         Provide a dictionary of str mappings between glob expressions and directory targets.
         """
         self.log_pre_change(mappings)
         for pattern in mappings:
-            self.move_files(pattern, mappings[pattern], recursive=recursive)
+            self.move_files(pattern, mappings[pattern], recursive=recursive, make_dirs=make_dirs)
 
 
     def print_summary(self, count, strategy, glob_exp, rename_base, recursive):

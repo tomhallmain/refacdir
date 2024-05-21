@@ -153,7 +153,7 @@ class BackupMapping:
 
     def _create_dirs(self, target_path, test=True):
         parent = os.path.dirname(target_path)
-        if not os.path.isdir(parent):
+        if parent != "" and not os.path.exists(parent):
             print(f"Creating direc: {parent}")
             if not test:
                 os.makedirs(parent)
@@ -258,7 +258,7 @@ class BackupMapping:
             self._ensure_files(source_hash, source_files, move_func=move_func, test=test)
 
     def mirror(self, test=True):
-        self.push(move_func=copy, test=test)
+        self.push(move_func=Utils.copy, test=test)
         confirm = input("Please confirm files removal from external directory - they should be in trash folder if there is a major issue (y/n):")
         if confirm.lower() != "y":
             print("No \"stale\" files or directories to be removed.")
