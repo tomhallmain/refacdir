@@ -10,7 +10,7 @@ def any_file(filename):
     return True
 
 
-def random_selection(filename, chance=0.2):
+def random_selection(filename, chance=0.5):
     return random.random() <= chance
 
 def is_id_filename(filename, fixed_length=22):

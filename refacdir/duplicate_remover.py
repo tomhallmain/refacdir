@@ -90,7 +90,10 @@ class DuplicateRemover:
             for filename in filenames:
                 file_path = os.path.normpath(os.path.join(foldername, filename))
                 if self.skip_exclusion_check or not self.is_excluded(file_path):
-                    file_dict[self.get_file_hash(file_path)].append(file_path)
+                    try:
+                        file_dict[self.get_file_hash(file_path)].append(file_path)
+                    except Exception as e: # FileNotFound error is possible
+                        print(f"Error generating hash for \"{file_path}\": {e}")
         self.duplicates = {k: v for k, v in file_dict.items() if len(v) > 1}
         return self.has_duplicates()
 

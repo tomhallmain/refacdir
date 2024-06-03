@@ -146,6 +146,10 @@ class Utils:
        return any(item in list1 for item in list2)
 
     @staticmethod
+    def subtract_list(original, subtracted):
+        return list(set(original) - set(subtracted))
+
+    @staticmethod
     def get_list_from_string(s, sep=","):
         if s is None or s.strip() == "":
             return []

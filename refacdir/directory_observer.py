@@ -2,6 +2,8 @@ import glob
 import json
 import os
 
+from refacdir.utils import Utils
+
 media_file_types = [".bmp", ".gif", ".jpeg", ".jpg", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".png", ".tiff", ".webm", ".webp"]
 
 def print_table(table, divider="  "):
@@ -21,6 +23,8 @@ def print_table(table, divider="  "):
             cell_str = str(cell)
             spaces_to_add = max_field_lengths[col_index] - len(cell_str)
             if isinstance(cell, int):
+                if cell == 0:
+                    cell_str = "-"
                 row_string += (spaces_to_add * " ") + cell_str + divider
             else:
                 row_string += cell_str + (spaces_to_add * " ") + divider
@@ -59,6 +63,7 @@ class DirData:
 
     def __init__(self, directory):
         self.directory = directory
+        self.exclude_dirs = []
         self.all_files = []
         self.dict = {}
         self.total_file_count_types = 0
@@ -68,6 +73,13 @@ class DirData:
 
     def observe(self):
         self.all_files = glob.glob("**/*", root_dir=self.directory, recursive=True)
+        if len(self.exclude_dirs) > 0:
+            for d in self.exclude_dirs:
+                to_remove = []
+                for f in self.all_files:
+                    if f.startswith(d):
+                        to_remove.append(f)
+                self.all_files = Utils.subtract_list(self.all_files, to_remove)
         self.total_file_count = len(self.all_files)
         for file_type in DirData.file_types:
             file_count = len(list(filter(lambda f: f.lower().endswith(file_type), self.all_files)))
@@ -91,9 +103,15 @@ class DirData:
     def has_file_type(self, ext):
         return ext in self.dict and self.dict[ext] > 0
 
+    def apply_exclude_dir(self, exclude_dir):
+        if exclude_dir.startswith(self.directory):
+            exclude_dir = exclude_dir[len(self.directory)+1:]
+        self.exclude_dirs.append(exclude_dir)
+
+
 class DirectoryObserver:
     UNSORTED = "_unsorted"
-    def __init__(self, name, sortable_dirs=[], extra_dirs=[], file_types=[]):
+    def __init__(self, name, sortable_dirs=[], extra_dirs=[], exclude_dirs=[], file_types=[]):
         self.name = name
         self.dir_data = {}
         self.total_file_count = 0
@@ -109,6 +127,11 @@ class DirectoryObserver:
             if not os.path.isdir(d):
                 raise Exception("Invalid directory provided: " + d)
             self.dir_data[d] = DirData(d)
+
+        for d in exclude_dirs:
+            if not os.path.isdir(d):
+                raise Exception("Invalid exclude directory provided: " + d)
+            self.apply_exclude_dir_to_matching_dir_data(d)
 
         if len(file_types) == 0 or len(self.dir_data) == 0:
             raise Exception("No sort dirs or file types provided")
@@ -168,6 +191,15 @@ class DirectoryObserver:
         rows.sort(key=lambda row: row[len(row)-1], reverse=True)
         rows.insert(0, header)
         print_table(rows)
+
+    def apply_exclude_dir_to_matching_dir_data(self, exclude_dir):
+        for d, dir_data in self.dir_data.items():
+            if exclude_dir.startswith(d):
+                dir_data.apply_exclude_dir(exclude_dir)
+                return
+
+        print(f"No matching directory found for exclude directory {exclude_dir}")
+
 
 
 if __name__ == "__main__":

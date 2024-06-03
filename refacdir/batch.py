@@ -1,4 +1,5 @@
 from enum import Enum
+from glob import glob
 import os
 import yaml
 
@@ -10,6 +11,15 @@ from refacdir.directory_observer import DirectoryObserver, media_file_types
 from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.utils import Utils
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
+
+
+class BatchArgs:
+    def __init__(self):
+        self.verbose = False
+        self.test = False
+        self.skip_confirm = False
+        self.configs = sorted(glob("configs/*.yaml", recursive=False))
+        self.only_observers = False
 
 
 class ActionType(Enum):
@@ -28,21 +38,22 @@ class ActionType(Enum):
 
 
 class BatchJob:
-    def __init__(self, configurations=[], test=True, skip_confirm=False):
+    def __init__(self, args=BatchArgs()):
         self.cwd = os.getcwd()
-        self.configurations = configurations
+        self.args = args
+        self.configurations = args.configs
         self.counts_map = {}
         self.failure_counts_map = {}
         for action_type in ActionType.__members__.values():
             self.counts_map[action_type] = 0
             self.failure_counts_map[action_type] = 0
         self.failures = []
-        self.test = test
-        self.skip_confirm = skip_confirm
+        self.test = args.test
+        self.skip_confirm = args.skip_confirm
         self.cancelled = False
         
         temp_full_path_example = None
-        for config in configurations:
+        for config in self.configurations:
             if config.endswith("config_example.yaml"):
                 temp_full_path_example = config
 
@@ -108,6 +119,9 @@ class BatchJob:
         try:
             action_type_string = action["type"]
             action_type = ActionType[action_type_string]
+            if self.args.only_observers and ActionType.DIRECTORY_OBSERVER != action_type:
+                print(f"{config} - Skipping {action_type} action")
+                return True
             print(f"Running action type: {action_type}")
             if action_type == ActionType.RENAMER:
                 return self.run_renamers(config, action["mappings"])
@@ -235,8 +249,9 @@ class BatchJob:
         name = yaml_dict["name"]
         sortable_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "sortable_dirs", [])]
         extra_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "extra_dirs", [])]
+        exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "exclude_dirs", [])]
         file_types = FiletypesDefinition.get_definitions(Utils.get_from_dict(yaml_dict, "file_types", media_file_types))
-        return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, file_types=file_types)
+        return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, exclude_dirs=exclude_dirs, file_types=file_types)
 
 
 
