@@ -4,7 +4,7 @@ import sys
 from refacdir.batch import BatchJob
 
 def main(test=True, skip_confirm=False):
-    configurations = sorted(glob("configs\\*.yaml", recursive=False))
+    configurations = sorted(glob("configs/*.yaml", recursive=False))
     batch_job = BatchJob(configurations=configurations, test=test, skip_confirm=skip_confirm)
     batch_job.run()
     batch_job.log_results()

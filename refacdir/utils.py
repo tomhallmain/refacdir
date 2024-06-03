@@ -1,12 +1,24 @@
 import datetime
 import os
 import shutil
+import sys
 
-import win32file
-import pywintypes
-
+if sys.platform == "win32":
+    import win32file
+    import pywintypes
+else:
+    pass # TODO
 
 class Utils:
+    @staticmethod
+    def fix_path(path):
+        path = path.replace("{{USER_HOME}}", os.path.expanduser("~"))
+        if sys.platform=="win32":
+            path = path.replace("/", "\\")
+        else:
+            path = path.replace("\\", "/")
+        return os.path.normpath(path)
+
     @staticmethod
     def string_distance(s, t):
         # create two work vectors of integer distances
@@ -190,7 +202,10 @@ class Utils:
         creation_datetime = datetime.datetime.fromtimestamp(stat_obj.st_ctime)
         modification_datetime = datetime.datetime.fromtimestamp(stat_obj.st_mtime)
         shutil.move(source_path, target_path)
-        Utils.change_fileinfo_times(target_path, creation_datetime, modification_datetime)
+        if sys.platform == "win32":
+            Utils.change_fileinfo_times(target_path, creation_datetime, modification_datetime)
+        else:
+            pass # TODO
 
     @staticmethod
     def copy(source_path, target_path):
@@ -198,7 +213,10 @@ class Utils:
         creation_datetime = datetime.datetime.fromtimestamp(stat_obj.st_ctime)
         modification_datetime = datetime.datetime.fromtimestamp(stat_obj.st_mtime)
         shutil.copy2(source_path, target_path)
-        Utils.change_fileinfo_times(target_path, creation_datetime, modification_datetime)
+        if sys.platform == "win32":
+            Utils.change_fileinfo_times(target_path, creation_datetime, modification_datetime)
+        else:
+            pass # TODO
 
     @staticmethod
     def stringify_list(l, one_line=False, do_print=True):

@@ -51,6 +51,7 @@ class BatchJob:
                 raise Exception("Excluded example config file! Please change name of config_example.yaml to ensure it is included.")
             self.configurations.remove(temp_full_path_example)
 
+
     def run(self):
         try:
             for config in self.configurations:
@@ -107,6 +108,7 @@ class BatchJob:
         try:
             action_type_string = action["type"]
             action_type = ActionType[action_type_string]
+            print(f"Running action type: {action_type}")
             if action_type == ActionType.RENAMER:
                 return self.run_renamers(config, action["mappings"])
             else:

@@ -9,8 +9,8 @@ class Location:
     def __init__(self, root, exclude_dirs=[]):
         if not isinstance(root, str):
             raise TypeError(f"directory root must be a string, got {type(root)} ({root})")
-        self.root = root.replace("{{USER_HOME}}", os.path.expanduser("~"))
-        self.exclude_dirs = exclude_dirs
+        self.root = Utils.fix_path(root)
+        self.exclude_dirs = list(map(lambda p: Utils.fix_path(p), exclude_dirs))
 
     @staticmethod
     def construct(location_obj):

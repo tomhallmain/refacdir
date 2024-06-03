@@ -245,15 +245,16 @@ class BackupMapping:
 
     def push(self, move_func=Utils.move, test=True):
         # Create any new directories first (even if empty)
-        print("PUSHING DIRECTORIES TO EXTERNAL DRIVE")
         new_dirs = list(set(self._source_dirs) - set(self._target_dirs))
+        if len(new_dirs) > 0:
+            print(f"PUSHING DIRECTORIES TO {self.target_dir}")
         for directory in sorted(new_dirs):
             new_dir = os.path.join(self.target_dir, directory)
             print(f"Making new directory: {new_dir}")
             if not test:
                 os.makedirs(new_dir)
         # Move the files to external drive
-        print("PUSHING FILES TO EXTERNAL DRIVE")
+        print(f"PUSHING FILES TO {self.target_dir}")
         for source_hash, source_files in self._source_data.hash_dict.items():
             self._ensure_files(source_hash, source_files, move_func=move_func, test=test)
 
@@ -264,7 +265,7 @@ class BackupMapping:
             print("No \"stale\" files or directories to be removed.")
             return
         # Remove stale files to ensure parity
-        print("REMOVING OLD EXTERNAL FILES TO ENSURE PARITY")
+        print(f"REMOVING OLD FILES FROM {self.target_dir} TO ENSURE PARITY")
         for target_file, target_hash in self._target_hash_dict.items():
             if not target_hash in self._source_data.hash_dict:
                 if self._is_file_excluded(target_file) or self._is_file_removal_excluded(target_file):
@@ -276,7 +277,7 @@ class BackupMapping:
                 except Exception as e:
                     self.failures.append([FailureType.REMOVE_STALE_FILE, exception_as_dict(e), target_file, "Could not remove stale file"])
         # Remove stale directories to ensure parity
-        print("REMOVING OLD EXTERNAL DIRECTORIES TO ENSURE PARITY")
+        print(f"REMOVING OLD EXTERNAL DIRECTORIES FROM {self.target_dir} TO ENSURE PARITY")
         old_external_dirs = list(set(self._target_dirs) - set(self._source_dirs))
         for directory in old_external_dirs:
             stale_dirpath = os.path.join(self.target_dir, directory)
