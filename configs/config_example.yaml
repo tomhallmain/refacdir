@@ -156,3 +156,4 @@ actions:
     extra_dirs: [
       "{{USER_HOME}}\\Downloads"
     ]
+    parent_dirs: []

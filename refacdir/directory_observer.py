@@ -111,7 +111,7 @@ class DirData:
 
 class DirectoryObserver:
     UNSORTED = "_unsorted"
-    def __init__(self, name, sortable_dirs=[], extra_dirs=[], exclude_dirs=[], file_types=[]):
+    def __init__(self, name, sortable_dirs=[], extra_dirs=[], parent_dirs=[], exclude_dirs=[], file_types=[]):
         self.name = name
         self.dir_data = {}
         self.total_file_count = 0
@@ -127,6 +127,13 @@ class DirectoryObserver:
             if not os.path.isdir(d):
                 raise Exception("Invalid directory provided: " + d)
             self.dir_data[d] = DirData(d)
+        
+        for d in parent_dirs:
+            if not os.path.isdir(d):
+                raise Exception("Invalid directory provided: " + d)
+            print(f"Adding directories from parent: {d}")
+            for subdir in [ f.path for f in os.scandir(d) if f.is_dir() ]:
+                self.dir_data[subdir] = DirData(subdir)
 
         for d in exclude_dirs:
             if not os.path.isdir(d):

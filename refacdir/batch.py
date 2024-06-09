@@ -249,9 +249,10 @@ class BatchJob:
         name = yaml_dict["name"]
         sortable_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "sortable_dirs", [])]
         extra_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "extra_dirs", [])]
+        parent_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "parent_dirs", [])]
         exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "exclude_dirs", [])]
         file_types = FiletypesDefinition.get_definitions(Utils.get_from_dict(yaml_dict, "file_types", media_file_types))
-        return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, exclude_dirs=exclude_dirs, file_types=file_types)
+        return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, parent_dirs=parent_dirs, exclude_dirs=exclude_dirs, file_types=file_types)
 
 
 
