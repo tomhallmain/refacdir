@@ -14,10 +14,12 @@ class DuplicateRemover:
     NORMAL_FILE_CHARS_REGEX = re.compile(r'^[\w_\-. ]+$')
     STARTS_WITH_ALPHA_REGEX = re.compile(r'^[A-Za-z]')
 
-    def __init__(self, name, source_folder, select_for_folder_depth=False, match_dir=False,
+    def __init__(self, name, source_folders, select_for_folder_depth=False, match_dir=False,
                  recursive=True, exclude_dirs=[], preferred_delete_dirs=[]):
         self.name = name
-        self.source_folder = os.path.abspath(source_folder)
+        self.source_folders = []
+        for source_folder in source_folders:
+            self.source_folders.append(os.path.abspath(source_folder))
         self.duplicates = {}
         self.select_for_folder_depth = select_for_folder_depth
         self.match_dir = match_dir
@@ -29,10 +31,7 @@ class DuplicateRemover:
         if not self.skip_exclusion_check:
             print("Excluding directories from duplicates check:")
             for d in exclude_dirs:
-                if os.path.abspath(d) == d:
-                    full_path = d
-                else:
-                    full_path = os.path.join(os.path.abspath(self.source_folder), d)
+                full_path = self._find_full_path(d)
                 if not os.path.isdir(full_path):
                     raise Exception("Invalid exclude directory: " + d)
                 print(full_path)
@@ -40,17 +39,25 @@ class DuplicateRemover:
         if len(preferred_delete_dirs) > 0:
             print("Preferring directories for deletion:")
             for d in preferred_delete_dirs:
-                if os.path.abspath(d) == d:
-                    full_path = d
-                else:
-                    full_path = os.path.join(os.path.abspath(self.source_folder), d)
+                full_path = self._find_full_path(d)
                 if not os.path.isdir(full_path):
                     raise Exception("Invalid preferred delete directory: " + d)
                 print(full_path)
                 self.preferred_delete_dirs.append(full_path)
 
+    def _find_full_path(self, dirname):
+        if "{{USER_HOME}}" in dirname:
+            dirname = dirname.replace("{{USER_HOME}}", os.path.expanduser("~"))
+        if os.path.abspath(dirname) == dirname:
+            return dirname
+        for d in self.source_folders:
+            full_path = os.path.join(os.path.abspath(d), dirname)
+            if os.path.isdir(full_path):
+                return full_path
+        return ""
+
     def run(self):
-        print(f"Running duplicate removal for: {self.source_folder}")
+        print(f"Running duplicate removal for: {self.source_folders}")
         if self.find_duplicates():
             self.handle_duplicates(testing=True)
             confirm = input("Confirm all duplicates removal (Y/n): ")
@@ -84,16 +91,17 @@ class DuplicateRemover:
 
     def find_duplicates(self):
         file_dict = defaultdict(list)
-        for foldername, subfolders, filenames in os.walk(self.source_folder):
-            if not self.recursive and foldername != self.source_folder: # TODO better way to handle this
-                continue
-            for filename in filenames:
-                file_path = os.path.normpath(os.path.join(foldername, filename))
-                if self.skip_exclusion_check or not self.is_excluded(file_path):
-                    try:
-                        file_dict[self.get_file_hash(file_path)].append(file_path)
-                    except Exception as e: # FileNotFound error is possible
-                        print(f"Error generating hash for \"{file_path}\": {e}")
+        for source_folder in self.source_folders:
+            for foldername, subfolders, filenames in os.walk(source_folder):
+                if not self.recursive and foldername != source_folder: # TODO better way to handle this
+                    continue
+                for filename in filenames:
+                    file_path = os.path.normpath(os.path.join(foldername, filename))
+                    if self.skip_exclusion_check or not self.is_excluded(file_path):
+                        try:
+                            file_dict[self.get_file_hash(file_path)].append(file_path)
+                        except Exception as e: # FileNotFound error is possible
+                            print(f"Error generating hash for \"{file_path}\": {e}")
         self.duplicates = {k: v for k, v in file_dict.items() if len(v) > 1}
         return self.has_duplicates()
 
@@ -137,7 +145,7 @@ class DuplicateRemover:
 
     def select_best_duplicate(self, file_list):
         filtered_list = list(file_list)
-        # only keep files that are in the preferred delete dirs, unless there are none
+        # only keep files that are not in the preferred delete dirs, unless there are none
         if len(self.preferred_delete_dirs) > 0:
             for f in filtered_list[:]:
                 if self.is_preferred_delete_file(f):
@@ -181,9 +189,9 @@ class DuplicateRemover:
         # Sort the list based on the filename of the best duplicate
         sorted_duplicates_list = sorted(duplicates_list, key=lambda x: os.path.basename(x[0]))
         # Create a report
-        report_path = os.path.join(self.source_folder, 'duplicates_report.txt')
+        report_path = os.path.join(self.source_folders[0], 'duplicates_report.txt')
         with open(report_path, 'w') as f:
-            f.write("DUPLICATES REPORT FOR DIR: " + self.source_folder + "\n")
+            f.write(f"DUPLICATES REPORT FOR DIRS: {self.source_folders}\n")
             for best, duplicates in sorted_duplicates_list:
                 f.write(f'Best duplicate: {best}\n')
                 f.write('Duplicates to be removed:\n')
@@ -191,6 +199,7 @@ class DuplicateRemover:
                     if duplicate != best:
                         f.write(f'{duplicate}\n')
                 f.write('\n')
+        print(f'Report saved at {report_path}')
 
 def dups_main(directory_path=".", select_deepest=False, match_dir=False, recursive=True, 
               exclude_dir_string="", preferred_delete_dirs_string=""):

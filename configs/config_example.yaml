@@ -32,7 +32,7 @@ actions:
 - type: "DUPLICATE_REMOVER"
   mappings:
   - name: "Downloads duplicates cleaner"
-    source_dir: "{{USER_HOME}}\\Downloads"
+    source_dirs: ["{{USER_HOME}}\\Downloads"]
     select_for_folder_depth: false
     match_dir: false
     recursive: true
@@ -157,3 +157,19 @@ actions:
       "{{USER_HOME}}\\Downloads"
     ]
     parent_dirs: []
+
+
+- type: "IMAGE_CATEGORIZER"
+  mappings:
+  - name: "Downloads Categorizer"
+    test: false
+    source_dir: "{{USER_HOME}}\\Downloads"
+    file_types: "{{image_file_types}}"
+    categories: [
+      "normal photograph",
+      "art"
+    ]
+    recursive: true
+    exclude_dirs: []
+
+

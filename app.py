@@ -1,0 +1,562 @@
+from copy import deepcopy
+import os
+import signal
+import time
+import traceback
+
+import tkinter as tk
+from tkinter import messagebox, HORIZONTAL, Label, Checkbutton
+from tkinter.constants import W
+import tkinter.font as fnt
+from tkinter.ttk import Button, Entry, Frame, OptionMenu, Progressbar
+from lib.autocomplete_entry import AutocompleteEntry, matches
+from ttkthemes import ThemedTk
+
+from run import main
+from refacdir.batch import BatchArgs
+from refacdir.config import config as _config
+from refacdir.utils import Utils
+
+
+# TODO persistent file ops (see "D:\Scripts\poll_folder.py")
+# TODO filtering of configs
+
+
+def set_attr_if_not_empty(text_box):
+    current_value = text_box.get()
+    if not current_value or current_value == "":
+        return None
+    return
+
+def matches_tag(fieldValue, acListEntry):
+    if fieldValue and "+" in fieldValue:
+        pattern_base = fieldValue.split("+")[-1]
+    elif fieldValue and "," in fieldValue:
+        pattern_base = fieldValue.split(",")[-1]
+    else:
+        pattern_base = fieldValue
+    return matches(pattern_base, acListEntry)
+
+def set_tag(current_value, new_value):
+    if current_value and (current_value.endswith("+") or current_value.endswith(",")):
+        return current_value + new_value
+    else:
+        return new_value
+
+def clear_quotes(s):
+    if len(s) > 0:
+        if s.startswith('"'):
+            s = s[1:]
+        if s.endswith('"'):
+            s = s[:-1]
+        if s.startswith("'"):
+            s = s[1:]
+        if s.endswith("'"):
+            s = s[:-1]
+    return s
+
+class Sidebar(tk.Frame):
+    def __init__(self, master=None, cnf={}, **kw):
+        tk.Frame.__init__(self, master=master, cnf=cnf, **kw)
+
+
+class ProgressListener:
+    def __init__(self, update_func):
+        self.update_func = update_func
+
+    def update(self, context, percent_complete):
+        self.update_func(context, percent_complete)
+
+class JobQueue:
+    def __init__(self, max_size=20):
+        self.max_size = max_size
+        self.pending_jobs = []
+        self.job_running = False
+
+    def has_pending(self):
+        return self.job_running or len(self.pending_jobs) > 0
+
+    def take(self):
+        if len(self.pending_jobs) == 0:
+            return None
+        run_config = self.pending_jobs[0]
+        del self.pending_jobs[0]
+        return run_config
+
+    def add(self, run_config):
+        if len(self.pending_jobs) > self.max_size:
+            raise Exception(f"Reached limit of pending runs: {self.max_size} - wait until current run has completed.")
+        self.pending_jobs.append(run_config)
+        print(f"Added pending job: {run_config}")
+
+
+class App():
+    '''
+    UI for refacdir app.
+    '''
+
+    configs = {}
+
+    IS_DEFAULT_THEME = False
+    GRAY = "gray"
+    DARK_BG = "#26242f"
+
+    def configure_style(self, theme):
+        self.master.set_theme(theme, themebg="black")
+
+    def toggle_theme(self):
+        if App.IS_DEFAULT_THEME:
+            self.configure_style("breeze") # Changes the window to light theme
+            bg_color = App.GRAY
+            fg_color = "black"
+        else:
+            self.configure_style("black") # Changes the window to dark theme
+            bg_color = App.DARK_BG
+            fg_color = "white"
+        App.IS_DEFAULT_THEME = not App.IS_DEFAULT_THEME
+        self.master.config(bg=bg_color)
+        self.sidebar.config(bg=bg_color)
+        self.config.config(bg=bg_color)
+        for name, attr in self.__dict__.items():
+            if isinstance(attr, Label):
+                attr.config(bg=bg_color, fg=fg_color)
+            elif isinstance(attr, Checkbutton):
+                attr.config(bg=bg_color, fg=fg_color, selectcolor=bg_color)
+        self.master.update()
+        self.toast("Theme switched to dark." if App.IS_DEFAULT_THEME else "Theme switched to light.")
+
+    def __init__(self, master):
+        self.master = master
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.progress_bar = None
+        self.job_queue = JobQueue()
+        self.server = self.setup_server()
+
+        BatchArgs.setup_configs(recache=False)
+        App.configs = deepcopy(BatchArgs.configs)
+        self.filtered_configs = deepcopy(BatchArgs.configs)
+        self.filter_text = ""
+
+        # Sidebar
+        self.sidebar = Sidebar(self.master)
+        self.sidebar.columnconfigure(0, weight=1)
+        self.row_counter0 = 0
+        self.sidebar.grid(column=0, row=self.row_counter0)
+        self.label_title = Label(self.sidebar)
+        self.add_label(self.label_title, "Run File Batch Operations", sticky=None)
+
+        self.toggle_theme_btn = None
+        self.add_button("toggle_theme_btn", "Toggle theme", self.toggle_theme)
+
+        self.run_btn = None
+        self.add_button("run_btn", "Run", self.run)
+        self.master.bind("<Shift-R>", self.run)
+
+        self.config_vars = []
+        self.config_checkbuttons = []
+        self.add_config_widgets()
+
+        # self.label_workflows = Label(self.sidebar)
+        # self.add_label(self.label_workflows, "Workflow")
+        # self.workflow = tk.StringVar(master)
+        # self.workflows_choice = OptionMenu(self.sidebar, self.workflow, WorkflowType.SIMPLE_IMAGE_GEN_LORA.name,
+        #                                    *WorkflowType.__members__.keys(), command=self.set_workflow_type)
+        # self.apply_to_grid(self.workflows_choice, sticky=W)
+
+        # self.label_resolutions = Label(self.sidebar)
+        # self.add_label(self.label_resolutions, "Resolutions")
+        # self.resolutions = tk.StringVar()
+        # self.resolutions_box = self.new_entry(self.resolutions)
+        # self.resolutions_box.insert(0, "landscape3,portrait3")
+        # self.resolutions_box.bind("<Return>", self.set_prompt_massage_tags)
+        # self.apply_to_grid(self.resolutions_box, sticky=W)
+
+        # self.label_model_tags = Label(self.sidebar)
+        # self.add_label(self.label_model_tags, "Model Tags")
+        # self.model_tags = tk.StringVar()
+        # model_names = list(map(lambda l: str(l).split('.')[0], Model.CHECKPOINTS))
+        # self.model_tags_box = AutocompleteEntry(model_names,
+        #                                        self.sidebar,
+        #                                        listboxLength=6,
+        #                                        textvariable=self.model_tags,
+        #                                        matchesFunction=matches_tag,
+        #                                        setFunction=set_tag,
+        #                                        width=40, font=fnt.Font(size=8))
+        # self.model_tags_box.bind("<Return>", self.set_prompt_massage_tags_box_from_model_tags)
+        # self.model_tags_box.insert(0, "realvisxlV40_v40Bakedvae")
+        # self.apply_to_grid(self.model_tags_box, sticky=W)
+
+
+        # Prompter Config
+        self.row_counter1 = 0
+        self.config = Sidebar(self.master)
+        self.config.columnconfigure(0, weight=1)
+        self.config.columnconfigure(1, weight=1)
+        self.config.columnconfigure(2, weight=1)
+        self.config.grid(column=1, row=self.row_counter1)
+
+        # self.label_title_config = Label(self.prompter_config)
+        # self.add_label(self.label_title_config, "Prompts Configuration", column=1, sticky=tk.W+tk.E)
+
+        # self.label_prompt_mode = Label(self.prompter_config)
+        # self.add_label(self.label_prompt_mode, "Prompt Mode", column=1)
+        # self.prompt_mode = tk.StringVar(master)
+        # self.prompt_mode_choice = OptionMenu(self.prompter_config, self.prompt_mode, str(PromptMode.SFW), *PromptMode.__members__.keys())
+        # self.apply_to_grid(self.prompt_mode_choice, sticky=W, column=1)
+
+        self.test_var = tk.BooleanVar(value=False)
+        self.test_choice = Checkbutton(self.config, text="Test Mode", variable=self.test_var)
+        self.apply_to_grid(self.test_choice, sticky=W, column=1)
+
+        self.skip_confirm_var = tk.BooleanVar(value=False)
+        self.skip_confirm_choice = Checkbutton(self.config, text="Skip Confirmations", variable=self.skip_confirm_var)
+        self.apply_to_grid(self.skip_confirm_choice, sticky=W, column=1)
+
+        self.only_observers_var = tk.BooleanVar(value=False)
+        self.only_observers_choice = Checkbutton(self.config, text="Only Observers", variable=self.only_observers_var)
+        self.apply_to_grid(self.only_observers_choice, sticky=W, column=1)
+
+        self.master.bind("<Return>", self.do_action)
+        self.master.bind("<Key>", self.filter_configs)
+        self.toggle_theme()
+        self.master.update()
+#        self.model_tags_box.closeListbox()
+
+
+    def on_closing(self):
+        if self.server is not None:
+            try:
+                self.server.stop()
+            except Exception as e:
+                print(f"Error stopping server: {e}")
+        self.master.destroy()
+
+    def setup_server(self):
+#        server = SDRunnerServer(self.server_run_callback)
+#        try:
+#            Utils.start_thread(server.start)
+#            return server
+#        except Exception as e:
+#            print(f"Failed to start server: {e}")
+        return None
+
+    def add_config_widgets(self):
+        for config, will_run in self.filtered_configs.items():
+            var = tk.BooleanVar(value=will_run if will_run == True or will_run is None else False)
+            def toggle_config_handler(event=None, self=self, config=config):
+                if config in self.filtered_configs:
+                    self.filtered_configs[config] = var.get()
+            choice = Checkbutton(self.sidebar, text=config, variable=var, command=toggle_config_handler)
+            choice.config(bg=App.DARK_BG, fg="white", selectcolor=App.DARK_BG)
+            self.config_vars.append(var)
+            self.config_checkbuttons.append(choice)
+            self.apply_to_grid(choice, sticky=W)
+
+    def get_config(self, event=None, config=None):
+        """
+        Have to call this when user is setting a new directory as well, in which case _dir will be None.
+        
+        In this case we will need to add the new directory to the list of valid directories.
+        
+        Also in this case, this function will call itself by calling set_directory(),
+        just this time with the directory set.
+        """
+        config, target_was_valid = RecentDirectoryWindow.get_directory(config, self.starting_target, self.app_actions.toast)
+        if not os.path.isdir(config):
+            self.close_windows()
+            raise Exception("Failed to set target directory to receive marked files.")
+        if target_was_valid and config is not None:
+            if config in RecentDirectories.directories:
+                RecentDirectories.directories.remove(config)
+            RecentDirectories.directories.insert(0, config)
+            return config
+
+        config = os.path.normpath(config)
+        # NOTE don't want to sort here, instead keep the most recent directories at the top
+        if config in RecentDirectories.directories:
+            RecentDirectories.directories.remove(config)
+        RecentDirectories.directories.insert(0, config)
+        self.run_config(config=config)
+
+    def run_config(self, event=None, config=None):
+        config = self.get_config(config=config)
+        if self.filter_text is not None and self.filter_text.strip() != "":
+            print(f"Filtered by string: {self.filter_text}")
+        self.filtered_configs = {config: True}
+        RecentDirectoryWindow.last_set_directory = config
+        self.close_windows()
+
+    def filter_configs(self, event):
+        """
+        Rebuild the filtered configs dict based on the filter string and update the UI.
+        """
+        modifier_key_pressed = (event.state & 0x1) != 0 or (event.state & 0x4) != 0 # Do not filter if modifier key is down
+        if modifier_key_pressed:
+            return
+        filtered_configs_list = list(self.filtered_configs.keys())
+        if len(event.keysym) > 1:
+            # If the key is up/down arrow key, roll the list up/down
+            if event.keysym == "Down" or event.keysym == "Up":
+                if event.keysym == "Down":
+                    filtered_configs_list = filtered_configs_list[1:] + [filtered_configs_list[0]]
+                else:  # keysym == "Up"
+                    filtered_configs_list = [filtered_configs_list[-1]] + filtered_configs_list[:-1]
+                to_delete = []
+                for config in self.filtered_configs:
+                    if config not in filtered_configs_list and config is not None:
+                        to_delete += [config]
+                for config in to_delete:
+                    del self.filtered_configs[config]
+                self.clear_widget_lists()
+                self.add_config_widgets()
+                self.master.update()
+            if event.keysym != "BackSpace":
+                return
+        if event.keysym == "BackSpace":
+            if len(self.filter_text) > 0:
+                self.filter_text = self.filter_text[:-1]
+        elif event.char:
+            self.filter_text += event.char
+        else:
+            return
+        if self.filter_text.strip() == "":
+            if _config.debug:
+                print("Filter unset")
+            # Restore the list of target directories to the full list
+            self.filtered_configs.clear()
+            self.filtered_configs = deepcopy(App.configs)
+        else:
+            temp = []
+            for path in App.configs:
+                basename = os.path.basename(os.path.normpath(path))
+                if basename.lower() == self.filter_text:
+                    temp.append(path)
+            for path in App.configs:
+                basename = os.path.basename(os.path.normpath(path))
+                if not path in temp:
+                    if basename.lower().startswith(self.filter_text):
+                        temp.append(path)
+            for path in App.configs:
+                if not path in temp:
+                    basename = os.path.basename(os.path.normpath(path))
+                    if basename and (f" {self.filter_text}" in basename.lower() or f"_{self.filter_text}" in basename.lower()):
+                        temp.append(path)
+            self.filtered_configs = {}
+            for config_path in temp:
+                self.filtered_configs[config_path]  = App.configs[config_path]
+
+        self.clear_widget_lists()
+        self.add_config_widgets()
+        self.master.update()
+
+
+    def do_action(self, event=None):
+        """
+        The user has requested to run a file operation. Based on the context, figure out what to do.
+
+        If no configs preset or control key pressed, run all files not explicitly set to will_run == False.
+
+        If configs filtered, call set_directory() to set the first directory.
+
+        The idea is the user can filter the configs using keypresses, then press enter to
+        do the action with the first filtered config.
+        """
+#        shift_key_pressed = (event.state & 0x1) != 0
+        control_key_pressed = (event.state & 0x4) != 0
+#        alt_key_pressed = (event.state & 0x20000) != 0
+        if len(self.filtered_configs) == 0:
+            raise Exception("No directories to run")
+        if self.filter_text.strip() == "" or control_key_pressed:
+            self.run()
+        elif len(self.filtered_configs) == 1 or self.filter_text.strip() != "":
+            _dir = self.filtered_configs[0]
+            self.run_config(config=_dir)
+        else:
+            self.run()
+
+
+    def set_workflow_type(self, event=None, workflow_tag=None):
+        pass
+
+    def destroy_progress_bar(self):
+        if self.progress_bar is not None:
+            self.progress_bar.stop()
+            self.progress_bar.grid_forget()
+            self.destroy_grid_element("progress_bar")
+            self.progress_bar = None
+
+    def run(self, event=None):
+        batch_args = BatchArgs()
+        BatchArgs.override_configs(self.filtered_configs)
+        batch_args.test = self.test_var.get()
+        batch_args.skip_confirm = self.skip_confirm_var.get()
+        batch_args.only_observers = self.only_observers_var.get()
+        # args.prompt_mode = PromptMode[self.prompt_mode.get()]
+
+        try:
+            batch_args.validate()
+        except Exception as e:
+            res = self.alert("Confirm Run",
+                str(e) + "\n\nAre you sure you want to proceed?",
+                kind="warning")
+            if res != messagebox.OK:
+                return
+
+        def run_async(args) -> None:
+            self.job_queue.job_running = True
+            self.destroy_progress_bar()
+            self.progress_bar = Progressbar(self.sidebar, orient=HORIZONTAL, length=100, mode='indeterminate')
+            self.apply_to_grid(self.progress_bar)
+            self.progress_bar.start()
+            main(args)
+            self.destroy_progress_bar()
+            self.job_queue.job_running = False
+            next_job_args = self.job_queue.take()
+            if next_job_args:
+                Utils.start_thread(run_async, use_asyncio=False, args=[next_job_args])
+
+        if self.job_queue.has_pending():
+            self.job_queue.add(batch_args)
+        else:
+            Utils.start_thread(run_async, use_asyncio=False, args=[batch_args])
+
+
+    def server_run_callback(self, workflow_type, args):
+        # self.workflow.set(workflow_type.name)
+        # self.set_workflow_type(workflow_type.name)
+        if len(args) > 0:
+            # file = args[0].replace(",", "\\,")
+            # print(file)
+            # if workflow_type == WorkflowType.CONTROLNET or workflow_type == WorkflowType.RENOISER:
+            #     self.controlnet_file.set(file)
+            # elif workflow_type == WorkflowType.IP_ADAPTER:
+            #     self.ipadapter_file.set(file)
+            # else:
+            #     print(f"Unhandled workflow type for server connection: {workflow_type}")
+            self.master.update()
+        self.run()
+        return {} # Empty error object for confirmation
+
+
+    def clear_widget_lists(self):
+        for btn in self.config_checkbuttons:
+            btn.destroy()
+            self.row_counter0 -= 1
+        self.config_vars = []
+        self.config_checkbuttons = []
+
+    def alert(self, title, message, kind="info", hidemain=True) -> None:
+        if kind not in ("error", "warning", "info"):
+            raise ValueError("Unsupported alert kind.")
+
+        print(f"Alert - Title: \"{title}\" Message: {message}")
+        show_method = getattr(messagebox, "show{}".format(kind))
+        return show_method(title, message)
+
+    def toast(self, message):
+        print("Toast message: " + message)
+
+        # Set the position of the toast on the screen (top right)
+        width = 300
+        height = 100
+        x = self.master.winfo_screenwidth() - width
+        y = 0
+
+        # Create the toast on the top level
+        toast = tk.Toplevel(self.master, bg=App.DARK_BG)
+        toast.geometry(f'{width}x{height}+{int(x)}+{int(y)}')
+        self.container = tk.Frame(toast, bg=App.DARK_BG)
+        self.container.pack(fill=tk.BOTH, expand=tk.YES)
+        label = tk.Label(
+            self.container,
+            text=message,
+            anchor=tk.NW,
+            bg=App.DARK_BG,
+            fg='white',
+            font=('Helvetica', 12)
+        )
+        label.grid(row=1, column=1, sticky="NSEW", padx=10, pady=(0, 5))
+        
+        # Make the window invisible and bring it to front
+        toast.attributes('-topmost', True)
+#        toast.withdraw()
+
+        # Start a new thread that will destroy the window after a few seconds
+        def self_destruct_after(time_in_seconds):
+            time.sleep(time_in_seconds)
+            label.destroy()
+            toast.destroy()
+        Utils.start_thread(self_destruct_after, use_asyncio=False, args=[2])
+
+    def apply_to_grid(self, component, sticky=None, pady=0, interior_column=0, column=0, increment_row_counter=True, columnspan=None):
+        row = self.row_counter0 if column == 0 else self.row_counter1
+        if sticky is None:
+            if columnspan is None:
+                component.grid(column=interior_column, row=row, pady=pady)
+            else:
+                component.grid(column=interior_column, row=row, pady=pady, columnspan=columnspan)
+        else:
+            if columnspan is None:
+                component.grid(column=interior_column, row=row, sticky=sticky, pady=pady)
+            else:
+                component.grid(column=interior_column, row=row, sticky=sticky, pady=pady, columnspan=columnspan)
+        if increment_row_counter:
+            if column == 0:
+                self.row_counter0 += 1
+            else:
+                self.row_counter1 += 1
+
+    def add_label(self, label_ref, text, sticky=W, pady=0, column=0, columnspan=None):
+        label_ref['text'] = text
+        self.apply_to_grid(label_ref, sticky=sticky, pady=pady, column=column, columnspan=columnspan)
+
+    def add_button(self, button_ref_name, text, command):
+        if getattr(self, button_ref_name) is None:
+            button = Button(master=self.sidebar, text=text, command=command)
+            setattr(self, button_ref_name, button)
+            button
+            self.apply_to_grid(button)
+
+    def new_entry(self, text_variable, text="", **kw):
+        return Entry(self.sidebar, text=text, textvariable=text_variable, width=40, font=fnt.Font(size=8), **kw)
+
+    def destroy_grid_element(self, element_ref_name):
+        element = getattr(self, element_ref_name)
+        if element is not None:
+            element.destroy()
+            setattr(self, element_ref_name, None)
+            self.row_counter0 -= 1
+
+
+if __name__ == "__main__":
+    try:
+        assets = os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets")
+        root = ThemedTk(theme="black", themebg="black")
+        root.title(" RefacDir ")
+        #root.iconbitmap(bitmap=r"icon.ico")
+        # icon = PhotoImage(file=os.path.join(assets, "icon.png"))
+        # root.iconphoto(False, icon)
+        root.geometry("600x400")
+        # root.attributes('-fullscreen', True)
+        root.resizable(1, 1)
+        root.columnconfigure(0, weight=1)
+        root.columnconfigure(1, weight=1)
+        root.rowconfigure(0, weight=1)
+
+        # Graceful shutdown handler
+        def graceful_shutdown(signum, frame):
+            print("Caught signal, shutting down gracefully...")
+            app.on_closing()
+            exit(0)
+
+        # Register the signal handlers for graceful shutdown
+        signal.signal(signal.SIGINT, graceful_shutdown)
+        signal.signal(signal.SIGTERM, graceful_shutdown)
+
+        app = App(root)
+        root.mainloop()
+        exit()
+    except KeyboardInterrupt:
+        pass
+    except Exception:
+        traceback.print_exc()

@@ -125,13 +125,14 @@ class FilenameMappingDefinition:
 
     @staticmethod
     def add_named_functions(funcs_list):
-        for func in funcs_list:
-            function_call = StringFunctionCall(
-                func["name"],
-                StringFunction[func["type"]],
-                func["args"],
-            )
-            FilenameMappingDefinition.add_named_function(function_call=function_call)
+        if type(funcs_list) == list:
+            for func in funcs_list:
+                function_call = StringFunctionCall(
+                    func["name"],
+                    StringFunction[func["type"]],
+                    func["args"],
+                )
+                FilenameMappingDefinition.add_named_function(function_call=function_call)
 
     @staticmethod
     def compiled(pattern, funcs=[]):
@@ -175,12 +176,13 @@ class FiletypesDefinition:
 
     @staticmethod
     def add_named_definitions(definitions_list):
-        for defn in definitions_list:
-            definition = FiletypesDefinition(
-                defn["name"],
-                extensions_list=defn["extensions"],
-            )
-            FiletypesDefinition.add_named_definition(definition=definition)
+        if type(definitions_list) == list:
+            for defn in definitions_list:
+                definition = FiletypesDefinition(
+                    defn["name"],
+                    extensions_list=defn["extensions"],
+                )
+                FiletypesDefinition.add_named_definition(definition=definition)
 
     @staticmethod
     def compile(name_string):

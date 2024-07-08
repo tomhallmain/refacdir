@@ -7,20 +7,63 @@ from refacdir.backup.backup_manager import BackupManager
 from refacdir.backup.backup_mapping import BackupMode, BackupMapping
 
 from refacdir.batch_renamer import BatchRenamer, Location, DirectoryFlattener
+from refacdir.config import Config
 from refacdir.directory_observer import DirectoryObserver, media_file_types
 from refacdir.duplicate_remover import DuplicateRemover
+from refacdir.image_categorizer import ImageCategorizer
 from refacdir.utils import Utils
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 
 
 class BatchArgs:
-    def __init__(self):
+    configs = {}
+
+    def __init__(self, recache_configs=False):
         self.verbose = False
         self.test = False
         self.skip_confirm = False
-        self.configs = sorted(glob("configs/*.yaml", recursive=False))
         self.only_observers = False
+        if len(self.configs) == 0 or recache_configs:
+            BatchArgs.setup_configs()
 
+    def validate(self):
+        if len(BatchArgs.configs) == 0:
+            raise Exception("No config files found!")
+        return True
+
+    @staticmethod
+    def override_configs(filtered_configs):
+        BatchArgs.configs = filtered_configs
+
+    @staticmethod
+    def setup_configs(recache=True):
+        if not recache and len(BatchArgs.configs) > 0:
+            return
+
+        master_config_file = os.path.join(Config.CONFIGS_DIR_LOC, "master_config.yaml")
+        if not os.path.exists(master_config_file):
+            master_config_file = os.path.join(Config.CONFIGS_DIR_LOC, "master_config_example.yaml")
+            if not os.path.exists(master_config_file):
+                print("No master config file found, parsing config list.")
+                configs = sorted(glob("configs/*.yaml", recursive=False))
+                for config in configs:
+                    BatchArgs.configs[config] = None
+                return
+            else:
+                print("master_config.yaml not found, using master_config_example.yaml instead.")
+
+        try:
+            master_config_yaml = yaml.load(open(master_config_file), Loader=yaml.FullLoader)
+        except yaml.YAMLError as e:
+            print(f"Error loading {master_config_file}: {e}")
+            configs = sorted(glob("configs/*.yaml", recursive=False))
+            for config in configs:
+                BatchArgs.configs[config] = None
+            return
+
+        for config in master_config_yaml["configs"]:
+            print(f"Config: {config}")
+            BatchArgs.configs["configs/" + config["config_file"]] = config["will_run"]
 
 class ActionType(Enum):
     # NOTE action type values must not be changed without also updating the func names of BatchJob
@@ -29,6 +72,7 @@ class ActionType(Enum):
     DUPLICATE_REMOVER = 'DUPLICATE_REMOVER'
     DIRECTORY_OBSERVER = 'DIRECTORY_OBSERVER'
     DIRECTORY_FLATTENER = 'DIRECTORY_FLATTENER'
+    IMAGE_CATEGORIZER = 'IMAGE_CATEGORIZER'
 
     def get_varname(self):
         return self.value.lower()
@@ -41,7 +85,7 @@ class BatchJob:
     def __init__(self, args=BatchArgs()):
         self.cwd = os.getcwd()
         self.args = args
-        self.configurations = args.configs
+        self.configurations = BatchArgs.configs
         self.counts_map = {}
         self.failure_counts_map = {}
         for action_type in ActionType.__members__.values():
@@ -60,12 +104,14 @@ class BatchJob:
         if temp_full_path_example:
             if len(self.configurations) == 1:
                 raise Exception("Excluded example config file! Please change name of config_example.yaml to ensure it is included.")
-            self.configurations.remove(temp_full_path_example)
+            del self.configurations[temp_full_path_example]
 
 
     def run(self):
         try:
-            for config in self.configurations:
+            for config, will_run in self.configurations.items():
+                if will_run == False:
+                    continue
                 os.chdir(self.cwd)
                 self.run_config_file(config)
         except KeyboardInterrupt:
@@ -187,12 +233,12 @@ class BatchJob:
 
     def construct_duplicate_remover(self, yaml_dict={}):
         name = yaml_dict["name"]
-        source_dir = Location.construct(yaml_dict["source_dir"]).root
+        source_dirs = [Location.construct(location).root for location in yaml_dict["source_dirs"]]
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
         select_for_folder_depth = Utils.get_from_dict(yaml_dict, "select_for_folder_depth", None)
         exclude_dirs = Utils.get_from_dict(yaml_dict, "exclude_dirs", [])
         preferred_delete_dirs = Utils.get_from_dict(yaml_dict, "preferred_delete_dirs", [])
-        return DuplicateRemover(name, source_dir, select_for_folder_depth=select_for_folder_depth,
+        return DuplicateRemover(name, source_dirs, select_for_folder_depth=select_for_folder_depth,
                                 recursive=recursive, exclude_dirs=exclude_dirs, preferred_delete_dirs=preferred_delete_dirs)
 
     def construct_batch_renamer(self, yaml_dict={}):
@@ -217,8 +263,7 @@ class BatchJob:
         search_patterns = Utils.get_from_dict(yaml_dict, "search_patterns", [])
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
-        renamer = DirectoryFlattener(name, location, search_patterns, test=test, skip_confirm=skip_confirm)
-        return renamer
+        return DirectoryFlattener(name, location, search_patterns, test=test, skip_confirm=skip_confirm)
 
     def construct_backup(self, yaml_dict={}):
         name = yaml_dict["name"]
@@ -253,6 +298,20 @@ class BatchJob:
         exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "exclude_dirs", [])]
         file_types = FiletypesDefinition.get_definitions(Utils.get_from_dict(yaml_dict, "file_types", media_file_types))
         return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, parent_dirs=parent_dirs, exclude_dirs=exclude_dirs, file_types=file_types)
+
+    def construct_image_categorizer(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        source_dir = Location.construct(yaml_dict["source_dir"]).root
+        file_types = FiletypesDefinition.get_definitions(Utils.get_from_dict(yaml_dict, "file_types", [".png", ".jpg", ".jpeg"]))
+        exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "exclude_dirs", [])]
+        categories = Utils.get_from_dict(yaml_dict, "categories", [])
+        recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
+        return ImageCategorizer(name, test=test, source_dir=source_dir, exclude_dirs=exclude_dirs,
+                                file_types=file_types, categories=categories, skip_confirm=skip_confirm,
+                                recursive=recursive)
+
 
 
 

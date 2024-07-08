@@ -17,8 +17,14 @@ Available batch actions include:
   - `MIRROR`
   - `MIRROR_DUPLICATES`
 - Observe directory state by counts of file types
+- Image categorization using CLIP (requires [this project](https://github.com/tomhallmain/simple_image_compare))
 
 Define custom named functions and sets of file types in the config YAML `filename_mapping_functions` and `filetype_definitions` headers to be referenced in the other parts of the config. Similarly, define custom functions in `custom_file_name_search_funcs.py` and add the function name refs to the config YAML to add custom search logic for gathering files to rename or move.
 
 Once all configurations are defined, run `run.py` to perform the actions. The actions will be run in the order they are listed in the config file. Each configuration file will create a batch job which will run in sequence sorted by the name of the config file.
+
+# UI
+
+Start the UI by running `app.py`.
+
 
