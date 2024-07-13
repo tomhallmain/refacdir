@@ -10,6 +10,8 @@ class Config:
         self.simple_image_compare_loc = None
         self.print_settings = False
         self.debug = False
+        self.server_port = 6001
+        self.server_password = "<PASSWORD>"
 
         dict_set = False
         configs =  [ f.path for f in os.scandir(Config.CONFIGS_DIR_LOC) if f.is_file() and f.path.endswith(".json") ]

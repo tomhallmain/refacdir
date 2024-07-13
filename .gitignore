@@ -1,6 +1,7 @@
 __pycache__/
 refacdir/backup/backup_failures.json
 configs/*
+!configs/config_example.json
 !configs/config_example.yaml
 temp.py
 do_refacdir.bat

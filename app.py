@@ -13,8 +13,10 @@ from lib.autocomplete_entry import AutocompleteEntry, matches
 from ttkthemes import ThemedTk
 
 from run import main
+from extensions.refacdir_server import RefacDirServer
 from refacdir.batch import BatchArgs
 from refacdir.config import config as _config
+from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
 from refacdir.utils import Utils
 
 
@@ -131,6 +133,7 @@ class App():
         self.progress_bar = None
         self.job_queue = JobQueue()
         self.server = self.setup_server()
+        self.recurring_action_config = RecurringActionConfig()
 
         BatchArgs.setup_configs(recache=False)
         App.configs = deepcopy(BatchArgs.configs)
@@ -204,6 +207,10 @@ class App():
         # self.prompt_mode_choice = OptionMenu(self.prompter_config, self.prompt_mode, str(PromptMode.SFW), *PromptMode.__members__.keys())
         # self.apply_to_grid(self.prompt_mode_choice, sticky=W, column=1)
 
+        self.recur_var = tk.BooleanVar(value=False)
+        self.recur_choice = Checkbutton(self.config, text="Recur Selected Actions", variable=self.recur_var, command=self.set_recurring_action)
+        self.apply_to_grid(self.recur_choice, sticky=W, column=1)
+
         self.test_var = tk.BooleanVar(value=False)
         self.test_choice = Checkbutton(self.config, text="Test Mode", variable=self.test_var)
         self.apply_to_grid(self.test_choice, sticky=W, column=1)
@@ -222,7 +229,6 @@ class App():
         self.master.update()
 #        self.model_tags_box.closeListbox()
 
-
     def on_closing(self):
         if self.server is not None:
             try:
@@ -232,12 +238,12 @@ class App():
         self.master.destroy()
 
     def setup_server(self):
-#        server = SDRunnerServer(self.server_run_callback)
-#        try:
-#            Utils.start_thread(server.start)
-#            return server
-#        except Exception as e:
-#            print(f"Failed to start server: {e}")
+        server = RefacDirServer(self.server_run_callback)
+        try:
+            Utils.start_thread(server.start)
+            return server
+        except Exception as e:
+            print(f"Failed to start server: {e}")
         return None
 
     def add_config_widgets(self):
@@ -421,18 +427,21 @@ class App():
             Utils.start_thread(run_async, use_asyncio=False, args=[batch_args])
 
 
-    def server_run_callback(self, workflow_type, args):
-        # self.workflow.set(workflow_type.name)
-        # self.set_workflow_type(workflow_type.name)
+    def set_recurring_action(self, event=None):
+        self.recurring_action_config.set(self.recur_var.get())
+        if self.recurring_action_config.is_running:
+            self.skip_confirm_var.set(True)
+            start_thread(self.run_recurring_actions)
+
+
+    @periodic("recurring_action_config")
+    async def run_recurring_actions(self, **kwargs):
+        self.run()
+
+
+    def server_run_callback(self, args):
         if len(args) > 0:
-            # file = args[0].replace(",", "\\,")
-            # print(file)
-            # if workflow_type == WorkflowType.CONTROLNET or workflow_type == WorkflowType.RENOISER:
-            #     self.controlnet_file.set(file)
-            # elif workflow_type == WorkflowType.IP_ADAPTER:
-            #     self.ipadapter_file.set(file)
-            # else:
-            #     print(f"Unhandled workflow type for server connection: {workflow_type}")
+            print(args)
             self.master.update()
         self.run()
         return {} # Empty error object for confirmation

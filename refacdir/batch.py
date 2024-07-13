@@ -64,6 +64,7 @@ class BatchArgs:
         for config in master_config_yaml["configs"]:
             print(f"Config: {config}")
             BatchArgs.configs["configs/" + config["config_file"]] = config["will_run"]
+        print(BatchArgs.configs)
 
 class ActionType(Enum):
     # NOTE action type values must not be changed without also updating the func names of BatchJob
@@ -82,6 +83,8 @@ class ActionType(Enum):
 
 
 class BatchJob:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
     def __init__(self, args=BatchArgs()):
         self.cwd = os.getcwd()
         self.args = args
@@ -119,7 +122,7 @@ class BatchJob:
             self.cancelled = True
 
     def run_config_file(self, config):
-        with open(config, 'r') as f:
+        with open(os.path.join(BatchJob.BASE_DIR, config), 'r') as f:
             try:
                 config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
             except yaml.YAMLError as e:
