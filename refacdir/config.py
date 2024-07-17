@@ -7,6 +7,8 @@ class Config:
 
     def __init__(self):
         self.dict = {}
+        self.foreground_color = None
+        self.background_color = None
         self.simple_image_compare_loc = None
         self.print_settings = False
         self.debug = False
@@ -33,6 +35,13 @@ class Config:
         except Exception as e:
             print(e)
             print("Unable to load config. Ensure config.json file is located in the configs directory of simple-image-comare.")
+
+        self.set_values(str,
+                        "foreground_color",
+                        "background_color",
+                        "server_password")
+        self.set_values(int, "server_port")
+        self.set_values(bool, "debug")
 
         if dict_set:
             self.simple_image_compare_loc = self.validate_and_set_directory(key="simple_image_compare_loc")

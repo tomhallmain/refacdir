@@ -64,7 +64,6 @@ class BatchArgs:
         for config in master_config_yaml["configs"]:
             print(f"Config: {config}")
             BatchArgs.configs["configs/" + config["config_file"]] = config["will_run"]
-        print(BatchArgs.configs)
 
 class ActionType(Enum):
     # NOTE action type values must not be changed without also updating the func names of BatchJob

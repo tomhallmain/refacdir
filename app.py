@@ -101,7 +101,8 @@ class App():
 
     IS_DEFAULT_THEME = False
     GRAY = "gray"
-    DARK_BG = "#26242f"
+    DARK_BG = _config.background_color if _config.background_color and _config.background_color != "" else "#26242f"
+    DARK_FG = _config.foreground_color if _config.foreground_color and _config.foreground_color != "" else "#white"
 
     def configure_style(self, theme):
         self.master.set_theme(theme, themebg="black")
@@ -114,7 +115,7 @@ class App():
         else:
             self.configure_style("black") # Changes the window to dark theme
             bg_color = App.DARK_BG
-            fg_color = "white"
+            fg_color = App.DARK_FG
         App.IS_DEFAULT_THEME = not App.IS_DEFAULT_THEME
         self.master.config(bg=bg_color)
         self.sidebar.config(bg=bg_color)

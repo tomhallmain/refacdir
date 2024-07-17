@@ -1,5 +1,8 @@
 {
+    "foreground_color": "white",
+    "background_color": "#3E0B05",
     "simple_image_compare_loc": "{{USER_HOME}}\\simple_image_compare",
     "server_port": 6001,
-    "server_password": "<PASSWORD>"
+    "server_password": "<PASSWORD>",
+    "debug": false
 }
