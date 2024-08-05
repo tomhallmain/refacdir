@@ -1,3 +1,4 @@
+from refacdir.utils import Utils
 from collections import defaultdict
 import datetime
 from enum import Enum
@@ -11,6 +12,7 @@ try:
 except Exception:
     print("Could not import trashing utility - all deleted files will be deleted instantly")
 
+
 def remove_file(path):
     try:
         send2trash(os.path.normpath(path))
@@ -20,13 +22,17 @@ def remove_file(path):
 #        os.remove(path)
 
 
-from refacdir.utils import Utils
-
 def exception_as_dict(ex):
     return dict(type=ex.__class__.__name__,
                 errno=ex.errno, message=ex.message,
                 strerror=exception_as_dict(ex.strerror)
-                if isinstance(ex.strerror,Exception) else ex.strerror)
+                if isinstance(ex.strerror, Exception) else ex.strerror)
+
+
+class FileMode(Enum):
+    FILES_AND_DIRS = 0
+    DIRS_ONLY = 1
+
 
 class BackupMode(Enum):
     PUSH_AND_REMOVE = 0
@@ -35,12 +41,14 @@ class BackupMode(Enum):
     MIRROR = 3
     MIRROR_DUPLICATES = 4
 
+
 class FailureType(str, Enum):
     MOVE_FILE = 1
     REMOVE_SOURCE_FILE = 2
     REMOVE_SOURCE_FILE_TARGET_NOEXIST = 3
     REMOVE_STALE_FILE = 4
     REMOVE_STALE_DIRECTORY = 5
+
 
 class BackupSourceData:
     FILEPATH = "backup_mapping_data.pkl"
@@ -70,7 +78,8 @@ class BackupSourceData:
 class BackupMapping:
 
     def __init__(self, name="BackupMapping", source_dir=None, target_dir=None, file_types=[],
-                 mode=BackupMode.PUSH, exclude_dirs=[], exclude_removal_dirs=[], will_run=True):
+                 mode=BackupMode.PUSH, file_mode=FileMode.FILES_AND_DIRS,
+                 exclude_dirs=[], exclude_removal_dirs=[], will_run=True):
         self.name = name
         if source_dir is None or target_dir is None:
             raise ValueError("Source and target directories must be specified")
@@ -86,6 +95,7 @@ class BackupMapping:
         self._target_dirs = []
         self.modified_target_files = []
         self.mode = mode
+        self.file_mode = file_mode
         self.failures = []
         self.will_run = will_run
 
@@ -103,7 +113,8 @@ class BackupMapping:
             sha256 = hashlib.sha256()
             while True:
                 data = f.read(65536)
-                if not data: break
+                if not data:
+                    break
                 sha256.update(f.read())
         return sha256.hexdigest()
 
@@ -122,16 +133,17 @@ class BackupMapping:
                 if full_path not in self.exclude_dirs:
                     relative_path = full_path.replace(os.path.join(_dir, ""), "")
                     get_dirs.append(relative_path)
-            for name in files:
-                if self.allows_all_file_types or self._file_type_match(name):
-                    filepath = os.path.join(root, name)
-                    if is_target:
-                        hash_dict[filepath] = self._calculate_hash(filepath)
-                    else:
-                        _hash = source_hash_dict[filepath] if filepath in source_hash_dict else self._calculate_hash(filepath)
-                        filepaths = hash_dict[_hash]
-                        if not filepath in filepaths:
-                            filepaths.append(filepath)
+            if self.file_mode == FileMode.FILES_AND_DIRS:
+                for name in files:
+                    if self.allows_all_file_types or self._file_type_match(name):
+                        filepath = os.path.join(root, name)
+                        if is_target:
+                            hash_dict[filepath] = self._calculate_hash(filepath)
+                        else:
+                            _hash = source_hash_dict[filepath] if filepath in source_hash_dict else self._calculate_hash(filepath)
+                            filepaths = hash_dict[_hash]
+                            if filepath not in filepaths:
+                                filepaths.append(filepath)
 
     def setup(self, overwrite=False, warn_duplicates=False):
         self._source_data = BackupSourceData.load(self.source_dir, overwrite=overwrite)
@@ -140,8 +152,8 @@ class BackupMapping:
             for hash, files in self._source_data.hash_dict.items():
                 if len(files) > 1:
                     print(f"Duplicate: {str(files)}")
-        self._build_hash_dict(self.target_dir, self._target_hash_dict, get_dirs=self._target_dirs, is_target=True)
-
+        self._build_hash_dict(self.target_dir, self._target_hash_dict,
+                              get_dirs=self._target_dirs, is_target=True)
 
     def _build_target_path(self, source_filepath):
         relative_path = source_filepath.replace(os.path.join(self.source_dir, ""), "")
@@ -154,7 +166,7 @@ class BackupMapping:
     def _create_dirs(self, target_path, test=True):
         parent = os.path.dirname(target_path)
         if parent != "" and not os.path.exists(parent):
-            print(f"Creating direc: {parent}")
+            print(f"Creating directory: {parent}")
             if not test:
                 os.makedirs(parent)
 
@@ -181,13 +193,16 @@ class BackupMapping:
                 move_func(source_path, target_path)
                 self.modified_target_files.append(target_path)
         except Exception as e:
-            self.failures.append([FailureType.MOVE_FILE, exception_as_dict(e), target_path, source_path])
+            self.failures.append(
+                [FailureType.MOVE_FILE, exception_as_dict(e), target_path, source_path])
 
     def _is_file_excluded(self, filepath):
+        if self.file_mode == FileMode.DIRS_ONLY and not os.path.isdir(filepath):
+            return True
         for _dir in self.exclude_dirs:
             if filepath.startswith(_dir):
                 return True
-        return filepath in self.exclude_dirs # could be a directory
+        return filepath in self.exclude_dirs  # could be a directory
 
     def _is_file_removal_excluded(self, filepath):
         for _dir in self.exclude_removal_dirs:
@@ -200,14 +215,16 @@ class BackupMapping:
             return
         if not os.path.exists(target_path):
             print(f"Could not remove source file {source_path} because expected target file {target_path} was not found!!!")
-            self.failures.append([FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST, "Backup file not found", target_path, source_path])
+            self.failures.append([FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST,
+                                 "Backup file not found", target_path, source_path])
             return
         print(f"Removing file already backed up: {source_path}")
         if not test:
             try:
                 remove_file(source_path)
             except Exception as e:
-                self.failures.append([FailureType.REMOVE_SOURCE_FILE, exception_as_dict(e), target_path, source_path])
+                self.failures.append(
+                    [FailureType.REMOVE_SOURCE_FILE, exception_as_dict(e), target_path, source_path])
 
     def _has_duplicates_in_target(self, _hash):
         all_hashes = list(self._target_hash_dict.values())[:]
@@ -215,7 +232,7 @@ class BackupMapping:
         return _hash in all_hashes
 
     def _ensure_files(self, source_hash, source_files, move_func=Utils.move, test=True):
-        if not source_hash in self._target_hash_dict.values():
+        if source_hash not in self._target_hash_dict.values():
             for source_path in source_files:
                 print("Hash not found")
                 self._move_file(source_path, move_func=move_func, test=test)
@@ -230,7 +247,7 @@ class BackupMapping:
                     else:
                         found_hash = False
                         for fp, _hash in self._target_hash_dict.items():
-                            if _hash == source_hash and not fp in self.modified_target_files and os.path.exists(fp):
+                            if _hash == source_hash and fp not in self.modified_target_files and os.path.exists(fp):
                                 self._move_file(source_path, external_source=fp, move_func=move_func, test=test)
                                 if move_func == Utils.move:
                                     # Need to remove file in source also here because we did not remove it using shutil due to modified call
@@ -260,7 +277,8 @@ class BackupMapping:
 
     def mirror(self, test=True):
         self.push(move_func=Utils.copy, test=test)
-        confirm = input("Please confirm files removal from external directory - they should be in trash folder if there is a major issue (y/n):")
+        confirm = input(
+            "Please confirm files removal from external directory - they should be in trash folder if there is a major issue (y/n):")
         if confirm.lower() != "y":
             print("No \"stale\" files or directories to be removed.")
             return
@@ -275,10 +293,12 @@ class BackupMapping:
                     if not test:
                         remove_file(target_file)
                 except Exception as e:
-                    self.failures.append([FailureType.REMOVE_STALE_FILE, exception_as_dict(e), target_file, "Could not remove stale file"])
+                    self.failures.append([FailureType.REMOVE_STALE_FILE, exception_as_dict(
+                        e), target_file, "Could not remove stale file"])
         # Remove stale directories to ensure parity
         print(f"REMOVING OLD EXTERNAL DIRECTORIES FROM {self.target_dir} TO ENSURE PARITY")
-        old_external_dirs = list(set(self._target_dirs) - set(self._source_dirs))
+        old_external_dirs = list(
+            set(self._target_dirs) - set(self._source_dirs))
         for directory in old_external_dirs:
             stale_dirpath = os.path.join(self.target_dir, directory)
             if self._is_file_excluded(stale_dirpath) or self._is_file_removal_excluded(stale_dirpath):
@@ -288,14 +308,16 @@ class BackupMapping:
                 if not test:
                     remove_file(stale_dirpath)
             except Exception as e:
-                self.failures.append([FailureType.REMOVE_STALE_DIRECTORY, exception_as_dict(e), stale_dirpath, "Could not remove stale directory"])
+                self.failures.append([FailureType.REMOVE_STALE_DIRECTORY, exception_as_dict(
+                    e), stale_dirpath, "Could not remove stale directory"])
 
     def backup(self, test=True):
         if self.is_push_mode():
             move_func = Utils.move if self.mode == BackupMode.PUSH_AND_REMOVE else Utils.copy
             self.push(move_func=move_func, test=test)
         elif self.is_mirror_mode():
-            self._source_data.save() # The source data will only matter if we are not removing source files.
+            # The source data will only matter if we are not removing source files.
+            self._source_data.save()
             self.mirror(test=test)
 
     def report_failures(self):

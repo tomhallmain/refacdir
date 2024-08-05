@@ -16,6 +16,7 @@ Available batch actions include:
   - `PUSH_DUPLICATES`
   - `MIRROR`
   - `MIRROR_DUPLICATES`
+  - `FILES_AND_DIRS` or `DIRS_ONLY` (both exclusive of the other modes)
 - Observe directory state by counts of file types
 - Image categorization using CLIP (requires [this project](https://github.com/tomhallmain/simple_image_compare))
 

@@ -126,6 +126,7 @@ actions:
       source_dir: "{{USER_HOME}}\\stable-diffusion-webui\\log\\images"
       target_dir: "D:\\stable-diffusion-webui\\log\\images"
       mode: "PUSH_AND_REMOVE"
+      file_mode: "FILES_AND_DIRS"
       will_run: false
       file_types: "{{visual_media_file_types}}"
       exclude_dirs: [
@@ -138,6 +139,20 @@ actions:
       source_dir: "{{USER_HOME}}\\img"
       target_dir: "D:\\img"
       mode: "MIRROR"
+      file_mode: "FILES_AND_DIRS"
+      will_run: true
+      file_types: "{{visual_media_file_types}}"
+      exclude_dirs: [
+      ]
+      exclude_removal_dirs: [
+      ]
+
+
+    - name: "Directories Mirror"
+      source_dir: "{{USER_HOME}}\\source_directory_structure"
+      target_dir: "D:\\target_directory_structure"
+      mode: "MIRROR"
+      file_mode: "DIRS_ONLY"
       will_run: true
       file_types: "{{visual_media_file_types}}"
       exclude_dirs: [
@@ -171,5 +186,3 @@ actions:
     ]
     recursive: true
     exclude_dirs: []
-
-
