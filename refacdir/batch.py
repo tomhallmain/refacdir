@@ -4,7 +4,7 @@ import os
 import yaml
 
 from refacdir.backup.backup_manager import BackupManager
-from refacdir.backup.backup_mapping import BackupMode, BackupMapping
+from refacdir.backup.backup_mapping import BackupMode, FileMode, HashMode, BackupMapping
 
 from refacdir.batch_renamer import BatchRenamer, Location, DirectoryFlattener
 from refacdir.config import Config
@@ -285,9 +285,18 @@ class BatchJob:
                 mode = BackupMode[mapping["mode"]]
             else:
                 mode = BackupMode.PUSH
+            if "file_mode" in mapping:
+                file_mode = FileMode[mapping["file_mode"]]
+            else:
+                file_mode = FileMode.FILES_AND_DIRS
+            if "hash_mode" in mapping:
+                hash_mode = HashMode[mapping["hash_mode"]]
+            else:
+                hash_mode = HashMode.SHA256
             exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(mapping, "exclude_dirs", [])]
             exclude_removal_dirs = [Location.construct(location).root for location in Utils.get_from_dict(mapping, "exclude_removal_dirs", [])]
-            mappings.append(BackupMapping(name=name, source_dir=source_dir, target_dir=target_dir, file_types=file_types, mode=mode,
+            mappings.append(BackupMapping(name=name, source_dir=source_dir, target_dir=target_dir, file_types=file_types,
+                                          mode=mode, file_mode=file_mode, hash_mode=hash_mode,
                                           exclude_dirs=exclude_dirs, exclude_removal_dirs=exclude_removal_dirs, will_run=will_run))
 
         return BackupManager(name, mappings=mappings, test=test, overwrite=overwrite, warn_duplicates=warn_duplicates, skip_confirm=skip_confirm)

@@ -33,6 +33,10 @@ class FileMode(Enum):
     FILES_AND_DIRS = 0
     DIRS_ONLY = 1
 
+class HashMode(Enum):
+    FILENAME = 0
+    FILENAME_AND_PARENT = 1
+    SHA256 = 2
 
 class BackupMode(Enum):
     PUSH_AND_REMOVE = 0
@@ -78,7 +82,7 @@ class BackupSourceData:
 class BackupMapping:
 
     def __init__(self, name="BackupMapping", source_dir=None, target_dir=None, file_types=[],
-                 mode=BackupMode.PUSH, file_mode=FileMode.FILES_AND_DIRS,
+                 mode=BackupMode.PUSH, file_mode=FileMode.FILES_AND_DIRS, hash_mode=HashMode.SHA256,
                  exclude_dirs=[], exclude_removal_dirs=[], will_run=True):
         self.name = name
         if source_dir is None or target_dir is None:
@@ -96,6 +100,7 @@ class BackupMapping:
         self.modified_target_files = []
         self.mode = mode
         self.file_mode = file_mode
+        self.hash_mode = hash_mode
         self.failures = []
         self.will_run = will_run
 
@@ -109,6 +114,11 @@ class BackupMapping:
         return False
 
     def _calculate_hash(self, filepath):
+        if self.hash_mode == HashMode.FILENAME:
+            return str(os.path.basename(filepath))
+        elif self.hash_mode == HashMode.FILENAME_AND_PARENT:
+            parent_dir = os.path.basename(os.path.dirname(filepath))
+            return str(os.path.join(parent_dir, os.path.basename(filepath)))
         with open(filepath, 'rb') as f:
             sha256 = hashlib.sha256()
             while True:

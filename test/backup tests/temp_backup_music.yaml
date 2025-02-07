@@ -1,0 +1,48 @@
+
+will_run: true
+
+filename_mapping_functions:
+
+filetype_definitions:
+
+actions:
+
+- type: "BACKUP"
+  mappings:
+
+  - name: "Test Backups"
+    warn_duplicates: false
+    overwrite: false
+    test: false
+    skip_confirm: true
+    backup_mappings:
+
+    - name: "Test Backup Mirror"
+      source_dir: "{HOME}\\refacdir\\test\\backup tests\\a"
+      target_dir: "{HOME}\\refacdir\\test\\backup tests\\a backup mirror"
+      mode: "MIRROR"
+      file_mode: "FILES_AND_DIRS"
+      will_run: true
+      file_types: []
+      exclude_dirs: [
+      ]
+      exclude_removal_dirs: [
+      ]
+
+    - name: "Test Backup Push"
+      source_dir: "{HOME}\\refacdir\\test\\backup tests\\a"
+      target_dir: "{HOME}\\refacdir\\test\\backup tests\\a backup push"
+      mode: "MIRROR"
+      file_mode: "FILES_AND_DIRS"
+      will_run: true
+      file_types: []
+      exclude_dirs: [
+        "{HOME}\\refacdir\\test\\backup tests\\a\\exclude"
+        "exclude 2"
+      ]
+      exclude_removal_dirs: [
+        "{HOME}\\refacdir\\test\\backup tests\\a\\exclude removal dir"
+        "exclude removal dir 1"
+      ]
+
+

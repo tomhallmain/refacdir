@@ -127,6 +127,7 @@ actions:
       target_dir: "D:\\stable-diffusion-webui\\log\\images"
       mode: "PUSH_AND_REMOVE"
       file_mode: "FILES_AND_DIRS"
+      hash_mode: "SHA256"
       will_run: false
       file_types: "{{visual_media_file_types}}"
       exclude_dirs: [
@@ -140,6 +141,7 @@ actions:
       target_dir: "D:\\img"
       mode: "MIRROR"
       file_mode: "FILES_AND_DIRS"
+      hash_mode: "FILENAME_AND_PARENT"
       will_run: true
       file_types: "{{visual_media_file_types}}"
       exclude_dirs: [
