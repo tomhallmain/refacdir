@@ -249,15 +249,19 @@ class App():
 
     def add_config_widgets(self):
         for config, will_run in self.filtered_configs.items():
-            var = tk.BooleanVar(value=will_run if will_run == True or will_run is None else False)
             def toggle_config_handler(event=None, self=self, config=config):
                 if config in self.filtered_configs:
-                    self.filtered_configs[config] = var.get()
-            choice = Checkbutton(self.sidebar, text=config, variable=var, command=toggle_config_handler)
-            choice.config(bg=App.DARK_BG, fg="white", selectcolor=App.DARK_BG)
+                    self.filtered_configs[config] = not self.filtered_configs[config]
+                    App.configs[config] = self.filtered_configs[config]  # Keep main configs in sync
+                    BatchArgs.update_config_state(config, self.filtered_configs[config])
+                    print(f"Config {config} set to {self.filtered_configs[config]}")
+                return True
+
+            var = tk.BooleanVar(value=will_run if will_run is not None else False)
             self.config_vars.append(var)
-            self.config_checkbuttons.append(choice)
-            self.apply_to_grid(choice, sticky=W)
+            checkbutton = Checkbutton(self.sidebar, text=config, variable=var, command=toggle_config_handler)
+            self.config_checkbuttons.append(checkbutton)
+            self.apply_to_grid(checkbutton, sticky=W)
 
     def get_config(self, event=None, config=None):
         """
@@ -393,39 +397,34 @@ class App():
             self.progress_bar = None
 
     def run(self, event=None):
-        batch_args = BatchArgs()
-        BatchArgs.override_configs(self.filtered_configs)
-        batch_args.test = self.test_var.get()
-        batch_args.skip_confirm = self.skip_confirm_var.get()
-        batch_args.only_observers = self.only_observers_var.get()
-        # args.prompt_mode = PromptMode[self.prompt_mode.get()]
+        if self.progress_bar is not None:
+            return
 
-        try:
-            batch_args.validate()
-        except Exception as e:
-            res = self.alert("Confirm Run",
-                str(e) + "\n\nAre you sure you want to proceed?",
-                kind="warning")
-            if res != messagebox.OK:
-                return
+        args = BatchArgs(recache_configs=False)  # Don't reload from files
+        args.test = self.test_var.get()
+        args.skip_confirm = self.skip_confirm_var.get()
+        args.only_observers = self.only_observers_var.get()
+        
+        # Only run filtered configs
+        BatchArgs.override_configs(self.filtered_configs)
+
+        self.progress_bar = Progressbar(
+            self.config,
+            orient=HORIZONTAL,
+            length=100,
+            mode='determinate'
+        )
+        self.apply_to_grid(self.progress_bar, sticky=W, column=1)
 
         def run_async(args) -> None:
-            self.job_queue.job_running = True
-            self.destroy_progress_bar()
-            self.progress_bar = Progressbar(self.sidebar, orient=HORIZONTAL, length=100, mode='indeterminate')
-            self.apply_to_grid(self.progress_bar)
-            self.progress_bar.start()
-            main(args)
-            self.destroy_progress_bar()
-            self.job_queue.job_running = False
-            next_job_args = self.job_queue.take()
-            if next_job_args:
-                Utils.start_thread(run_async, use_asyncio=False, args=[next_job_args])
+            try:
+                main(args)
+            except Exception as e:
+                self.alert("Error", str(e), "error")
+            finally:
+                self.destroy_progress_bar()
 
-        if self.job_queue.has_pending():
-            self.job_queue.add(batch_args)
-        else:
-            Utils.start_thread(run_async, use_asyncio=False, args=[batch_args])
+        Utils.start_thread(lambda: run_async(args))
 
 
     def set_recurring_action(self, event=None):

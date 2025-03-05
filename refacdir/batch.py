@@ -36,6 +36,12 @@ class BatchArgs:
         BatchArgs.configs = filtered_configs
 
     @staticmethod
+    def update_config_state(config_path, will_run):
+        """Update a single config's will_run state without reloading from files"""
+        if config_path in BatchArgs.configs:
+            BatchArgs.configs[config_path] = will_run
+
+    @staticmethod
     def setup_configs(recache=True):
         if not recache and len(BatchArgs.configs) > 0:
             return
