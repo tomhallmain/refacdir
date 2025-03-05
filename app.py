@@ -16,9 +16,11 @@ from run import main
 from extensions.refacdir_server import RefacDirServer
 from refacdir.batch import BatchArgs
 from refacdir.config import config as _config
+from refacdir.job_queue import JobQueue
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
 from refacdir.utils import Utils
 
+from refacdir.ui.test_results_window import TestResultWindow
 
 # TODO persistent file ops (see "D:\Scripts\poll_folder.py")
 # TODO filtering of configs
@@ -68,28 +70,6 @@ class ProgressListener:
 
     def update(self, context, percent_complete):
         self.update_func(context, percent_complete)
-
-class JobQueue:
-    def __init__(self, max_size=20):
-        self.max_size = max_size
-        self.pending_jobs = []
-        self.job_running = False
-
-    def has_pending(self):
-        return self.job_running or len(self.pending_jobs) > 0
-
-    def take(self):
-        if len(self.pending_jobs) == 0:
-            return None
-        run_config = self.pending_jobs[0]
-        del self.pending_jobs[0]
-        return run_config
-
-    def add(self, run_config):
-        if len(self.pending_jobs) > self.max_size:
-            raise Exception(f"Reached limit of pending runs: {self.max_size} - wait until current run has completed.")
-        self.pending_jobs.append(run_config)
-        print(f"Added pending job: {run_config}")
 
 
 class App():
@@ -160,37 +140,6 @@ class App():
         self.config_checkbuttons = []
         self.add_config_widgets()
 
-        # self.label_workflows = Label(self.sidebar)
-        # self.add_label(self.label_workflows, "Workflow")
-        # self.workflow = tk.StringVar(master)
-        # self.workflows_choice = OptionMenu(self.sidebar, self.workflow, WorkflowType.SIMPLE_IMAGE_GEN_LORA.name,
-        #                                    *WorkflowType.__members__.keys(), command=self.set_workflow_type)
-        # self.apply_to_grid(self.workflows_choice, sticky=W)
-
-        # self.label_resolutions = Label(self.sidebar)
-        # self.add_label(self.label_resolutions, "Resolutions")
-        # self.resolutions = tk.StringVar()
-        # self.resolutions_box = self.new_entry(self.resolutions)
-        # self.resolutions_box.insert(0, "landscape3,portrait3")
-        # self.resolutions_box.bind("<Return>", self.set_prompt_massage_tags)
-        # self.apply_to_grid(self.resolutions_box, sticky=W)
-
-        # self.label_model_tags = Label(self.sidebar)
-        # self.add_label(self.label_model_tags, "Model Tags")
-        # self.model_tags = tk.StringVar()
-        # model_names = list(map(lambda l: str(l).split('.')[0], Model.CHECKPOINTS))
-        # self.model_tags_box = AutocompleteEntry(model_names,
-        #                                        self.sidebar,
-        #                                        listboxLength=6,
-        #                                        textvariable=self.model_tags,
-        #                                        matchesFunction=matches_tag,
-        #                                        setFunction=set_tag,
-        #                                        width=40, font=fnt.Font(size=8))
-        # self.model_tags_box.bind("<Return>", self.set_prompt_massage_tags_box_from_model_tags)
-        # self.model_tags_box.insert(0, "realvisxlV40_v40Bakedvae")
-        # self.apply_to_grid(self.model_tags_box, sticky=W)
-
-
         # Prompter Config
         self.row_counter1 = 0
         self.config = Sidebar(self.master)
@@ -229,6 +178,10 @@ class App():
         self.toggle_theme()
         self.master.update()
 #        self.model_tags_box.closeListbox()
+
+        # Add test runner button after theme toggle
+        self.test_runner_btn = None
+        self.add_button("test_runner_btn", "Run Backup Tests", self.run_tests)
 
     def on_closing(self):
         if self.server is not None:
@@ -535,6 +488,13 @@ class App():
             element.destroy()
             setattr(self, element_ref_name, None)
             self.row_counter0 -= 1
+
+    def run_tests(self, event=None):
+        """Run backup system tests and display results"""
+        # Create results window
+        results_window = TestResultWindow(self.master)
+        results_window.run_tests()
+            
 
 
 if __name__ == "__main__":

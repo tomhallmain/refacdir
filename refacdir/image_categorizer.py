@@ -7,9 +7,12 @@ from refacdir.utils import Utils
 simple_image_compare_imported = False
 
 if config.simple_image_compare_loc is not None:
-    sys.path.insert(0, config.simple_image_compare_loc)
-    from compare.compare_embeddings import CompareEmbedding
-    simple_image_compare_imported = True
+    try:
+        sys.path.insert(0, config.simple_image_compare_loc)
+        from compare.compare_embeddings import CompareEmbedding
+        simple_image_compare_imported = True
+    except Exception as e:
+        print(f"Failed to import Simple Image Compare: {e}")
 
 
 class ImageCategorizer:
