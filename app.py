@@ -5,10 +5,10 @@ import time
 import traceback
 
 import tkinter as tk
-from tkinter import messagebox, HORIZONTAL, Label, Checkbutton
+from tkinter import messagebox, HORIZONTAL
 from tkinter.constants import W
 import tkinter.font as fnt
-from tkinter.ttk import Button, Entry, Frame, OptionMenu, Progressbar
+from tkinter.ttk import Button, Entry, Progressbar, Label, Checkbutton, LabelFrame, Style
 from lib.autocomplete_entry import AutocompleteEntry, matches
 from ttkthemes import ThemedTk
 
@@ -71,6 +71,9 @@ class ProgressListener:
     def update(self, context, percent_complete):
         self.update_func(context, percent_complete)
 
+    def update_status(self, status):
+        self.update_func(None, None, status)
+
 
 class App():
     '''
@@ -80,33 +83,93 @@ class App():
     configs = {}
 
     IS_DEFAULT_THEME = False
-    GRAY = "gray"
     DARK_BG = _config.background_color if _config.background_color and _config.background_color != "" else "#26242f"
-    DARK_FG = _config.foreground_color if _config.foreground_color and _config.foreground_color != "" else "#white"
+    DARK_FG = _config.foreground_color if _config.foreground_color and _config.foreground_color != "" else "#ffffff"
+    LIGHT_BG = "#f0f0f0"
+    LIGHT_FG = "#000000"
 
     def configure_style(self, theme):
         self.master.set_theme(theme, themebg="black")
+        self.style = Style()
+        
+        # Configure colors based on theme
+        bg_color = App.LIGHT_BG if App.IS_DEFAULT_THEME else App.DARK_BG
+        fg_color = App.LIGHT_FG if App.IS_DEFAULT_THEME else App.DARK_FG
+        
+        # Configure styles with appropriate colors
+        self.style.configure('Header.TLabel', 
+                           font=('Helvetica', 12, 'bold'))
+        self.style.configure('Status.TLabel', 
+                           font=('Helvetica', 10))
+        self.style.configure('Summary.TLabel', 
+                           font=('Helvetica', 11))
+        self.style.configure('Action.TButton', 
+                           font=('Helvetica', 10))
+        self.style.configure('Config.TCheckbutton', 
+                           font=('Helvetica', 10))
+        self.style.configure('Toast.TLabel', 
+                           font=('Helvetica', 12))
+        
+        # Configure frame styles
+        self.style.configure('Main.TFrame', background=bg_color)
+        self.style.configure('Sidebar.TFrame', background=bg_color)
+        self.style.configure('Config.TFrame', background=bg_color)
+        self.style.configure('Progress.TFrame', background=bg_color)
+        self.style.configure('Control.TFrame', background=bg_color)
+        
+        # Configure label styles with proper background and foreground
+        self.style.configure('TLabel', 
+                           background=bg_color,
+                           foreground=fg_color)
+        
+        # Configure checkbutton styles with proper background and foreground
+        self.style.configure('TCheckbutton', 
+                           background=bg_color,
+                           foreground=fg_color)
+        
+        # Configure button styles
+        self.style.configure('TButton', 
+                           background=bg_color,
+                           foreground=fg_color)
+        
+        # Configure labelframe styles
+        self.style.configure('TLabelframe', 
+                           background=bg_color,
+                           foreground=fg_color)
+        self.style.configure('TLabelframe.Label', 
+                           background=bg_color,
+                           foreground=fg_color)
+        
+        # Configure progress bar styles
+        self.style.configure('Horizontal.TProgressbar', 
+                           background=bg_color,
+                           troughcolor=bg_color)
 
     def toggle_theme(self):
         if App.IS_DEFAULT_THEME:
-            self.configure_style("breeze") # Changes the window to light theme
-            bg_color = App.GRAY
-            fg_color = "black"
+            self.configure_style("breeze")
+            bg_color = App.LIGHT_BG
+            fg_color = App.LIGHT_FG
         else:
-            self.configure_style("black") # Changes the window to dark theme
+            self.configure_style("black")
             bg_color = App.DARK_BG
             fg_color = App.DARK_FG
         App.IS_DEFAULT_THEME = not App.IS_DEFAULT_THEME
+        
+        # Update main window and container backgrounds
         self.master.config(bg=bg_color)
+        self.main_container.config(bg=bg_color)
         self.sidebar.config(bg=bg_color)
         self.config.config(bg=bg_color)
-        for name, attr in self.__dict__.items():
-            if isinstance(attr, Label):
-                attr.config(bg=bg_color, fg=fg_color)
-            elif isinstance(attr, Checkbutton):
-                attr.config(bg=bg_color, fg=fg_color, selectcolor=bg_color)
+        
+        # Update all frames
+        for frame in [self.main_container, self.sidebar, self.config]:
+            for child in frame.winfo_children():
+                if isinstance(child, tk.Frame):
+                    child.config(bg=bg_color)
+        
         self.master.update()
-        self.toast("Theme switched to dark." if App.IS_DEFAULT_THEME else "Theme switched to light.")
+        self.toast("Theme switched to light." if App.IS_DEFAULT_THEME else "Theme switched to dark.")
 
     def __init__(self, master):
         self.master = master
@@ -121,67 +184,152 @@ class App():
         self.filtered_configs = deepcopy(BatchArgs.configs)
         self.filter_text = ""
 
-        # Sidebar
-        self.sidebar = Sidebar(self.master)
-        self.sidebar.columnconfigure(0, weight=1)
-        self.row_counter0 = 0
-        self.sidebar.grid(column=0, row=self.row_counter0)
-        self.label_title = Label(self.sidebar)
-        self.add_label(self.label_title, "Run File Batch Operations", sticky=None)
+        # Configure main window
+        self.master.title("RefacDir")
+        self.master.geometry("800x600")
+        self.master.minsize(600, 400)
+        self.master.configure(bg=App.DARK_BG)
+        
+        # Main container
+        self.main_container = tk.Frame(self.master, bg=App.DARK_BG)
+        self.main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Create sections
+        self.create_header_section()
+        self.create_sidebar_section()
+        self.create_config_section()
+        self.create_progress_section()
+        self.create_control_section()
 
-        self.toggle_theme_btn = None
-        self.add_button("toggle_theme_btn", "Toggle theme", self.toggle_theme)
+        # Initialize theme
+        self.configure_style("black")
+        self.toggle_theme()
 
-        self.run_btn = None
-        self.add_button("run_btn", "Run", self.run)
-        self.master.bind("<Shift-R>", self.run)
+    def create_header_section(self):
+        """Create the header section with title and description"""
+        header_frame = tk.Frame(self.main_container, bg=App.DARK_BG)
+        header_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        title = Label(header_frame, 
+                     text="RefacDir File Management", 
+                     style='Header.TLabel')
+        title.pack(anchor=tk.W)
+        
+        description = Label(header_frame,
+                          text="Configure and run file management operations with ease",
+                          wraplength=700)
+        description.pack(anchor=tk.W)
 
+    def create_sidebar_section(self):
+        """Create the sidebar section with action buttons and configs"""
+        self.sidebar = tk.Frame(self.main_container, bg=App.DARK_BG)
+        self.sidebar.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+        
+        # Action buttons
+        self.toggle_theme_btn = Button(self.sidebar, 
+                                     text="Toggle Theme", 
+                                     command=self.toggle_theme,
+                                     style='Action.TButton')
+        self.toggle_theme_btn.pack(fill=tk.X, pady=(0, 5))
+        
+        self.test_runner_btn = Button(self.sidebar, 
+                                    text="Run Backup Tests", 
+                                    command=self.run_tests,
+                                    style='Action.TButton')
+        self.test_runner_btn.pack(fill=tk.X, pady=(0, 5))
+        
+        self.run_btn = Button(self.sidebar, 
+                            text="Run Operations", 
+                            command=self.run,
+                            style='Action.TButton')
+        self.run_btn.pack(fill=tk.X, pady=(0, 5))
+        
+        # Config checkboxes
         self.config_vars = []
         self.config_checkbuttons = []
         self.add_config_widgets()
 
-        # Prompter Config
-        self.row_counter1 = 0
-        self.config = Sidebar(self.master)
-        self.config.columnconfigure(0, weight=1)
-        self.config.columnconfigure(1, weight=1)
-        self.config.columnconfigure(2, weight=1)
-        self.config.grid(column=1, row=self.row_counter1)
-
-        # self.label_title_config = Label(self.prompter_config)
-        # self.add_label(self.label_title_config, "Prompts Configuration", column=1, sticky=tk.W+tk.E)
-
-        # self.label_prompt_mode = Label(self.prompter_config)
-        # self.add_label(self.label_prompt_mode, "Prompt Mode", column=1)
-        # self.prompt_mode = tk.StringVar(master)
-        # self.prompt_mode_choice = OptionMenu(self.prompter_config, self.prompt_mode, str(PromptMode.SFW), *PromptMode.__members__.keys())
-        # self.apply_to_grid(self.prompt_mode_choice, sticky=W, column=1)
-
+    def create_config_section(self):
+        """Create the configuration section with options"""
+        self.config = tk.Frame(self.main_container, bg=App.DARK_BG)
+        self.config.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Options frame
+        options_frame = LabelFrame(self.config, text="Options", padding="5")
+        options_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        # Configuration options
         self.recur_var = tk.BooleanVar(value=False)
-        self.recur_choice = Checkbutton(self.config, text="Recur Selected Actions", variable=self.recur_var, command=self.set_recurring_action)
-        self.apply_to_grid(self.recur_choice, sticky=W, column=1)
-
+        self.recur_choice = Checkbutton(options_frame, 
+                                      text="Recur Selected Actions", 
+                                      variable=self.recur_var, 
+                                      command=self.set_recurring_action,
+                                      style='Config.TCheckbutton')
+        self.recur_choice.pack(anchor=tk.W, pady=2)
+        
         self.test_var = tk.BooleanVar(value=False)
-        self.test_choice = Checkbutton(self.config, text="Test Mode", variable=self.test_var)
-        self.apply_to_grid(self.test_choice, sticky=W, column=1)
-
+        self.test_choice = Checkbutton(options_frame, 
+                                     text="Test Mode", 
+                                     variable=self.test_var,
+                                     style='Config.TCheckbutton')
+        self.test_choice.pack(anchor=tk.W, pady=2)
+        
         self.skip_confirm_var = tk.BooleanVar(value=False)
-        self.skip_confirm_choice = Checkbutton(self.config, text="Skip Confirmations", variable=self.skip_confirm_var)
-        self.apply_to_grid(self.skip_confirm_choice, sticky=W, column=1)
-
+        self.skip_confirm_choice = Checkbutton(options_frame, 
+                                             text="Skip Confirmations", 
+                                             variable=self.skip_confirm_var,
+                                             style='Config.TCheckbutton')
+        self.skip_confirm_choice.pack(anchor=tk.W, pady=2)
+        
         self.only_observers_var = tk.BooleanVar(value=False)
-        self.only_observers_choice = Checkbutton(self.config, text="Only Observers", variable=self.only_observers_var)
-        self.apply_to_grid(self.only_observers_choice, sticky=W, column=1)
+        self.only_observers_choice = Checkbutton(options_frame, 
+                                               text="Only Observers", 
+                                               variable=self.only_observers_var,
+                                               style='Config.TCheckbutton')
+        self.only_observers_choice.pack(anchor=tk.W, pady=2)
 
+    def create_progress_section(self):
+        """Create the progress section"""
+        self.progress_frame = tk.Frame(self.config, bg=App.DARK_BG)
+        self.progress_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        self.status_label = Label(self.progress_frame, 
+                                text="Ready",
+                                style='Status.TLabel')
+        self.status_label.pack(fill=tk.X)
+        
+        self.progress_bar = None
+
+    def create_control_section(self):
+        """Create the control section"""
+        control_frame = tk.Frame(self.config, bg=App.DARK_BG)
+        control_frame.pack(fill=tk.X)
+        
+        # Bind keyboard shortcuts
+        self.master.bind("<Shift-R>", self.run)
         self.master.bind("<Return>", self.do_action)
         self.master.bind("<Key>", self.filter_configs)
-        self.toggle_theme()
-        self.master.update()
-#        self.model_tags_box.closeListbox()
 
-        # Add test runner button after theme toggle
-        self.test_runner_btn = None
-        self.add_button("test_runner_btn", "Run Backup Tests", self.run_tests)
+    def add_config_widgets(self):
+        """Add configuration checkboxes to sidebar"""
+        for config, will_run in self.filtered_configs.items():
+            def toggle_config_handler(event=None, self=self, config=config):
+                if config in self.filtered_configs:
+                    self.filtered_configs[config] = not self.filtered_configs[config]
+                    App.configs[config] = self.filtered_configs[config]
+                    BatchArgs.update_config_state(config, self.filtered_configs[config])
+                    print(f"Config {config} set to {self.filtered_configs[config]}")
+                return True
+
+            var = tk.BooleanVar(value=will_run if will_run is not None else False)
+            self.config_vars.append(var)
+            checkbutton = Checkbutton(self.sidebar, 
+                                    text=config, 
+                                    variable=var, 
+                                    command=toggle_config_handler,
+                                    style='Config.TCheckbutton')
+            self.config_checkbuttons.append(checkbutton)
+            checkbutton.pack(anchor=tk.W, pady=2)
 
     def on_closing(self):
         if self.server is not None:
@@ -199,22 +347,6 @@ class App():
         except Exception as e:
             print(f"Failed to start server: {e}")
         return None
-
-    def add_config_widgets(self):
-        for config, will_run in self.filtered_configs.items():
-            def toggle_config_handler(event=None, self=self, config=config):
-                if config in self.filtered_configs:
-                    self.filtered_configs[config] = not self.filtered_configs[config]
-                    App.configs[config] = self.filtered_configs[config]  # Keep main configs in sync
-                    BatchArgs.update_config_state(config, self.filtered_configs[config])
-                    print(f"Config {config} set to {self.filtered_configs[config]}")
-                return True
-
-            var = tk.BooleanVar(value=will_run if will_run is not None else False)
-            self.config_vars.append(var)
-            checkbutton = Checkbutton(self.sidebar, text=config, variable=var, command=toggle_config_handler)
-            self.config_checkbuttons.append(checkbutton)
-            self.apply_to_grid(checkbutton, sticky=W)
 
     def get_config(self, event=None, config=None):
         """
@@ -345,8 +477,7 @@ class App():
     def destroy_progress_bar(self):
         if self.progress_bar is not None:
             self.progress_bar.stop()
-            self.progress_bar.grid_forget()
-            self.destroy_grid_element("progress_bar")
+            self.progress_bar.pack_forget()
             self.progress_bar = None
 
     def run(self, event=None):
@@ -361,21 +492,31 @@ class App():
         # Only run filtered configs
         BatchArgs.override_configs(self.filtered_configs)
 
-        self.progress_bar = Progressbar(
-            self.config,
-            orient=HORIZONTAL,
-            length=100,
-            mode='determinate'
-        )
-        self.apply_to_grid(self.progress_bar, sticky=W, column=1)
+        # Create progress bar if it doesn't exist
+        if self.progress_bar is None:
+            self.progress_bar = Progressbar(
+                self.progress_frame,
+                orient=tk.HORIZONTAL,
+                length=300,
+                mode='determinate'
+            )
+            self.progress_bar.pack(fill=tk.X, pady=(5, 0))
+
+        # Update status
+        self.status_label.config(text="Running operations...")
+        self.progress_bar["value"] = 0
 
         def run_async(args) -> None:
             try:
                 main(args)
             except Exception as e:
                 self.alert("Error", str(e), "error")
+                self.status_label.config(text="Operation failed")
             finally:
-                self.destroy_progress_bar()
+                self.status_label.config(text="Ready")
+                self.progress_bar["value"] = 0
+                self.progress_bar.pack_forget()  # Hide progress bar when done
+                self.progress_bar = None
 
         Utils.start_thread(lambda: run_async(args))
 
@@ -425,23 +566,22 @@ class App():
         y = 0
 
         # Create the toast on the top level
-        toast = tk.Toplevel(self.master, bg=App.DARK_BG)
+        toast = tk.Toplevel(self.master, bg=App.DARK_BG if not App.IS_DEFAULT_THEME else App.LIGHT_BG)
         toast.geometry(f'{width}x{height}+{int(x)}+{int(y)}')
-        self.container = tk.Frame(toast, bg=App.DARK_BG)
+        self.container = tk.Frame(toast, bg=App.DARK_BG if not App.IS_DEFAULT_THEME else App.LIGHT_BG)
         self.container.pack(fill=tk.BOTH, expand=tk.YES)
-        label = tk.Label(
+        
+        # Style the toast message
+        label = Label(
             self.container,
             text=message,
             anchor=tk.NW,
-            bg=App.DARK_BG,
-            fg='white',
-            font=('Helvetica', 12)
+            style='Toast.TLabel'
         )
         label.grid(row=1, column=1, sticky="NSEW", padx=10, pady=(0, 5))
         
         # Make the window invisible and bring it to front
         toast.attributes('-topmost', True)
-#        toast.withdraw()
 
         # Start a new thread that will destroy the window after a few seconds
         def self_destruct_after(time_in_seconds):
@@ -501,13 +641,12 @@ if __name__ == "__main__":
     try:
         assets = os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets")
         root = ThemedTk(theme="black", themebg="black")
-        root.title(" RefacDir ")
-        #root.iconbitmap(bitmap=r"icon.ico")
-        # icon = PhotoImage(file=os.path.join(assets, "icon.png"))
-        # root.iconphoto(False, icon)
-        root.geometry("600x400")
-        # root.attributes('-fullscreen', True)
-        root.resizable(1, 1)
+        root.title("RefacDir")
+        root.geometry("800x600")
+        root.minsize(600, 400)
+        root.resizable(True, True)
+        
+        # Configure grid weights
         root.columnconfigure(0, weight=1)
         root.columnconfigure(1, weight=1)
         root.rowconfigure(0, weight=1)
