@@ -23,7 +23,8 @@ import pickle
 import time
 import hashlib
 import json
-import fcntl
+# TODO use a module that is supported on windows instead, maybe portalocker
+#import fcntl
 import errno
 import shutil
 from collections import defaultdict
@@ -293,7 +294,7 @@ class BackupSourceData:
         while True:
             try:
                 self._lock_fd = os.open(self.lock_file, os.O_CREAT | os.O_RDWR)
-                fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                #fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 return
             except (IOError, OSError) as e:
                 if e.errno != errno.EAGAIN:
@@ -306,7 +307,7 @@ class BackupSourceData:
         """Release backup lock"""
         if self._lock_fd is not None:
             try:
-                fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
+                #fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
                 os.close(self._lock_fd)
             finally:
                 self._lock_fd = None

@@ -64,6 +64,10 @@ class FileRenamer:
         if target_dir is not None and ("/" in new_filename or "\\" in new_filename):
             os.makedirs(os.path.dirname(new_filename_full_path), exist_ok=True)
             made_dirs = True
+        if filename == new_filename_full_path:
+            if False:
+                print("File rename not necessary")
+            return count
         try:
             if not self.test:
                 os.rename(filename, new_filename_full_path)
