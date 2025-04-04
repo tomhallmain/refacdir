@@ -2,7 +2,7 @@ import getopt
 import sys
 
 from refacdir.batch import BatchArgs, BatchJob
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
 
 
 help_text = """Edit configuration YAML files in configs directory to configure file management batch actions.

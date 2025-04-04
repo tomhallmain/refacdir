@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
 
 # TODO maybe option to not preserve/ignore duplicates if they exist in different subdirectories within the root
 

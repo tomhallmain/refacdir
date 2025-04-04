@@ -2,7 +2,7 @@ import glob
 import json
 import os
 
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
 
 media_file_types = [".bmp", ".gif", ".jpeg", ".jpg", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".png", ".tiff", ".webm", ".webp"]
 

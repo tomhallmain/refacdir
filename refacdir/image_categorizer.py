@@ -2,7 +2,7 @@ import os
 import sys
 
 from refacdir.config import config
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
 
 simple_image_compare_imported = False
 

@@ -18,7 +18,10 @@ from refacdir.batch import BatchArgs
 from refacdir.config import config as _config
 from refacdir.job_queue import JobQueue
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
+from refacdir.utils.translations import I18N
+
+_ = I18N._
 
 from refacdir.ui.test_results_window import TestResultWindow
 
@@ -185,7 +188,7 @@ class App():
         self.filter_text = ""
 
         # Configure main window
-        self.master.title("RefacDir")
+        self.master.title(_("RefacDir"))
         self.master.geometry("800x600")
         self.master.minsize(600, 400)
         self.master.configure(bg=App.DARK_BG)
@@ -216,7 +219,7 @@ class App():
         title.pack(anchor=tk.W)
         
         description = Label(header_frame,
-                          text="Configure and run file management operations with ease",
+                          text=_("Configure and run file management operations with ease"),
                           wraplength=700)
         description.pack(anchor=tk.W)
 
@@ -227,19 +230,19 @@ class App():
         
         # Action buttons
         self.toggle_theme_btn = Button(self.sidebar, 
-                                     text="Toggle Theme", 
+                                     text=_("Toggle Theme"), 
                                      command=self.toggle_theme,
                                      style='Action.TButton')
         self.toggle_theme_btn.pack(fill=tk.X, pady=(0, 5))
         
         self.test_runner_btn = Button(self.sidebar, 
-                                    text="Run Backup Tests", 
+                                    text=_("Run Backup Tests"), 
                                     command=self.run_tests,
                                     style='Action.TButton')
         self.test_runner_btn.pack(fill=tk.X, pady=(0, 5))
         
         self.run_btn = Button(self.sidebar, 
-                            text="Run Operations", 
+                            text=_("Run Operations"), 
                             command=self.run,
                             style='Action.TButton')
         self.run_btn.pack(fill=tk.X, pady=(0, 5))
@@ -255,13 +258,13 @@ class App():
         self.config.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         # Options frame
-        options_frame = LabelFrame(self.config, text="Options", padding="5")
+        options_frame = LabelFrame(self.config, text=_("Options"), padding="5")
         options_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Configuration options
         self.recur_var = tk.BooleanVar(value=False)
         self.recur_choice = Checkbutton(options_frame, 
-                                      text="Recur Selected Actions", 
+                                      text=_("Recur Selected Actions"), 
                                       variable=self.recur_var, 
                                       command=self.set_recurring_action,
                                       style='Config.TCheckbutton')
@@ -269,21 +272,21 @@ class App():
         
         self.test_var = tk.BooleanVar(value=False)
         self.test_choice = Checkbutton(options_frame, 
-                                     text="Test Mode", 
+                                     text=_("Test Mode"), 
                                      variable=self.test_var,
                                      style='Config.TCheckbutton')
         self.test_choice.pack(anchor=tk.W, pady=2)
         
         self.skip_confirm_var = tk.BooleanVar(value=False)
         self.skip_confirm_choice = Checkbutton(options_frame, 
-                                             text="Skip Confirmations", 
+                                             text=_("Skip Confirmations"), 
                                              variable=self.skip_confirm_var,
                                              style='Config.TCheckbutton')
         self.skip_confirm_choice.pack(anchor=tk.W, pady=2)
         
         self.only_observers_var = tk.BooleanVar(value=False)
         self.only_observers_choice = Checkbutton(options_frame, 
-                                               text="Only Observers", 
+                                               text=_("Only Observers"), 
                                                variable=self.only_observers_var,
                                                style='Config.TCheckbutton')
         self.only_observers_choice.pack(anchor=tk.W, pady=2)
@@ -294,7 +297,7 @@ class App():
         self.progress_frame.pack(fill=tk.X, pady=(0, 10))
         
         self.status_label = Label(self.progress_frame, 
-                                text="Ready",
+                                text=_("Ready"),
                                 style='Status.TLabel')
         self.status_label.pack(fill=tk.X)
         
@@ -511,9 +514,9 @@ class App():
                 main(args)
             except Exception as e:
                 self.alert("Error", str(e), "error")
-                self.status_label.config(text="Operation failed")
+                self.status_label.config(text=_("Operation failed"))
             finally:
-                self.status_label.config(text="Ready")
+                self.status_label.config(text=_("Ready"))
                 self.progress_bar["value"] = 0
                 self.progress_bar.pack_forget()  # Hide progress bar when done
                 self.progress_bar = None
@@ -641,7 +644,7 @@ if __name__ == "__main__":
     try:
         assets = os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets")
         root = ThemedTk(theme="black", themebg="black")
-        root.title("RefacDir")
+        root.title(_("RefacDir"))
         root.geometry("800x600")
         root.minsize(600, 400)
         root.resizable(True, True)

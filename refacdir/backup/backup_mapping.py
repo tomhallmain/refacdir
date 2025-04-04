@@ -1,4 +1,3 @@
-from refacdir.utils import Utils
 from collections import defaultdict
 import datetime
 from enum import Enum
@@ -6,15 +5,18 @@ import hashlib
 import json
 import os
 import pickle
-from .safe_file_ops import SafeFileOps
 import shutil
 import tempfile
 from typing import List, Tuple, Optional
+
 from .backup_modes import BackupMode, FileMode, HashMode, FailureType
 from .backup_source_data import BackupSourceData
 from .backup_state import BackupState
 from .directory_ops import DirectoryOps
 from .hash_manager import HashManager
+from .safe_file_ops import SafeFileOps
+
+from refacdir.utils.utils import Utils
 
 try:
     from send2trash import send2trash

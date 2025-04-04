@@ -10,9 +10,9 @@ from refacdir.batch_renamer import BatchRenamer, Location, DirectoryFlattener
 from refacdir.config import Config
 from refacdir.directory_observer import DirectoryObserver, media_file_types
 from refacdir.duplicate_remover import DuplicateRemover
-from refacdir.image_categorizer import ImageCategorizer
-from refacdir.utils import Utils
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
+from refacdir.image_categorizer import ImageCategorizer
+from refacdir.utils.utils import Utils
 
 
 class BatchArgs:

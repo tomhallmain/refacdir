@@ -12,12 +12,17 @@ from datetime import datetime
 from queue import Queue
 from typing import Dict, Tuple
 
+from refacdir.utils.translations import I18N
+
+_ = I18N._
+
+
 class TestResultWindow(tk.Toplevel):
     """Professional test results display window with real-time updates"""
     
     def __init__(self, master):
         super().__init__(master)
-        self.title("Backup System Verification")
+        self.title(_("Backup System Verification"))
         self.geometry("800x600")
         self.minsize(600, 400)
         
@@ -82,7 +87,7 @@ class TestResultWindow(tk.Toplevel):
                 # Use proper directory name for tests
                 test_dir = os.path.join(base_dir, "test", "backup")
                 if not os.path.exists(test_dir):
-                    raise Exception(f"Test directory not found: {test_dir}")
+                    raise Exception(_("Test directory not found: {0}").format(test_dir))
                 
                 # Ensure test files directory exists
                 test_files_dir = os.path.join(test_dir, "test_files")
@@ -97,23 +102,23 @@ class TestResultWindow(tk.Toplevel):
                 ]
                 
                 # Debug info
-                self.update_queue.put(("text", (f"Base directory: {base_dir}\n", "important")))
-                self.update_queue.put(("text", (f"Test directory: {test_dir}\n", "important")))
-                self.update_queue.put(("text", (f"Test files directory: {test_files_dir}\n", "important")))
-                self.update_queue.put(("text", (f"Python path: {sys.path[0]}\n", "important")))
+                self.update_queue.put(("text", (_("Base directory: ") + "{base_dir}\n", "important")))
+                self.update_queue.put(("text", (_("Test directory: ") + "{test_dir}\n", "important")))
+                self.update_queue.put(("text", (_("Test files directory: ") + "{test_files_dir}\n", "important")))
+                self.update_queue.put(("text", (_("Python path: ") + "{sys.path[0]}\n", "important")))
                 
                 # Verify test files exist
                 for test_file in test_files[:]:
                     if not os.path.exists(test_file):
-                        error_msg = f"Test file not found: {test_file}\n"
+                        error_msg = _("Test file not found: {0}").format(test_file) + "\n"
                         print(error_msg, file=original_stdout)
                         self.update_queue.put(("text", (error_msg, "error")))
                         test_files.remove(test_file)
                     else:
-                        self.update_queue.put(("text", (f"Found test file: {test_file}\n", "important")))
+                        self.update_queue.put(("text", (_("Found test file: ") + "{test_file}\n", "important")))
                 
                 if not test_files:
-                    error_msg = "No test files found!\n"
+                    error_msg = _("No test files found!") + "\n"
                     print(error_msg, file=original_stdout)
                     self.update_queue.put(("text", (error_msg, "error")))
                     self.update_queue.put(("done", None))
@@ -125,7 +130,7 @@ class TestResultWindow(tk.Toplevel):
                 failed_tests = 0
                 
                 # First pass to count tests
-                self.update_queue.put(("status", "Analyzing test suite..."))
+                self.update_queue.put(("status", _("Analyzing test suite...")))
                 for test_file in test_files:
                     try:
                         class TestCounter:
@@ -140,10 +145,11 @@ class TestResultWindow(tk.Toplevel):
                         
                         if counter.count > 0:
                             total_tests += counter.count
-                            print(f"Found {counter.count} tests in {os.path.basename(test_file)}", file=original_stdout)
-                            self.update_queue.put(("text", (f"Found {counter.count} tests in {os.path.basename(test_file)}\n", "important")))
+                            message = _("Found {0} tests in {1}").format(counter.count, os.path.basename(test_file))
+                            print(message, file=original_stdout)
+                            self.update_queue.put(("text", (message + "\n", "important")))
                     except Exception as e:
-                        error_msg = f"Error collecting tests from {test_file}: {str(e)}\n"
+                        error_msg = _("Error collecting tests from {0}: {1}").format(test_file, str(e)) + "\n"
                         error_trace = traceback.format_exc()
                         print(error_msg + error_trace, file=original_stdout)
                         self.update_queue.put(("text", (error_msg, "error")))
@@ -163,13 +169,13 @@ class TestResultWindow(tk.Toplevel):
                         # Update status with current file
                         current_file = os.path.basename(test_file)
                         self.update_queue.put(
-                            ("status", f"Running tests from {current_file}...")
+                            ("status", _("Running tests from {0}...").format(current_file))
                         )
                         
                         # Add header for test file
                         self.update_queue.put((
                             "text",
-                            (f"\nRunning tests from {current_file}:\n", "header")
+                            ("\n" + _("Running tests from {0}:").format(current_file) + "\n", "header")
                         ))
                         
                         class ResultCollector:
@@ -201,11 +207,9 @@ class TestResultWindow(tk.Toplevel):
                                         ))
                                         if report.longrepr:
                                             error_text = str(report.longrepr)
-                                            print(f"\nError in {test_name}:\n{error_text}\n", file=original_stdout)
-                                            self.update_queue.put((
-                                                "text",
-                                                (f"\nError in {test_name}:\n{error_text}\n", "error")
-                                            ))
+                                            message = "\n" + _("Error in {0}:").format(test_name) + f"\n{error_text}\n"
+                                            print(message, file=original_stdout)
+                                            self.update_queue.put(("text", (message, "error")))
                                     
                                     # Update statistics
                                     self.update_queue.put(("stats", {
@@ -221,7 +225,7 @@ class TestResultWindow(tk.Toplevel):
                         pytest.main(['-v', test_file], plugins=[collector])
                         
                     except Exception as e:
-                        error_msg = f"\nError running tests in {test_file}: {str(e)}\n"
+                        error_msg = "\n" + _("Error running tests in {0}: {1}").format(test_file, str(e)) + "\n"
                         error_trace = traceback.format_exc()
                         # Print to both console and results window
                         print(error_msg + error_trace, file=original_stdout)
@@ -236,7 +240,7 @@ class TestResultWindow(tk.Toplevel):
                 self.update_queue.put(("done", None))
                 
             except Exception as e:
-                error_msg = f"\nUnexpected error running tests: {str(e)}\n"
+                error_msg = "\n" + _("Unexpected error running tests: {0}").format(str(e)) + "\n"
                 error_trace = traceback.format_exc()
                 # Print to both console and results window
                 print(error_msg + error_trace, file=original_stdout)
@@ -258,12 +262,12 @@ class TestResultWindow(tk.Toplevel):
         header_frame.pack(fill=tk.X, pady=(0, 10))
         
         title = Label(header_frame, 
-                     text="Backup System Verification", 
+                     text=_("Backup System Verification"), 
                      style='Header.TLabel')
         title.pack(anchor=tk.W)
         
         description = Label(header_frame,
-                          text="Running comprehensive tests to verify backup system integrity and reliability",
+                          text=_("Running comprehensive tests to verify backup system integrity and reliability"),
                           wraplength=700)
         description.pack(anchor=tk.W)
     
@@ -274,7 +278,7 @@ class TestResultWindow(tk.Toplevel):
         
         # Status line
         self.status_label = Label(progress_frame, 
-                                text="Initializing tests...",
+                                text=_("Initializing tests..."),
                                 style='Status.TLabel')
         self.status_label.pack(side=tk.TOP, fill=tk.X)
         
@@ -299,7 +303,7 @@ class TestResultWindow(tk.Toplevel):
         """Create the scrollable results section"""
         # Results container with border
         results_frame = ttk.LabelFrame(self.main_container, 
-                                     text="Test Results",
+                                     text=_("Test Results"),
                                      padding="5")
         results_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
@@ -334,33 +338,33 @@ class TestResultWindow(tk.Toplevel):
     def create_summary_section(self):
         """Create the test summary section"""
         self.summary_frame = ttk.LabelFrame(self.main_container,
-                                          text="Summary",
+                                          text=_("Summary"),
                                           padding="5")
         self.summary_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Grid for test statistics
         self.total_label = Label(self.summary_frame, 
-                               text="Total Tests: 0",
+                               text=_("Total Tests: 0"),
                                style='Summary.TLabel',
                                padding="0 5")
         self.total_label.grid(row=0, column=0, padx=5)
         
         self.passed_label = Label(self.summary_frame,
-                                text="Passed: 0",
+                                text=_("Passed: 0"),
                                 style='Summary.TLabel',
                                 padding="0 5",
                                 foreground='dark green')
         self.passed_label.grid(row=0, column=1, padx=5)
         
         self.failed_label = Label(self.summary_frame,
-                                text="Failed: 0",
+                                text=_("Failed: 0"),
                                 style='Summary.TLabel',
                                 padding="0 5",
                                 foreground='red')
         self.failed_label.grid(row=0, column=2, padx=5)
         
         self.time_label = Label(self.summary_frame,
-                              text="Time: 0:00",
+                              text=_("Time: 0:00"),
                               style='Summary.TLabel',
                               padding="0 5")
         self.time_label.grid(row=0, column=3, padx=5)
@@ -372,7 +376,7 @@ class TestResultWindow(tk.Toplevel):
         
         self.close_button = Button(
             control_frame,
-            text="Close",
+            text=_("Close"),
             command=self.destroy,
             width=15
         )
@@ -380,7 +384,7 @@ class TestResultWindow(tk.Toplevel):
         
         self.save_button = Button(
             control_frame,
-            text="Save Results",
+            text=_("Save Results"),
             command=self.save_results,
             width=15
         )
@@ -401,7 +405,7 @@ class TestResultWindow(tk.Toplevel):
                 elapsed = datetime.now() - self.test_stats['start_time']
                 minutes = elapsed.seconds // 60
                 seconds = elapsed.seconds % 60
-                self.time_label.config(text=f"Time: {minutes}:{seconds:02d}")
+                self.time_label.config(text=_("Time: ") + "f{minutes}:{seconds:02d}")
             
             self.after(100, check_queue)
         
@@ -431,9 +435,9 @@ class TestResultWindow(tk.Toplevel):
     def update_stats(self, stats: Dict[str, int]):
         """Update test statistics"""
         self.test_stats.update(stats)
-        self.total_label.config(text=f"Total Tests: {stats['total']}")
-        self.passed_label.config(text=f"Passed: {stats['passed']}")
-        self.failed_label.config(text=f"Failed: {stats['failed']}")
+        self.total_label.config(text=_("Total Tests: ").format(stats['total']))
+        self.passed_label.config(text=_("Passed: ").format(stats['passed']))
+        self.failed_label.config(text=_("Failed: ").format(stats['failed']))
     
     def append_text(self, text: str, tags: str = None):
         """Append text to results with optional tags"""
@@ -449,13 +453,13 @@ class TestResultWindow(tk.Toplevel):
         
         # Add summary to results
         self.append_text("\n" + "="*50 + "\n", "header")
-        self.append_text(f"Test Run Complete - {minutes}:{seconds:02d}\n", "header")
-        self.append_text(f"Total Tests: {self.test_stats['total']}\n")
-        self.append_text(f"Passed: {self.test_stats['passed']}\n", "pass")
-        self.append_text(f"Failed: {self.test_stats['failed']}\n", "fail" if self.test_stats['failed'] > 0 else None)
+        self.append_text(_("Test Run Complete - ") + f"{minutes}:{seconds:02d}\n", "header")
+        self.append_text(_("Total Tests: ") + f"{self.test_stats['total']}\n")
+        self.append_text(_("Passed: ") + f"{self.test_stats['passed']}\n", "pass")
+        self.append_text(_("Failed: ") + f"{self.test_stats['failed']}\n", "fail" if self.test_stats['failed'] > 0 else None)
         
         # Update status
-        status = "All tests passed successfully!" if self.test_stats['failed'] == 0 else "Some tests failed - check results"
+        status = _("All tests passed successfully!") if self.test_stats['failed'] == 0 else _("Some tests failed - check results")
         self.status_label.config(text=status)
         
         # Enable save button
@@ -469,9 +473,9 @@ class TestResultWindow(tk.Toplevel):
         try:
             with open(filename, 'w') as f:
                 f.write(self.results_text.get("1.0", tk.END))
-            self.append_text(f"\nResults saved to {filename}\n", "important")
+            self.append_text("\n" + _("Results saved to ") + f"{filename}\n", "important")
         except Exception as e:
-            self.append_text(f"\nError saving results: {str(e)}\n", "error")
+            self.append_text("\n" + _("Error saving results: ") + f"{str(e)}\n", "error")
 
     def copy_selected_text(self):
         """Copy selected text to clipboard"""

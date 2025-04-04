@@ -2,7 +2,7 @@ import os
 
 from refacdir.file_renamer import FileRenamer
 from refacdir.filename_ops import FilenameMappingDefinition
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
 
 
 class Location:

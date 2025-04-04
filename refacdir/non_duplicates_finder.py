@@ -4,7 +4,7 @@ import hashlib
 import os
 import sys
 
-from refacdir.utils import Utils
+from refacdir.utils.utils import Utils
 
 # TODO trim and finish this
 

@@ -1,0 +1,267 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"POT-Creation-Date: 2025-04-03 19:22-0400\n"
+"PO-Revision-Date: 2025-04-03 19:22-0400\n"
+"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
+"Language-Team: ko Team <<EMAIL>>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\app.py:191 .\app.py:647
+msgid "RefacDir"
+msgstr "RefacDir"
+
+#: .\app.py:222
+msgid "Configure and run file management operations with ease"
+msgstr "쉽게 파일 관리 작업을 구성하고 실행"
+
+#: .\app.py:233
+msgid "Toggle Theme"
+msgstr "제품정보 이름 *"
+
+#: .\app.py:239
+msgid "Run Backup Tests"
+msgstr "실행 백업 제품정보"
+
+#: .\app.py:245
+msgid "Run Operations"
+msgstr "실행 작업"
+
+#: .\app.py:261
+msgid "Options"
+msgstr "제품 설명"
+
+#: .\app.py:267
+msgid "Recur Selected Actions"
+msgstr "선택된 행동"
+
+#: .\app.py:275
+msgid "Test Mode"
+msgstr "시험 형태"
+
+#: .\app.py:282
+msgid "Skip Confirmations"
+msgstr "자주 묻는 질문"
+
+#: .\app.py:289
+msgid "Only Observers"
+msgstr "만 관찰자"
+
+#: .\app.py:300 .\app.py:519
+msgid "Ready"
+msgstr "지원하다"
+
+#: .\app.py:517
+msgid "Operation failed"
+msgstr "가동 실패"
+
+#: .\refacdir\ui\test_results_window.py:25
+#: .\refacdir\ui\test_results_window.py:265
+msgid "Backup System Verification"
+msgstr "백업 시스템 검증"
+
+#: .\refacdir\ui\test_results_window.py:90
+msgid "Test directory not found: {0}"
+msgstr "찾을 수 없음: 이름 *"
+
+#: .\refacdir\ui\test_results_window.py:105
+msgid "Base directory: "
+msgstr "기본 디렉토리: "
+
+#: .\refacdir\ui\test_results_window.py:106
+msgid "Test directory: "
+msgstr "테스트 디렉토리: "
+
+#: .\refacdir\ui\test_results_window.py:107
+msgid "Test files directory: "
+msgstr "파일 디렉토리를 테스트: "
+
+#: .\refacdir\ui\test_results_window.py:108
+msgid "Python path: "
+msgstr "파이썬 경로: "
+
+#: .\refacdir\ui\test_results_window.py:113
+msgid "Test file not found: {0}"
+msgstr "찾을 수없는 테스트 파일 : 이름 *"
+
+#: .\refacdir\ui\test_results_window.py:118
+msgid "Found test file: "
+msgstr "발견된 시험 파일: "
+
+#: .\refacdir\ui\test_results_window.py:121
+msgid "No test files found!"
+msgstr "테스트 파일이 없습니다!"
+
+#: .\refacdir\ui\test_results_window.py:133
+msgid "Analyzing test suite..."
+msgstr "분석 테스트 스위트 ..."
+
+#: .\refacdir\ui\test_results_window.py:148
+msgid "Found {0} tests in {1}"
+msgstr "{0} {1}에서 테스트"
+
+#: .\refacdir\ui\test_results_window.py:152
+msgid "Error collecting tests from {0}: {1}"
+msgstr "오류 수집 테스트 {0}: {1}"
+
+#: .\refacdir\ui\test_results_window.py:172
+msgid "Running tests from {0}..."
+msgstr "{0}에서 실행 테스트 ..."
+
+#: .\refacdir\ui\test_results_window.py:178
+msgid "Running tests from {0}:"
+msgstr "{0}에서 실행된 테스트:"
+
+#: .\refacdir\ui\test_results_window.py:210
+msgid "Error in {0}:"
+msgstr "오류 {0}:"
+
+#: .\refacdir\ui\test_results_window.py:228
+msgid "Error running tests in {0}: {1}"
+msgstr "오류 실행 테스트 {0}: 이름 *"
+
+#: .\refacdir\ui\test_results_window.py:243
+msgid "Unexpected error running tests: {0}"
+msgstr "오류 실행 테스트: 이름 *"
+
+#: .\refacdir\ui\test_results_window.py:270
+msgid ""
+"Running comprehensive tests to verify backup system integrity and "
+"reliability"
+msgstr "백업 시스템의 무결성 및 신뢰성을 확인하는 포괄적인 테스트를 실행"
+
+#: .\refacdir\ui\test_results_window.py:281
+msgid "Initializing tests..."
+msgstr "초기 테스트 ..."
+
+#: .\refacdir\ui\test_results_window.py:306
+msgid "Test Results"
+msgstr "시험 결과"
+
+#: .\refacdir\ui\test_results_window.py:341
+msgid "Summary"
+msgstr "제품정보"
+
+#: .\refacdir\ui\test_results_window.py:347
+msgid "Total Tests: 0"
+msgstr "총 시험: 0 댓글"
+
+#: .\refacdir\ui\test_results_window.py:353
+msgid "Passed: 0"
+msgstr "통과: 0"
+
+#: .\refacdir\ui\test_results_window.py:360
+msgid "Failed: 0"
+msgstr "실패: 0"
+
+#: .\refacdir\ui\test_results_window.py:367
+msgid "Time: 0:00"
+msgstr "시각: 0:00"
+
+#: .\refacdir\ui\test_results_window.py:379
+msgid "Close"
+msgstr "이름 *"
+
+#: .\refacdir\ui\test_results_window.py:387
+msgid "Save Results"
+msgstr "결과 저장"
+
+#: .\refacdir\ui\test_results_window.py:408
+msgid "Time: "
+msgstr "시간: "
+
+#: .\refacdir\ui\test_results_window.py:438
+#: .\refacdir\ui\test_results_window.py:457
+msgid "Total Tests: "
+msgstr "총 시험: "
+
+#: .\refacdir\ui\test_results_window.py:439
+#: .\refacdir\ui\test_results_window.py:458
+msgid "Passed: "
+msgstr "공급 능력: "
+
+#: .\refacdir\ui\test_results_window.py:440
+#: .\refacdir\ui\test_results_window.py:459
+msgid "Failed: "
+msgstr "실패: "
+
+#: .\refacdir\ui\test_results_window.py:456
+msgid "Test Run Complete - "
+msgstr "테스트 실행 완료 - "
+
+#: .\refacdir\ui\test_results_window.py:462
+msgid "All tests passed successfully!"
+msgstr "모든 시험은 성공적으로 통과했습니다!"
+
+#: .\refacdir\ui\test_results_window.py:462
+msgid "Some tests failed - check results"
+msgstr "일부 테스트 실패 - 결과 확인"
+
+#: .\refacdir\ui\test_results_window.py:476
+msgid "Results saved to "
+msgstr "결과 저장 "
+
+#: .\refacdir\ui\test_results_window.py:478
+msgid "Error saving results: "
+msgstr "오류 절약 결과 : "
+
+#: .\refacdir\utils\translations.py:37
+msgid "Monday"
+msgstr "월~금"
+
+#: .\refacdir\utils\translations.py:39
+msgid "Tuesday"
+msgstr "* 이름"
+
+#: .\refacdir\utils\translations.py:41
+msgid "Wednesday"
+msgstr "- 한국어"
+
+#: .\refacdir\utils\translations.py:43
+msgid "Thursday"
+msgstr "주 메뉴"
+
+#: .\refacdir\utils\translations.py:45
+msgid "Friday"
+msgstr "월~금"
+
+#: .\refacdir\utils\translations.py:47
+msgid "Saturday"
+msgstr "·"
+
+#: .\refacdir\utils\translations.py:49
+msgid "Sunday"
+msgstr "주 메뉴"
+
+#: .\refacdir\utils\translations.py:61
+msgid "seconds"
+msgstr "지원하다"
+
+#: .\refacdir\utils\translations.py:63
+msgid "minutes"
+msgstr "1시간"
+
+#: .\refacdir\utils\translations.py:65
+msgid "hours"
+msgstr "영업시간"
+
+#: .\refacdir\utils\translations.py:67
+msgid "days"
+msgstr "일 시"
+
+#: .\refacdir\utils\translations.py:69
+msgid "weeks"
+msgstr "주 메뉴"
+
+#: .\refacdir\utils\translations.py:71
+msgid "months"
+msgstr "1 개월 전"
+
+#: .\refacdir\utils\translations.py:73
+msgid "years"
+msgstr "- 연혁"
