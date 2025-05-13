@@ -1,0 +1,608 @@
+from copy import deepcopy
+import os
+import signal
+import time
+import traceback
+from typing import Dict, Optional
+
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QLabel, QCheckBox, QProgressBar, QFrame,
+    QMessageBox, QScrollArea, QSizePolicy, QTextEdit, QFileDialog, QLineEdit, QGridLayout, QStyle
+)
+from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread
+from PySide6.QtGui import QFont, QPalette, QColor
+
+from run import main
+from extensions.refacdir_server import RefacDirServer
+from refacdir.batch import BatchArgs
+from refacdir.config import config as _config
+from refacdir.job_queue import JobQueue
+from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
+from refacdir.utils.utils import Utils
+from refacdir.utils.translations import I18N
+from ui.styles import ThemeManager, ThemeColors
+
+_ = I18N._
+
+class ToastNotification(QWidget):
+    """Custom toast notification widget"""
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.Window | Qt.FramelessWindowHint | Qt.Tool)
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        self.label = QLabel()
+        self.label.setWordWrap(True)
+        layout.addWidget(self.label)
+        
+    def show_message(self, message: str, duration: int = 2000):
+        self.label.setText(message)
+        self.adjustSize()
+        
+        # Position in top-right corner
+        screen = QApplication.primaryScreen().geometry()
+        self.move(screen.width() - self.width() - 20, 20)
+        
+        self.show()
+        QTimer.singleShot(duration, self.close)
+
+class ProgressListener:
+    def __init__(self, update_func):
+        self.update_func = update_func
+
+    def update(self, context, percent_complete):
+        self.update_func(context, percent_complete)
+
+    def update_status(self, status):
+        self.update_func(None, None, status)
+
+class TestResultsWindow(QMainWindow):
+    """Window for displaying test results"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup_ui()
+        
+    def setup_ui(self):
+        """Initialize the test results window UI"""
+        self.setWindowTitle(_("Backup System Verification"))
+        self.resize(800, 600)
+        self.setMinimumSize(600, 400)
+        
+        # Main widget and layout
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        layout = QVBoxLayout(main_widget)
+        layout.setSpacing(10)
+        
+        # Header
+        header = QLabel(_("Backup System Test Results"))
+        header.setFont(QFont("Helvetica", 12, QFont.Bold))
+        layout.addWidget(header)
+        
+        # Progress section
+        progress_frame = QWidget()
+        progress_layout = QVBoxLayout(progress_frame)
+        
+        self.status_label = QLabel(_("Initializing tests..."))
+        progress_layout.addWidget(self.status_label)
+        
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        progress_layout.addWidget(self.progress_bar)
+        
+        layout.addWidget(progress_frame)
+        
+        # Results section
+        self.results_text = QTextEdit()
+        self.results_text.setReadOnly(True)
+        layout.addWidget(self.results_text)
+        
+        # Summary section
+        summary_frame = QWidget()
+        summary_layout = QHBoxLayout(summary_frame)
+        
+        self.total_label = QLabel(_("Total Tests: 0"))
+        summary_layout.addWidget(self.total_label)
+        
+        self.passed_label = QLabel(_("Passed: 0"))
+        summary_layout.addWidget(self.passed_label)
+        
+        self.failed_label = QLabel(_("Failed: 0"))
+        summary_layout.addWidget(self.failed_label)
+        
+        layout.addWidget(summary_frame)
+        
+        # Control buttons
+        control_frame = QWidget()
+        control_layout = QHBoxLayout(control_frame)
+        
+        self.close_button = QPushButton(_("Close"))
+        self.close_button.clicked.connect(self.close)
+        control_layout.addWidget(self.close_button)
+        
+        self.save_button = QPushButton(_("Save Results"))
+        self.save_button.clicked.connect(self.save_results)
+        self.save_button.setEnabled(False)
+        control_layout.addWidget(self.save_button)
+        
+        layout.addWidget(control_frame)
+        
+    def run_tests(self):
+        """Run the backup system tests"""
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(0)
+        self.status_label.setText(_("Running tests..."))
+        
+        def run_tests_thread():
+            try:
+                # TODO: Implement actual test running logic
+                pass
+            except Exception as e:
+                self.alert("Error", str(e), "error")
+            finally:
+                self.progress_bar.setVisible(False)
+                self.save_button.setEnabled(True)
+                
+        Utils.start_thread(run_tests_thread)
+        
+    def save_results(self):
+        """Save test results to a file"""
+        file_name, _ = QFileDialog.getSaveFileName(
+            self,
+            _("Save Test Results"),
+            "",
+            _("Text Files (*.txt);;All Files (*)")
+        )
+        
+        if file_name:
+            try:
+                with open(file_name, 'w') as f:
+                    f.write(self.results_text.toPlainText())
+            except Exception as e:
+                self.alert("Error", str(e), "error")
+                
+    def alert(self, title: str, message: str, kind: str = "info"):
+        """Show an alert dialog"""
+        if kind not in ("error", "warning", "info"):
+            raise ValueError("Unsupported alert kind.")
+            
+        QMessageBox.critical(self, title, message) if kind == "error" else \
+        QMessageBox.warning(self, title, message) if kind == "warning" else \
+        QMessageBox.information(self, title, message)
+
+class MainWindow(QMainWindow):
+    """Main application window"""
+    
+    def __init__(self):
+        super().__init__()
+        self.configs = {}
+        self.filtered_configs = {}
+        self.filter_text = ""
+        self.progress_bar = None
+        self.job_queue = JobQueue()
+        self.server = self.setup_server()
+        self.recurring_action_config = RecurringActionConfig()
+        self.toast = ToastNotification()
+        self.is_dark_theme = True
+        
+        self.setup_ui()
+        self.setup_connections()
+        self.load_configs()
+        
+    def setup_ui(self):
+        """Initialize the main UI components"""
+        self.setWindowTitle(_("RefacDir"))
+        self.resize(1000, 700)  # Slightly larger default size
+        self.setMinimumSize(800, 600)
+        
+        # Main widget and layout
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QHBoxLayout(main_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins for full-width design
+        main_layout.setSpacing(0)  # Remove spacing between main sections
+        
+        # Create sections
+        self.create_sidebar(main_layout)
+        self.create_main_content(main_layout)
+        
+        # Apply initial theme
+        self.apply_theme(is_dark=True)
+        
+    def create_sidebar(self, parent_layout):
+        """Create the sidebar with action buttons and configs"""
+        sidebar = QWidget()
+        sidebar.setFixedWidth(280)  # Wider sidebar for better readability
+        sidebar.setObjectName("sidebar")  # For styling
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(20, 20, 20, 20)
+        sidebar_layout.setSpacing(15)
+        
+        # Logo/Title section
+        title_section = QWidget()
+        title_layout = QVBoxLayout(title_section)
+        title_layout.setContentsMargins(0, 0, 0, 20)
+        
+        title = QLabel("RefacDir")
+        title.setFont(QFont("Helvetica", 16, QFont.Bold))
+        title_layout.addWidget(title)
+        
+        subtitle = QLabel(_("File Management"))
+        subtitle.setFont(QFont("Helvetica", 10))
+        subtitle.setStyleSheet("color: gray;")
+        title_layout.addWidget(subtitle)
+        
+        sidebar_layout.addWidget(title_section)
+        
+        # Action buttons in a frame
+        actions_frame = QFrame()
+        actions_frame.setObjectName("actionsFrame")
+        actions_layout = QVBoxLayout(actions_frame)
+        actions_layout.setSpacing(10)
+        
+        self.toggle_theme_btn = QPushButton(_("Toggle Theme"))
+        self.toggle_theme_btn.setIcon(self.style().standardIcon(QStyle.SP_DesktopIcon))
+        self.toggle_theme_btn.clicked.connect(self.toggle_theme)
+        actions_layout.addWidget(self.toggle_theme_btn)
+        
+        self.test_runner_btn = QPushButton(_("Run Backup Tests"))
+        self.test_runner_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogListView))
+        self.test_runner_btn.clicked.connect(self.run_tests)
+        actions_layout.addWidget(self.test_runner_btn)
+        
+        self.run_btn = QPushButton(_("Run Operations"))
+        self.run_btn.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.run_btn.clicked.connect(self.run)
+        actions_layout.addWidget(self.run_btn)
+        
+        sidebar_layout.addWidget(actions_frame)
+        
+        # Search box
+        search_frame = QFrame()
+        search_frame.setObjectName("searchFrame")
+        search_layout = QVBoxLayout(search_frame)
+        
+        search_label = QLabel(_("Search Configurations"))
+        search_label.setFont(QFont("Helvetica", 10, QFont.Bold))
+        search_layout.addWidget(search_label)
+        
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText(_("Type to filter..."))
+        self.search_input.textChanged.connect(self.filter_configs)
+        search_layout.addWidget(self.search_input)
+        
+        sidebar_layout.addWidget(search_frame)
+        
+        # Config checkboxes container with title
+        config_section = QWidget()
+        config_layout = QVBoxLayout(config_section)
+        config_layout.setSpacing(10)
+        
+        config_header = QLabel(_("Available Configurations"))
+        config_header.setFont(QFont("Helvetica", 10, QFont.Bold))
+        config_layout.addWidget(config_header)
+        
+        self.config_scroll = QScrollArea()
+        self.config_scroll.setWidgetResizable(True)
+        self.config_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.config_scroll.setObjectName("configScroll")
+        
+        config_container = QWidget()
+        self.config_layout = QVBoxLayout(config_container)
+        self.config_layout.setSpacing(8)
+        self.config_scroll.setWidget(config_container)
+        
+        config_layout.addWidget(self.config_scroll)
+        sidebar_layout.addWidget(config_section)
+        
+        parent_layout.addWidget(sidebar)
+        
+    def create_main_content(self, parent_layout):
+        """Create the main content area"""
+        main_content = QWidget()
+        main_content.setObjectName("mainContent")
+        main_layout = QVBoxLayout(main_content)
+        main_layout.setContentsMargins(30, 30, 30, 30)
+        main_layout.setSpacing(20)
+        
+        # Header section
+        self.create_header_section(main_layout)
+        
+        # Options section
+        self.create_options_section(main_layout)
+        
+        # Progress section
+        self.create_progress_section(main_layout)
+        
+        # Add stretch to push everything up
+        main_layout.addStretch()
+        
+        parent_layout.addWidget(main_content)
+        
+    def create_header_section(self, parent_layout):
+        """Create the header section with title and description"""
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setSpacing(10)
+        
+        title = QLabel(_("File Management Dashboard"))
+        title.setFont(QFont("Helvetica", 24, QFont.Bold))
+        header_layout.addWidget(title)
+        
+        description = QLabel(_("Configure and run file management operations with ease. Select configurations from the sidebar and customize options below."))
+        description.setWordWrap(True)
+        description.setStyleSheet("color: gray;")
+        header_layout.addWidget(description)
+        
+        parent_layout.addWidget(header)
+        
+    def create_options_section(self, parent_layout):
+        """Create the options section with checkboxes"""
+        options_frame = QFrame()
+        options_frame.setObjectName("optionsFrame")
+        options_frame.setFrameStyle(QFrame.StyledPanel)
+        options_layout = QVBoxLayout(options_frame)
+        options_layout.setSpacing(15)
+        
+        # Options title
+        options_title = QLabel(_("Operation Settings"))
+        options_title.setFont(QFont("Helvetica", 14, QFont.Bold))
+        options_layout.addWidget(options_title)
+        
+        # Configuration options in a grid
+        options_grid = QGridLayout()
+        options_grid.setSpacing(15)
+        
+        self.recur_check = QCheckBox(_("Recur Selected Actions"))
+        self.recur_check.stateChanged.connect(self.set_recurring_action)
+        options_grid.addWidget(self.recur_check, 0, 0)
+        
+        self.test_check = QCheckBox(_("Test Mode"))
+        options_grid.addWidget(self.test_check, 0, 1)
+        
+        self.skip_confirm_check = QCheckBox(_("Skip Confirmations"))
+        options_grid.addWidget(self.skip_confirm_check, 1, 0)
+        
+        self.only_observers_check = QCheckBox(_("Only Observers"))
+        options_grid.addWidget(self.only_observers_check, 1, 1)
+        
+        options_layout.addLayout(options_grid)
+        parent_layout.addWidget(options_frame)
+        
+    def create_progress_section(self, parent_layout):
+        """Create the progress section with status and progress bar"""
+        progress_frame = QFrame()
+        progress_frame.setObjectName("progressFrame")
+        progress_frame.setFrameStyle(QFrame.StyledPanel)
+        progress_layout = QVBoxLayout(progress_frame)
+        progress_layout.setSpacing(15)
+        
+        # Progress title
+        progress_title = QLabel(_("Operation Status"))
+        progress_title.setFont(QFont("Helvetica", 14, QFont.Bold))
+        progress_layout.addWidget(progress_title)
+        
+        self.status_label = QLabel(_("Ready"))
+        self.status_label.setFont(QFont("Helvetica", 10))
+        progress_layout.addWidget(self.status_label)
+        
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setMinimumHeight(25)
+        progress_layout.addWidget(self.progress_bar)
+        
+        parent_layout.addWidget(progress_frame)
+        
+    def apply_theme(self, is_dark: bool):
+        """Apply the selected theme to the application"""
+        self.is_dark_theme = is_dark
+        ThemeManager.apply_theme(QApplication.instance(), is_dark)
+        
+    def toggle_theme(self):
+        """Toggle between light and dark themes"""
+        self.apply_theme(not self.is_dark_theme)
+        self.toast.show_message(
+            "Theme switched to light." if not self.is_dark_theme else "Theme switched to dark."
+        )
+
+    def setup_connections(self):
+        """Set up signal/slot connections"""
+        # TODO: Implement signal connections
+        
+    def load_configs(self):
+        """Load initial configurations"""
+        BatchArgs.setup_configs(recache=False)
+        self.configs = deepcopy(BatchArgs.configs)
+        self.filtered_configs = deepcopy(BatchArgs.configs)
+        self.add_config_widgets()
+        
+    def setup_server(self):
+        """Initialize the server component"""
+        server = RefacDirServer(self.server_run_callback)
+        try:
+            Utils.start_thread(server.start)
+            return server
+        except Exception as e:
+            print(f"Failed to start server: {e}")
+        return None
+        
+    def server_run_callback(self, args):
+        """Handle server callbacks"""
+        if len(args) > 0:
+            print(args)
+            self.update()
+        self.run()
+        return {}
+
+    def add_config_widgets(self):
+        """Add configuration checkboxes to sidebar"""
+        # Clear existing widgets
+        while self.config_layout.count():
+            item = self.config_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        
+        # Add new checkboxes
+        for config, will_run in self.filtered_configs.items():
+            checkbox = QCheckBox(config)
+            checkbox.setChecked(will_run if will_run is not None else False)
+            checkbox.stateChanged.connect(lambda state, c=config: self.toggle_config(c, state))
+            self.config_layout.addWidget(checkbox)
+            
+    def toggle_config(self, config: str, state: int):
+        """Handle config checkbox state changes"""
+        if config in self.filtered_configs:
+            self.filtered_configs[config] = state == Qt.Checked
+            self.configs[config] = self.filtered_configs[config]
+            BatchArgs.update_config_state(config, self.filtered_configs[config])
+            print(f"Config {config} set to {self.filtered_configs[config]}")
+            
+    def filter_configs(self, text: str):
+        """Filter configurations based on search text"""
+        if not text.strip():
+            self.filtered_configs = deepcopy(self.configs)
+        else:
+            self.filtered_configs = {}
+            for path in self.configs:
+                basename = os.path.basename(os.path.normpath(path))
+                if (basename.lower() == text.lower() or
+                    basename.lower().startswith(text.lower()) or
+                    f" {text.lower()}" in basename.lower() or
+                    f"_{text.lower()}" in basename.lower()):
+                    self.filtered_configs[path] = self.configs[path]
+        
+        self.add_config_widgets()
+        
+    def run(self):
+        """Run the selected operations"""
+        if self.progress_bar.isVisible():
+            return
+            
+        args = BatchArgs(recache_configs=False)
+        args.test = self.test_check.isChecked()
+        args.skip_confirm = self.skip_confirm_check.isChecked()
+        args.only_observers = self.only_observers_check.isChecked()
+        
+        # Only run filtered configs
+        BatchArgs.override_configs(self.filtered_configs)
+        
+        # Show progress bar
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(0)
+        self.status_label.setText(_("Running operations..."))
+        
+        # Run operations in background
+        def run_async():
+            try:
+                main(args)
+            except Exception as e:
+                self.alert("Error", str(e), "error")
+                self.status_label.setText(_("Operation failed"))
+            finally:
+                self.status_label.setText(_("Ready"))
+                self.progress_bar.setValue(0)
+                self.progress_bar.setVisible(False)
+                
+        Utils.start_thread(run_async)
+        
+    def set_recurring_action(self, state: int):
+        """Handle recurring action checkbox state changes"""
+        self.recurring_action_config.set(state == Qt.Checked)
+        if self.recurring_action_config.is_running:
+            self.skip_confirm_check.setChecked(True)
+            start_thread(self.run_recurring_actions)
+            
+    @periodic("recurring_action_config")
+    async def run_recurring_actions(self, **kwargs):
+        self.run()
+        
+    def run_tests(self):
+        """Run backup system tests"""
+        test_window = TestResultsWindow(self)
+        test_window.show()
+        test_window.run_tests()
+        
+    def run_config(self, config: str):
+        """Run operations for a specific config"""
+        if not os.path.isdir(config):
+            self.alert("Error", _("Failed to set target directory to receive marked files."), "error")
+            return
+            
+        self.filtered_configs = {config: True}
+        self.run()
+        
+    def alert(self, title: str, message: str, kind: str = "info"):
+        """Show an alert dialog"""
+        if kind not in ("error", "warning", "info"):
+            raise ValueError("Unsupported alert kind.")
+            
+        print(f"Alert - Title: \"{title}\" Message: {message}")
+        
+        # Use theme colors for message boxes
+        if kind == "error":
+            QMessageBox.critical(self, title, message)
+        elif kind == "warning":
+            QMessageBox.warning(self, title, message)
+        else:
+            QMessageBox.information(self, title, message)
+        
+    def closeEvent(self, event):
+        """Handle window close event"""
+        if self.server is not None:
+            try:
+                self.server.stop()
+            except Exception as e:
+                print(f"Error stopping server: {e}")
+        event.accept()
+
+    def keyPressEvent(self, event):
+        """Handle keyboard events"""
+        # Handle Shift+R for running operations
+        if event.key() == Qt.Key_R and event.modifiers() & Qt.ShiftModifier:
+            self.run()
+            return
+            
+        # Handle Enter for running filtered config
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            if self.filter_text.strip():
+                if len(self.filtered_configs) == 1:
+                    config = next(iter(self.filtered_configs))
+                    self.run_config(config)
+                else:
+                    self.run()
+            return
+            
+        # Handle Backspace for filtering
+        if event.key() == Qt.Key_Backspace:
+            if self.filter_text:
+                self.filter_text = self.filter_text[:-1]
+                self.filter_configs(self.filter_text)
+            return
+            
+        # Handle regular text input for filtering
+        if event.text():
+            self.filter_text += event.text()
+            self.filter_configs(self.filter_text)
+
+if __name__ == "__main__":
+    try:
+        # Set up signal handlers for graceful shutdown
+        def graceful_shutdown(signum, frame):
+            print("Caught signal, shutting down gracefully...")
+            app.close()
+            exit(0)
+            
+        signal.signal(signal.SIGINT, graceful_shutdown)
+        signal.signal(signal.SIGTERM, graceful_shutdown)
+        
+        # Create and run application
+        app = QApplication([])
+        window = MainWindow()
+        window.show()
+        exit(app.exec())
+    except KeyboardInterrupt:
+        pass
+    except Exception:
+        traceback.print_exc() 

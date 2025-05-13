@@ -1,1 +1,2 @@
-python %~dp0\app.py
+CALL TITLE RefacDir
+python %~dp0\app_qt.py
