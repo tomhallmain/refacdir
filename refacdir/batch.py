@@ -23,6 +23,7 @@ class BatchArgs:
         self.test = False
         self.skip_confirm = False
         self.only_observers = False
+        self.app_actions = None
         if len(self.configs) == 0 or recache_configs:
             BatchArgs.setup_configs()
 
@@ -96,6 +97,7 @@ class BatchJob:
         self.configurations = BatchArgs.configs
         self.counts_map = {}
         self.failure_counts_map = {}
+        self.app_actions = args.app_actions  # Store app_actions
         for action_type in ActionType.__members__.values():
             self.counts_map[action_type] = 0
             self.failure_counts_map[action_type] = 0
@@ -103,6 +105,13 @@ class BatchJob:
         self.test = args.test
         self.skip_confirm = args.skip_confirm
         self.cancelled = False
+        
+        # Progress tracking
+        self.total_configs = sum(1 for will_run in self.configurations.values() if will_run)
+        self.current_config_index = 0
+        self.total_actions = 0
+        self.current_action_index = 0
+        self.skipped_actions = 0  # Track skipped actions
         
         temp_full_path_example = None
         for config in self.configurations:
@@ -117,14 +126,49 @@ class BatchJob:
 
     def run(self):
         try:
+            # Count total actions across all configs
+            self.total_actions = 0
+            for config, will_run in self.configurations.items():
+                if not will_run:
+                    continue
+                with open(os.path.join(BatchJob.BASE_DIR, config), 'r') as f:
+                    try:
+                        config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
+                        if "actions" in config_wrapper:
+                            self.total_actions += len(config_wrapper["actions"])
+                    except yaml.YAMLError:
+                        continue
+
+            self.current_config_index = 0
+            self.current_action_index = 0
+            self.skipped_actions = 0
+            
+            if self.app_actions:
+                self.app_actions.progress_text("Starting batch operations...")
+                self.app_actions.progress_bar_update(None, 0.0)
+
             for config, will_run in self.configurations.items():
                 if will_run == False:
                     continue
                 os.chdir(self.cwd)
+                self.current_config_index += 1
+                if self.app_actions:
+                    self.app_actions.progress_text(f"Processing config {self.current_config_index}/{self.total_configs}: {config}")
                 self.run_config_file(config)
+                
+            if self.app_actions:
+                if self.skipped_actions > 0:
+                    self.app_actions.progress_text(f"Batch operations completed (skipped {self.skipped_actions} actions)")
+                else:
+                    self.app_actions.progress_text("Batch operations completed")
+                self.app_actions.progress_bar_reset()
+                
         except KeyboardInterrupt:
             print("Exiting prematurely at user request...")
             self.cancelled = True
+            if self.app_actions:
+                self.app_actions.progress_text("Operations cancelled by user")
+                self.app_actions.progress_bar_reset()
 
     def run_config_file(self, config):
         with open(os.path.join(BatchJob.BASE_DIR, config), 'r') as f:
@@ -149,10 +193,22 @@ class BatchJob:
             FilenameMappingDefinition.add_named_functions(Utils.get_from_dict(config_wrapper, "filename_mapping_functions", []))
             FiletypesDefinition.add_named_definitions(Utils.get_from_dict(config_wrapper, "filetype_definitions", []))
 
+            total_actions_in_config = len(config_wrapper["actions"])
             for i in range(len(config_wrapper["actions"])):
                 action = config_wrapper["actions"][i]
                 if not self.run_action(config, action, i):
+                    # If action fails, count remaining actions as skipped
+                    remaining_actions = total_actions_in_config - (i + 1)
+                    self.skipped_actions += remaining_actions
+                    if self.app_actions:
+                        self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: {config} stopped after {i + 1} actions (skipped {remaining_actions} actions)")
                     return # If we fail to run an action then we stop running the config file
+                
+                # Update progress after action completes successfully
+                self.current_action_index += 1
+                if self.app_actions:
+                    progress = self.current_action_index / self.total_actions
+                    self.app_actions.progress_bar_update(None, progress)
 
     def log_results(self):
         for action_type in ActionType.__members__.values():
@@ -176,6 +232,8 @@ class BatchJob:
             if self.args.only_observers and ActionType.DIRECTORY_OBSERVER != action_type:
                 print(f"{config} - Skipping {action_type} action")
                 return True
+            if self.app_actions:
+                self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running {action_type} action in {config}")
             print(f"Running action type: {action_type}")
             if action_type == ActionType.RENAMER:
                 return self.run_renamers(config, action["mappings"])
@@ -190,7 +248,8 @@ class BatchJob:
 
     def run_multi_action(self, config, action_type, actions):
         constructor_func_name = f"construct_{action_type.get_varname()}"
-        for _action in actions:
+        total_actions = len(actions)
+        for action_index, _action in enumerate(actions):
             self.counts_map[action_type] += 1
             try:
                 constructor_func = getattr(self, constructor_func_name)
@@ -205,6 +264,17 @@ class BatchJob:
                     error = f"Error in {config} {action_type} {_action_index}:  {e}"
                 self.failures.append(error)
                 continue
+
+            # Calculate sub-progress for this action
+            if self.app_actions:
+                # Calculate progress between current action and next action
+                current_action_progress = (self.current_action_index - 1) / self.total_actions
+                next_action_progress = self.current_action_index / self.total_actions
+                # Interpolate based on which sub-action we're on
+                sub_progress = current_action_progress + (next_action_progress - current_action_progress) * (action_index / total_actions)
+                self.app_actions.progress_bar_update(None, sub_progress)
+                self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running {action_type} {action_index + 1}/{total_actions} in {config}")
+
             try:
                 action.run()
             except Exception as e:
@@ -215,7 +285,8 @@ class BatchJob:
         return self.failure_counts_map[action_type] == 0
 
     def run_renamers(self, config, renamers):
-        for _renamer in renamers:
+        total_renamers = len(renamers)
+        for renamer_index, _renamer in enumerate(renamers):
             self.counts_map[ActionType.RENAMER] += 1
             try:
                 renamer, renamer_function = self.construct_batch_renamer(_renamer)
@@ -230,6 +301,17 @@ class BatchJob:
                 self.failures.append(error)
                 print(error)
                 continue
+
+            # Calculate sub-progress for this renamer
+            if self.app_actions:
+                # Calculate progress between current action and next action
+                current_action_progress = (self.current_action_index - 1) / self.total_actions
+                next_action_progress = self.current_action_index / self.total_actions
+                # Interpolate based on which renamer we're on
+                sub_progress = current_action_progress + (next_action_progress - current_action_progress) * (renamer_index / total_renamers)
+                self.app_actions.progress_bar_update(None, sub_progress)
+                self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running renamer mapping {renamer_index + 1}/{total_renamers} in {config}")
+
             try:
                 renamer.execute(renamer_function)
             except Exception as e:

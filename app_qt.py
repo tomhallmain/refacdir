@@ -21,32 +21,10 @@ from refacdir.job_queue import JobQueue
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
 from refacdir.utils.utils import Utils
 from refacdir.utils.translations import I18N
-from ui.styles import ThemeManager, ThemeColors
+from ui import AppActions, ThemeManager, ThemeColors, ToastNotification, TestResultsWindow
 
 _ = I18N._
 
-class ToastNotification(QWidget):
-    """Custom toast notification widget"""
-    def __init__(self, parent=None):
-        super().__init__(parent, Qt.Window | Qt.FramelessWindowHint | Qt.Tool)
-        self.setup_ui()
-        
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        self.label = QLabel()
-        self.label.setWordWrap(True)
-        layout.addWidget(self.label)
-        
-    def show_message(self, message: str, duration: int = 2000):
-        self.label.setText(message)
-        self.adjustSize()
-        
-        # Position in top-right corner
-        screen = QApplication.primaryScreen().geometry()
-        self.move(screen.width() - self.width() - 20, 20)
-        
-        self.show()
-        QTimer.singleShot(duration, self.close)
 
 class ProgressListener:
     def __init__(self, update_func):
@@ -58,122 +36,14 @@ class ProgressListener:
     def update_status(self, status):
         self.update_func(None, None, status)
 
-class TestResultsWindow(QMainWindow):
-    """Window for displaying test results"""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setup_ui()
-        
-    def setup_ui(self):
-        """Initialize the test results window UI"""
-        self.setWindowTitle(_("Backup System Verification"))
-        self.resize(800, 600)
-        self.setMinimumSize(600, 400)
-        
-        # Main widget and layout
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
-        layout.setSpacing(10)
-        
-        # Header
-        header = QLabel(_("Backup System Test Results"))
-        header.setFont(QFont("Helvetica", 12, QFont.Bold))
-        layout.addWidget(header)
-        
-        # Progress section
-        progress_frame = QWidget()
-        progress_layout = QVBoxLayout(progress_frame)
-        
-        self.status_label = QLabel(_("Initializing tests..."))
-        progress_layout.addWidget(self.status_label)
-        
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        progress_layout.addWidget(self.progress_bar)
-        
-        layout.addWidget(progress_frame)
-        
-        # Results section
-        self.results_text = QTextEdit()
-        self.results_text.setReadOnly(True)
-        layout.addWidget(self.results_text)
-        
-        # Summary section
-        summary_frame = QWidget()
-        summary_layout = QHBoxLayout(summary_frame)
-        
-        self.total_label = QLabel(_("Total Tests: 0"))
-        summary_layout.addWidget(self.total_label)
-        
-        self.passed_label = QLabel(_("Passed: 0"))
-        summary_layout.addWidget(self.passed_label)
-        
-        self.failed_label = QLabel(_("Failed: 0"))
-        summary_layout.addWidget(self.failed_label)
-        
-        layout.addWidget(summary_frame)
-        
-        # Control buttons
-        control_frame = QWidget()
-        control_layout = QHBoxLayout(control_frame)
-        
-        self.close_button = QPushButton(_("Close"))
-        self.close_button.clicked.connect(self.close)
-        control_layout.addWidget(self.close_button)
-        
-        self.save_button = QPushButton(_("Save Results"))
-        self.save_button.clicked.connect(self.save_results)
-        self.save_button.setEnabled(False)
-        control_layout.addWidget(self.save_button)
-        
-        layout.addWidget(control_frame)
-        
-    def run_tests(self):
-        """Run the backup system tests"""
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setValue(0)
-        self.status_label.setText(_("Running tests..."))
-        
-        def run_tests_thread():
-            try:
-                # TODO: Implement actual test running logic
-                pass
-            except Exception as e:
-                self.alert("Error", str(e), "error")
-            finally:
-                self.progress_bar.setVisible(False)
-                self.save_button.setEnabled(True)
-                
-        Utils.start_thread(run_tests_thread)
-        
-    def save_results(self):
-        """Save test results to a file"""
-        file_name, _ = QFileDialog.getSaveFileName(
-            self,
-            _("Save Test Results"),
-            "",
-            _("Text Files (*.txt);;All Files (*)")
-        )
-        
-        if file_name:
-            try:
-                with open(file_name, 'w') as f:
-                    f.write(self.results_text.toPlainText())
-            except Exception as e:
-                self.alert("Error", str(e), "error")
-                
-    def alert(self, title: str, message: str, kind: str = "info"):
-        """Show an alert dialog"""
-        if kind not in ("error", "warning", "info"):
-            raise ValueError("Unsupported alert kind.")
-            
-        QMessageBox.critical(self, title, message) if kind == "error" else \
-        QMessageBox.warning(self, title, message) if kind == "warning" else \
-        QMessageBox.information(self, title, message)
 
 class MainWindow(QMainWindow):
     """Main application window"""
+    
+    # Define signals for progress updates
+    progress_text_signal = Signal(str)
+    progress_bar_update_signal = Signal(float)
+    progress_bar_reset_signal = Signal()
     
     def __init__(self):
         super().__init__()
@@ -184,8 +54,22 @@ class MainWindow(QMainWindow):
         self.job_queue = JobQueue()
         self.server = self.setup_server()
         self.recurring_action_config = RecurringActionConfig()
-        self.toast = ToastNotification()
+        self._toast = ToastNotification()
         self.is_dark_theme = True
+
+        app_actions = {
+            "toast": self.toast,
+            "alert": self.alert,
+            "progress_text": self.progress_text,
+            "progress_bar_update": self.progress_bar_update,
+            "progress_bar_reset": self.progress_bar_reset,
+        }
+        self.app_actions = AppActions(app_actions)
+        
+        # Connect signals to slots
+        self.progress_text_signal.connect(self._progress_text)
+        self.progress_bar_update_signal.connect(self._progress_bar_update)
+        self.progress_bar_reset_signal.connect(self._progress_bar_reset)
         
         self.setup_ui()
         self.setup_connections()
@@ -205,13 +89,13 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)  # Remove spacing between main sections
         
         # Create sections
-        self.create_sidebar(main_layout)
-        self.create_main_content(main_layout)
+        self._create_sidebar(main_layout)
+        self._create_main_content(main_layout)
         
         # Apply initial theme
         self.apply_theme(is_dark=True)
         
-    def create_sidebar(self, parent_layout):
+    def _create_sidebar(self, parent_layout):
         """Create the sidebar with action buttons and configs"""
         sidebar = QWidget()
         sidebar.setFixedWidth(280)  # Wider sidebar for better readability
@@ -299,7 +183,7 @@ class MainWindow(QMainWindow):
         
         parent_layout.addWidget(sidebar)
         
-    def create_main_content(self, parent_layout):
+    def _create_main_content(self, parent_layout):
         """Create the main content area"""
         main_content = QWidget()
         main_content.setObjectName("mainContent")
@@ -308,20 +192,20 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(20)
         
         # Header section
-        self.create_header_section(main_layout)
+        self._create_header_section(main_layout)
         
         # Options section
-        self.create_options_section(main_layout)
+        self._create_options_section(main_layout)
         
         # Progress section
-        self.create_progress_section(main_layout)
+        self._create_progress_section(main_layout)
         
         # Add stretch to push everything up
         main_layout.addStretch()
         
         parent_layout.addWidget(main_content)
         
-    def create_header_section(self, parent_layout):
+    def _create_header_section(self, parent_layout):
         """Create the header section with title and description"""
         header = QWidget()
         header_layout = QVBoxLayout(header)
@@ -338,7 +222,7 @@ class MainWindow(QMainWindow):
         
         parent_layout.addWidget(header)
         
-    def create_options_section(self, parent_layout):
+    def _create_options_section(self, parent_layout):
         """Create the options section with checkboxes"""
         options_frame = QFrame()
         options_frame.setObjectName("optionsFrame")
@@ -371,7 +255,7 @@ class MainWindow(QMainWindow):
         options_layout.addLayout(options_grid)
         parent_layout.addWidget(options_frame)
         
-    def create_progress_section(self, parent_layout):
+    def _create_progress_section(self, parent_layout):
         """Create the progress section with status and progress bar"""
         progress_frame = QFrame()
         progress_frame.setObjectName("progressFrame")
@@ -484,6 +368,7 @@ class MainWindow(QMainWindow):
         args.test = self.test_check.isChecked()
         args.skip_confirm = self.skip_confirm_check.isChecked()
         args.only_observers = self.only_observers_check.isChecked()
+        args.app_actions = self.app_actions
         
         # Only run filtered configs
         BatchArgs.override_configs(self.filtered_configs)
@@ -532,7 +417,11 @@ class MainWindow(QMainWindow):
             
         self.filtered_configs = {config: True}
         self.run()
-        
+
+    def toast(self, message: str):
+        """Show a toast notification"""
+        self._toast.show_message(message)
+
     def alert(self, title: str, message: str, kind: str = "info"):
         """Show an alert dialog"""
         if kind not in ("error", "warning", "info"):
@@ -585,6 +474,35 @@ class MainWindow(QMainWindow):
         if event.text():
             self.filter_text += event.text()
             self.filter_configs(self.filter_text)
+
+    def progress_text(self, text: str):
+        """Update the progress status text (thread-safe)"""
+        self.progress_text_signal.emit(text)
+        
+    def _progress_text(self, text: str):
+        """Handle progress text update on main thread"""
+        self.status_label.setText(text)
+        
+    def progress_bar_update(self, context: str, percent_complete: float):
+        """Update the progress bar with completion percentage (thread-safe)"""
+        self.progress_bar_update_signal.emit(percent_complete)
+        
+    def _progress_bar_update(self, percent_complete: float):
+        """Handle progress bar update on main thread"""
+        if not self.progress_bar.isVisible():
+            self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(int(percent_complete * 100))
+        
+    def progress_bar_reset(self):
+        """Reset the progress bar and hide it (thread-safe)"""
+        self.progress_bar_reset_signal.emit()
+        
+    def _progress_bar_reset(self):
+        """Handle progress bar reset on main thread"""
+        self.progress_bar.setValue(0)
+        self.progress_bar.setVisible(False)
+        self.status_label.setText(_("Ready"))
+
 
 if __name__ == "__main__":
     try:
