@@ -1,17 +1,51 @@
+import os
+import pytest
+import sys
+import traceback
+from io import StringIO
+import threading
+from datetime import datetime
+
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QProgressBar, QPushButton
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtCore import Signal, QObject
 from refacdir.utils.utils import Utils
 from refacdir.utils.translations import I18N
 
 _ = I18N._
 
 
+class TestSignals(QObject):
+    """Signals for thread-safe UI updates"""
+    update_text = Signal(str, str)  # text, tag
+    update_status = Signal(str)
+    update_progress = Signal(int)
+    update_stats = Signal(dict)
+    test_complete = Signal()
+
+
 class TestResultsWindow(QMainWindow):
     """Window for displaying test results"""
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.signals = TestSignals()
         self.setup_ui()
+        self.setup_signals()
+        self.test_stats = {
+            'total': 0,
+            'passed': 0,
+            'failed': 0,
+            'start_time': datetime.now()
+        }
+        
+    def setup_signals(self):
+        """Connect signals to slots"""
+        self.signals.update_text.connect(self.append_text)
+        self.signals.update_status.connect(self.status_label.setText)
+        self.signals.update_progress.connect(self.progress_bar.setValue)
+        self.signals.update_stats.connect(self.update_stats)
+        self.signals.test_complete.connect(self.test_complete)
         
     def setup_ui(self):
         """Initialize the test results window UI"""
@@ -86,15 +120,182 @@ class TestResultsWindow(QMainWindow):
         
         def run_tests_thread():
             try:
-                # TODO: Implement actual test running logic
-                pass
-            except Exception as e:
-                self.alert("Error", str(e), "error")
-            finally:
-                self.progress_bar.setVisible(False)
-                self.save_button.setEnabled(True)
+                # Store original stdout and cwd to restore later
+                original_stdout = sys.stdout
+                original_cwd = os.getcwd()
+                captured_output = StringIO()
+                sys.stdout = captured_output
                 
-        Utils.start_thread(run_tests_thread)
+                # Run tests - use normalized paths
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                
+                # Change to base directory and update Python path
+                os.chdir(base_dir)
+                if base_dir not in sys.path:
+                    sys.path.insert(0, base_dir)
+                    
+                # Remove any other paths that might interfere
+                sys.path = [p for p in sys.path if not p.endswith('simple_image_compare')]
+                
+                # Use proper directory name for tests
+                test_dir = os.path.join(base_dir, "test", "backup")
+                if not os.path.exists(test_dir):
+                    raise Exception(_("Test directory not found: {0}").format(test_dir))
+                
+                # Ensure test files directory exists
+                test_files_dir = os.path.join(test_dir, "test_files")
+                if not os.path.exists(test_files_dir):
+                    os.makedirs(test_files_dir)
+                
+                test_files = [
+                    os.path.join(test_dir, "test_hash_manager.py"),
+                    os.path.join(test_dir, "test_backup_state.py"),
+                    os.path.join(test_dir, "test_backup_source_data.py"),
+                    os.path.join(test_dir, "test_backup_transaction.py")
+                ]
+                
+                # Debug info
+                self.signals.update_text.emit(_("Base directory: ") + f"{base_dir}\n", "important")
+                self.signals.update_text.emit(_("Test directory: ") + f"{test_dir}\n", "important")
+                self.signals.update_text.emit(_("Test files directory: ") + f"{test_files_dir}\n", "important")
+                self.signals.update_text.emit(_("Python path: ") + f"{sys.path[0]}\n", "important")
+                
+                # Verify test files exist
+                for test_file in test_files[:]:
+                    if not os.path.exists(test_file):
+                        error_msg = _("Test file not found: {0}").format(test_file) + "\n"
+                        print(error_msg, file=original_stdout)
+                        self.signals.update_text.emit(error_msg, "error")
+                        test_files.remove(test_file)
+                    else:
+                        self.signals.update_text.emit(_("Found test file: ") + f"{test_file}\n", "important")
+                
+                if not test_files:
+                    error_msg = _("No test files found!") + "\n"
+                    print(error_msg, file=original_stdout)
+                    self.signals.update_text.emit(error_msg, "error")
+                    return
+                
+                total_tests = 0
+                current_test = 0
+                passed_tests = 0
+                failed_tests = 0
+                
+                # First pass to count tests
+                self.signals.update_status.emit(_("Analyzing test suite..."))
+                for test_file in test_files:
+                    try:
+                        class TestCounter:
+                            def __init__(self):
+                                self.count = 0
+                            
+                            def pytest_collection_modifyitems(self, items):
+                                self.count = len(items)
+                        
+                        counter = TestCounter()
+                        pytest.main(['--collect-only', '-v', test_file], plugins=[counter])
+                        
+                        if counter.count > 0:
+                            total_tests += counter.count
+                            message = _("Found {0} tests in {1}").format(counter.count, os.path.basename(test_file))
+                            print(message, file=original_stdout)
+                            self.signals.update_text.emit(message + "\n", "important")
+                    except Exception as e:
+                        error_msg = _("Error collecting tests from {0}: {1}").format(test_file, str(e)) + "\n"
+                        error_trace = traceback.format_exc()
+                        print(error_msg + error_trace, file=original_stdout)
+                        self.signals.update_text.emit(error_msg, "error")
+                        self.signals.update_text.emit(error_trace, "error")
+                        continue
+                
+                self.progress_bar.setMaximum(total_tests or 1)  # Prevent division by zero
+                self.signals.update_stats.emit({
+                    'total': total_tests,
+                    'passed': 0,
+                    'failed': 0
+                })
+                
+                # Run actual tests
+                for test_file in test_files:
+                    try:
+                        # Update status with current file
+                        current_file = os.path.basename(test_file)
+                        self.signals.update_status.emit(_("Running tests from {0}...").format(current_file))
+                        
+                        # Add header for test file
+                        self.signals.update_text.emit("\n" + _("Running tests from {0}:").format(current_file) + "\n", "header")
+                        
+                        class ResultCollector:
+                            def __init__(self, signals):
+                                self.signals = signals
+                            
+                            def pytest_runtest_logreport(self, report):
+                                nonlocal current_test, passed_tests, failed_tests
+                                if report.when == "call":
+                                    current_test += 1
+                                    
+                                    # Update progress
+                                    self.signals.update_progress.emit(current_test)
+                                    
+                                    # Format test name
+                                    test_name = report.nodeid.split("::")[-1]
+                                    
+                                    if report.passed:
+                                        passed_tests += 1
+                                        self.signals.update_text.emit(f"✓ {test_name}\n", "pass")
+                                    elif report.failed:
+                                        failed_tests += 1
+                                        self.signals.update_text.emit(f"✗ {test_name}\n", "fail")
+                                        if report.longrepr:
+                                            error_text = str(report.longrepr)
+                                            message = "\n" + _("Error in {0}:").format(test_name) + f"\n{error_text}\n"
+                                            print(message, file=original_stdout)
+                                            self.signals.update_text.emit(message, "error")
+                                    
+                                    # Update statistics
+                                    self.signals.update_stats.emit({
+                                        'total': total_tests,
+                                        'passed': passed_tests,
+                                        'failed': failed_tests
+                                    })
+                        
+                        # Create plugin instance with access to signals
+                        collector = ResultCollector(self.signals)
+                        
+                        # Run tests with proper config
+                        pytest.main(['-v', test_file], plugins=[collector])
+                        
+                    except Exception as e:
+                        error_msg = "\n" + _("Error running tests in {0}: {1}").format(test_file, str(e)) + "\n"
+                        error_trace = traceback.format_exc()
+                        # Print to both console and results window
+                        print(error_msg + error_trace, file=original_stdout)
+                        self.signals.update_text.emit(error_msg, "error")
+                        self.signals.update_text.emit(error_trace, "error")
+                
+                # Restore stdout and cwd
+                sys.stdout = original_stdout
+                os.chdir(original_cwd)
+                
+                # Mark as done
+                self.signals.test_complete.emit()
+                
+            except Exception as e:
+                error_msg = "\n" + _("Unexpected error running tests: {0}").format(str(e)) + "\n"
+                error_trace = traceback.format_exc()
+                # Print to both console and results window
+                print(error_msg + error_trace, file=original_stdout)
+                self.signals.update_text.emit(error_msg, "error")
+                self.signals.update_text.emit(error_trace, "error")
+                self.signals.test_complete.emit()
+                
+            finally:
+                # Always ensure stdout is restored
+                if 'original_stdout' in locals():
+                    sys.stdout = original_stdout
+        
+        # Run tests in separate thread
+        threading.Thread(target=run_tests_thread, daemon=True).start()
         
     def save_results(self):
         """Save test results to a file"""
@@ -120,3 +321,52 @@ class TestResultsWindow(QMainWindow):
         QMessageBox.critical(self, title, message) if kind == "error" else \
         QMessageBox.warning(self, title, message) if kind == "warning" else \
         QMessageBox.information(self, title, message)
+        
+    def append_text(self, text: str, tags: str = None):
+        """Append text to results with optional tags"""
+        if tags:
+            self.results_text.append(f'<span style="color: {self.get_tag_color(tags)}">{text}</span>')
+        else:
+            self.results_text.append(text)
+        self.results_text.verticalScrollBar().setValue(
+            self.results_text.verticalScrollBar().maximum()
+        )
+        
+    def get_tag_color(self, tag: str) -> str:
+        """Get color for a text tag"""
+        colors = {
+            'pass': 'dark green',
+            'fail': 'red',
+            'error': 'red',
+            'header': 'blue',
+            'important': 'orange'
+        }
+        return colors.get(tag, 'black')
+        
+    def update_stats(self, stats: dict):
+        """Update test statistics"""
+        self.test_stats.update(stats)
+        self.total_label.setText(_("Total Tests: {0}").format(stats['total']))
+        self.passed_label.setText(_("Passed: {0}").format(stats['passed']))
+        self.failed_label.setText(_("Failed: {0}").format(stats['failed']))
+        
+    def test_complete(self):
+        """Handle test completion"""
+        elapsed = datetime.now() - self.test_stats['start_time']
+        minutes = elapsed.seconds // 60
+        seconds = elapsed.seconds % 60
+        
+        # Add summary to results
+        self.append_text("\n" + "="*50 + "\n", "header")
+        self.append_text(_("Test Run Complete - ") + f"{minutes}:{seconds:02d}\n", "header")
+        self.append_text(_("Total Tests: ") + f"{self.test_stats['total']}\n")
+        self.append_text(_("Passed: ") + f"{self.test_stats['passed']}\n", "pass")
+        self.append_text(_("Failed: ") + f"{self.test_stats['failed']}\n", "fail" if self.test_stats['failed'] > 0 else None)
+        
+        # Update status
+        status = _("All tests passed successfully!") if self.test_stats['failed'] == 0 else _("Some tests failed - check results")
+        self.status_label.setText(status)
+        
+        # Enable save button
+        self.save_button.setEnabled(True)
+        self.progress_bar.setVisible(False)
