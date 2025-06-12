@@ -7,9 +7,9 @@ import threading
 from datetime import datetime
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QProgressBar, QPushButton
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QFileDialog, QMessageBox
-from PySide6.QtCore import Signal, QObject
+from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu, QApplication
+from PySide6.QtCore import Signal, QObject, Qt
 from refacdir.utils.utils import Utils
 from refacdir.utils.translations import I18N
 
@@ -43,7 +43,7 @@ class TestResultsWindow(QMainWindow):
         """Connect signals to slots"""
         self.signals.update_text.connect(self.append_text)
         self.signals.update_status.connect(self.status_label.setText)
-        self.signals.update_progress.connect(self.progress_bar.setValue)
+        self.signals.update_progress.connect(self.update_progress)
         self.signals.update_stats.connect(self.update_stats)
         self.signals.test_complete.connect(self.test_complete)
         
@@ -71,15 +71,33 @@ class TestResultsWindow(QMainWindow):
         self.status_label = QLabel(_("Initializing tests..."))
         progress_layout.addWidget(self.status_label)
         
+        # Progress bar with label
+        progress_bar_frame = QWidget()
+        progress_bar_layout = QHBoxLayout(progress_bar_frame)
+        
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        progress_layout.addWidget(self.progress_bar)
+        progress_bar_layout.addWidget(self.progress_bar)
         
+        self.progress_label = QLabel("0%")
+        self.progress_label.setMinimumWidth(50)
+        progress_bar_layout.addWidget(self.progress_label)
+        
+        progress_layout.addWidget(progress_bar_frame)
         layout.addWidget(progress_frame)
         
         # Results section
         self.results_text = QTextEdit()
         self.results_text.setReadOnly(True)
+        self.results_text.setFont(QFont("Consolas", 10))
+        self.results_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #e0e0e0;
+            }
+        """)
+        # Enable text selection and copying
+        self.results_text.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.results_text.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.results_text)
         
         # Summary section
@@ -90,10 +108,15 @@ class TestResultsWindow(QMainWindow):
         summary_layout.addWidget(self.total_label)
         
         self.passed_label = QLabel(_("Passed: 0"))
+        self.passed_label.setStyleSheet("color: dark green;")
         summary_layout.addWidget(self.passed_label)
         
         self.failed_label = QLabel(_("Failed: 0"))
+        self.failed_label.setStyleSheet("color: red;")
         summary_layout.addWidget(self.failed_label)
+        
+        self.time_label = QLabel(_("Time: 0:00"))
+        summary_layout.addWidget(self.time_label)
         
         layout.addWidget(summary_frame)
         
@@ -322,15 +345,51 @@ class TestResultsWindow(QMainWindow):
         QMessageBox.warning(self, title, message) if kind == "warning" else \
         QMessageBox.information(self, title, message)
         
+    def update_progress(self, value: int):
+        """Update progress bar and percentage"""
+        if hasattr(self.progress_bar, "maximum"):
+            percentage = int((value / self.progress_bar.maximum()) * 100)
+            self.progress_bar.setValue(value)
+            self.progress_label.setText(f"{percentage}%")
+            
+    def show_context_menu(self, pos):
+        """Show context menu for text operations"""
+        menu = QMenu(self)
+        
+        copy_action = menu.addAction(_("Copy"))
+        copy_action.triggered.connect(self.copy_selected_text)
+        
+        select_all_action = menu.addAction(_("Select All"))
+        select_all_action.triggered.connect(self.select_all_text)
+        
+        menu.exec_(self.results_text.mapToGlobal(pos))
+        
+    def copy_selected_text(self):
+        """Copy selected text to clipboard"""
+        selected_text = self.results_text.textCursor().selectedText()
+        if selected_text:
+            QApplication.clipboard().setText(selected_text)
+            
+    def select_all_text(self):
+        """Select all text in the results window"""
+        self.results_text.selectAll()
+        
     def append_text(self, text: str, tags: str = None):
         """Append text to results with optional tags"""
+        cursor = self.results_text.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        
         if tags:
-            self.results_text.append(f'<span style="color: {self.get_tag_color(tags)}">{text}</span>')
+            format = QTextCharFormat()
+            format.setForeground(QColor(self.get_tag_color(tags)))
+            if tags == "error":
+                format.setFontUnderline(True)
+            cursor.insertText(text, format)
         else:
-            self.results_text.append(text)
-        self.results_text.verticalScrollBar().setValue(
-            self.results_text.verticalScrollBar().maximum()
-        )
+            cursor.insertText(text)
+            
+        self.results_text.setTextCursor(cursor)
+        self.results_text.ensureCursorVisible()
         
     def get_tag_color(self, tag: str) -> str:
         """Get color for a text tag"""
@@ -339,7 +398,7 @@ class TestResultsWindow(QMainWindow):
             'fail': 'red',
             'error': 'red',
             'header': 'blue',
-            'important': 'orange'
+            'important': '#a0660b'
         }
         return colors.get(tag, 'black')
         
@@ -349,6 +408,12 @@ class TestResultsWindow(QMainWindow):
         self.total_label.setText(_("Total Tests: {0}").format(stats['total']))
         self.passed_label.setText(_("Passed: {0}").format(stats['passed']))
         self.failed_label.setText(_("Failed: {0}").format(stats['failed']))
+        
+        # Update time elapsed
+        elapsed = datetime.now() - self.test_stats['start_time']
+        minutes = elapsed.seconds // 60
+        seconds = elapsed.seconds % 60
+        self.time_label.setText(_("Time: {0}:{1:02d}").format(minutes, seconds))
         
     def test_complete(self):
         """Handle test completion"""
