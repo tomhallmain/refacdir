@@ -1,6 +1,5 @@
 import os
-from typing import Dict, Set, Tuple, Optional
-from .safe_file_ops import SafeFileOps
+from typing import Set, Tuple, Optional
 from .backup_modes import BackupMode, HashMode
 from .hash_manager import HashManager
 

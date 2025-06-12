@@ -5,6 +5,10 @@ import re
 import shutil
 import sys
 import threading
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for utils
+logger = setup_logger('utils')
 
 if sys.platform == "win32":
     import win32file
@@ -47,7 +51,7 @@ class Utils:
                     period = int(run_obj) if isinstance(run_obj, int) else getattr(run_obj, sleep_attr)
                     await asyncio.sleep(period)
                     if run_obj and run_attr and not getattr(run_obj, run_attr):
-                        print(f"Ending periodic task: {run_obj.__name__}.{run_attr} = False")
+                        logger.info(f"Ending periodic task: {run_obj.__name__}.{run_attr} = False")
                         break
             return wrapper
         return scheduler
@@ -158,7 +162,7 @@ class Utils:
                     out_t += c_t
 
         if not has_found_one_difference:
-            Utils.debug_print("No differences were found between the two strings!", "utils")
+            logger.debug("No differences were found between the two strings!")
             return None
 
         if to_close_s:

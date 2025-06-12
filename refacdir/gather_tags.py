@@ -5,7 +5,10 @@ import mimetypes
 import os
 import re
 import sys
+from refacdir.utils.logger import setup_logger
 
+# Set up logger for tag gathering
+logger = setup_logger('gather_tags')
 
 mimetypes.init()
 
@@ -157,8 +160,8 @@ class FileWithTags(object):
 
 		self.tags = self.gather_tags()
 		# if len(self.tags) > 0 and "Wildflower" in self.file_name:
-		# 	print(self.file_name)
-		# 	print(str(self.tags))
+		# 	logger.debug(self.file_name)
+		# 	logger.debug(str(self.tags))
 
 	def is_media_type(self):
 		mimestart = mimetypes.guess_type(self.basename)[0]
@@ -202,13 +205,13 @@ class FileWithTags(object):
 		current_tags = set(info["keywords"])
 		if current_tags != self.tags:
 			if len(current_tags) > 0:
-				print(f"{self.file_path} existing tags were: {str(current_tags)}")
+				logger.info(f"{self.file_path} existing tags were: {str(current_tags)}")
 			tags_list = list(self.tags)
 			tags_list.sort()
 			info["keywords"] = tags_list
 			info.save()
 			os.remove(self.file_path + "~") # A lock file gets created by Windows OS on save but is not deleted by IPTCInfo3 module.
-			#print(f"Set tags for {self.file_path}: {str(self.tags)}")
+			#logger.debug(f"Set tags for {self.file_path}: {str(self.tags)}")
 
 
 class TaggedFiles:
@@ -219,7 +222,7 @@ class TaggedFiles:
 		self.tags = collections.defaultdict(int)
 		self.gather_tags()
 		self.remove_sparse_tags()
-		print(sorted(self.tags.keys()))
+		logger.info(f"Available tags: {sorted(self.tags.keys())}")
 
 	def gather_tags(self):
 		# Gather tags
@@ -243,27 +246,26 @@ class TaggedFiles:
 
 		for tag in sorted(self.tags):
 			# if tag in nltk.corpus.stopwords.words():
-			# 	print(f"{tag} (STOPWORD): {self.tags[tag]}")
-			print(f"{tag}: {self.tags[tag]}")
+			# 	logger.info(f"{tag} (STOPWORD): {self.tags[tag]}")
+			logger.info(f"{tag}: {self.tags[tag]}")
 
 		for file in self.files:
 			if file.has_tags():
 				file.remove_tags(tags_to_remove)
 
 	def apply_tags_to_all(self):
-		print("Applying tags to all media files in " + self.root_directory)
+		logger.info(f"Applying tags to all media files in {self.root_directory}")
 		for file in self.files:
 			file.apply_tags()
 
 
-
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
-		print("Must provide root directory as first argument.")
+		logger.error("Must provide root directory as first argument.")
 		exit(1)
 	root_directory = sys.argv[1]
 	if not os.path.isdir(root_directory):
-		print("First argument must be a valid directory.")
+		logger.error("First argument must be a valid directory.")
 		exit(1)
 	min_tag_sparsity = 2
 	if len(sys.argv) > 2:

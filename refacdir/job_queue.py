@@ -1,3 +1,7 @@
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for job queue
+logger = setup_logger('job_queue')
 
 class JobQueue:
     def __init__(self, max_size=20):
@@ -19,4 +23,4 @@ class JobQueue:
         if len(self.pending_jobs) > self.max_size:
             raise Exception(f"Reached limit of pending runs: {self.max_size} - wait until current run has completed.")
         self.pending_jobs.append(run_config)
-        print(f"Added pending job: {run_config}")
+        logger.info(f"Added pending job: {run_config}")

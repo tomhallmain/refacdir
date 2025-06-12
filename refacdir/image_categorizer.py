@@ -3,16 +3,20 @@ import sys
 
 from refacdir.config import config
 from refacdir.utils.utils import Utils
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for image categorizer
+logger = setup_logger('image_categorizer')
 
 simple_image_compare_imported = False
 
 if config.simple_image_compare_loc is not None:
     try:
         sys.path.insert(0, config.simple_image_compare_loc)
-        from compare.compare_embeddings import CompareEmbedding
+        from compare.compare_embeddings_clip import CompareEmbedding
         simple_image_compare_imported = True
     except Exception as e:
-        print(f"Failed to import Simple Image Compare: {e}")
+        logger.error(f"Failed to import Simple Image Compare: {e}")
 
 
 class ImageCategorizer:
@@ -38,7 +42,7 @@ class ImageCategorizer:
         if not os.path.isdir(source_dir):
             raise Exception(f"Source directory {source_dir} is invalid")
         
-        print("Excluding directories from image categorization:")
+        logger.info("Excluding directories from image categorization:")
         for d in exclude_dirs:
             if os.path.abspath(d) == d:
                 full_path = d
@@ -46,7 +50,7 @@ class ImageCategorizer:
                 full_path = os.path.join(os.path.abspath(self.source_dir), d)
             if not os.path.isdir(full_path):
                 raise Exception("Invalid exclude directory: " + d)
-            print(full_path)
+            logger.info(full_path)
             self.exclude_dirs.append(full_path)
 
         if len(categories) == 0:
@@ -83,7 +87,7 @@ class ImageCategorizer:
                 if not os.path.exists(new_path):
                     Utils.move(f, new_path)
                 else:
-                    print(f"File already exists: {new_path}")
+                    logger.warning(f"File already exists: {new_path}")
 
 
     def _get_files(self):

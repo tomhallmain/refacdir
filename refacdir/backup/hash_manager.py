@@ -1,6 +1,6 @@
 from collections import defaultdict
 import os
-from typing import Dict, List, Set
+from typing import Dict, List
 from .safe_file_ops import SafeFileOps
 from .backup_modes import HashMode
 

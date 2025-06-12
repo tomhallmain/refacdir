@@ -1,6 +1,5 @@
 import os
-import shutil
-from typing import List, Set, Dict, Optional
+from typing import List
 from .safe_file_ops import SafeFileOps
 
 class DirectoryOps:

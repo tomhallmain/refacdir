@@ -1,6 +1,10 @@
 import glob
 import os
 import sys
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for file renamer
+logger = setup_logger('file_renamer')
 
 def find_alpha_substring(s): 
     """
@@ -66,7 +70,7 @@ class FileRenamer:
             made_dirs = True
         if filename == new_filename_full_path:
             if False:
-                print("File rename not necessary")
+                logger.debug("File rename not necessary")
             return count
         try:
             if not self.test:
@@ -74,17 +78,17 @@ class FileRenamer:
             count += 1
             if self.log_changes:
                 if self.test:
-                    print(f"TEST rename {filename} to {new_filename_full_path}")
+                    logger.info(f"TEST rename {filename} to {new_filename_full_path}")
                 elif target_dir is not None:
-                    print(f"moved {filename} to {target_dir}")
+                    logger.info(f"moved {filename} to {target_dir}")
                 else:
-                    print(f"renamed {filename} to {new_filename_full_path}")
+                    logger.info(f"renamed {filename} to {new_filename_full_path}")
         except OSError as e:
             if FileRenamer.FILE_EXISTS_MESSAGE in str(e):
                 if not made_dirs:
                     raise e
-            print(f"Failed to rename {filename} to {new_filename_full_path}")
-            print(e)
+            logger.error(f"Failed to rename {filename} to {new_filename_full_path}")
+            logger.error(str(e))
             failures.append(filename)
         return count
 
@@ -124,7 +128,7 @@ class FileRenamer:
 
         test_func = None
         if callable(glob_exp):
-            print("reassigning glob expression.")
+            logger.info("reassigning glob expression.")
             test_func = glob_exp
             glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
         else:
@@ -141,7 +145,7 @@ class FileRenamer:
             except OSError as e0:
                 if not FileRenamer.FILE_EXISTS_MESSAGE in str(e0):
                     raise e0
-                print(f"Exact time for new filename \"{new_filename}\" matches another file, will try to find a close value.")
+                logger.info(f"Exact time for new filename \"{new_filename}\" matches another file, will try to find a close value.")
                 count = self.rename_by_func_unique_filename(rename_func, filename, failures, count)
 
     def os_stat_rename_func(self, attr, rename_base):
@@ -191,7 +195,7 @@ class FileRenamer:
 
         test_func = None
         if callable(glob_exp):
-            print("reassigning glob expression.")
+            logger.info("reassigning glob expression.")
             test_func = glob_exp
             glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
         else:
@@ -246,9 +250,9 @@ class FileRenamer:
     def log_pre_change(self, mappings):
         if self.log_changes:
             if self.test:
-                print(f"\nTEST Batch rename at {self.root} with mappings: {mappings}")
+                logger.info(f"\nTEST Batch rename at {self.root} with mappings: {mappings}")
             else:
-                print(f"\nBatch rename at {self.root} with mappings: {mappings}")
+                logger.info(f"\nBatch rename at {self.root} with mappings: {mappings}")
 
     def batch_rename_by_mtime(self, mappings={}, recursive=False, make_dirs=False):
         """
@@ -278,23 +282,23 @@ class FileRenamer:
     def print_summary(self, count, strategy, glob_exp, rename_base, recursive):
         if self.test:
             if count > 0:
-                print(f"TEST rename {str(count)} files in {self.root} by {strategy}. glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+                logger.info(f"TEST rename {str(count)} files in {self.root} by {strategy}. glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
             else:
-                print(f"No files found to rename at {self.root} for glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+                logger.info(f"No files found to rename at {self.root} for glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
         elif count > 0:
-            print(f"Renamed {str(count)} files in {self.root} by {strategy}. glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+            logger.info(f"Renamed {str(count)} files in {self.root} by {strategy}. glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
         else:
-            print(f"No files found to rename at {self.root} for glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+            logger.info(f"No files found to rename at {self.root} for glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
 
     def print_failures(self, failures):
         if len(failures) > 0:
-            print("Some renaming operations failed. The following files may still be present:")
+            logger.warning("Some renaming operations failed. The following files may still be present:")
             for filename in failures:
-                print(filename)
+                logger.warning(filename)
 
 
 def main():
-    print("file_renamer [glob_exp] [dirpath] [rename_base] [recursive=f]")
+    logger.info("file_renamer [glob_exp] [dirpath] [rename_base] [recursive=f]")
     glob_exp = sys.argv[1] if len(sys.argv) > 1 else "*.*"
     
     if (glob_exp == "-h" or glob_exp == "--help") and len(sys.argv) == 2:
@@ -306,7 +310,7 @@ def main():
     recursive = sys.argv[4] != "f" and sys.argv[4] != "" if len(sys.argv) > 4 else False
     
     if recursive:
-        print("Recursive option set")
+        logger.info("Recursive option set")
 
     if glob_exp == "*.*":
         confirm = input(f"Rename all files in {wd}? Confirm (y/n): ")
@@ -314,7 +318,7 @@ def main():
         confirm = input(f"Rename files according to glob pattern {glob_exp} in {wd}? Confirm (y/n): ")
 
     if confirm.lower() != "y":
-        print("No action taken.")
+        logger.info("No action taken.")
         exit(0)
 
     renamer = FileRenamer(wd)

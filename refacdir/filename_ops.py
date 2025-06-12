@@ -1,7 +1,11 @@
 from enum import Enum
 import re
+from refacdir.utils.logger import setup_logger
 
 import custom_file_name_search_funcs
+
+# Set up logger for filename operations
+logger = setup_logger('filename_ops')
 
 class StringFunction(Enum):
     REP = "rep"
@@ -92,7 +96,7 @@ class FilenameMappingDefinition:
             return temp
         else:
             if len(self.function_calls) > 0:
-                print(f"Warning - Functions defined for {self.pattern} but placement not defined.")
+                logger.warning(f"Functions defined for {self.pattern} but placement not defined.")
             return self.pattern
 
     def generate_subpattern(self, func_name="", index=0):

@@ -1,6 +1,9 @@
 import json
 import os
+from refacdir.utils.logger import setup_logger
 
+# Set up logger for config
+logger = setup_logger('config')
 
 class Config:
     CONFIGS_DIR_LOC = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "configs")
@@ -33,8 +36,8 @@ class Config:
             self.dict = json.load(open(self.config_path, "r"))
             dict_set = True
         except Exception as e:
-            print(e)
-            print("Unable to load config. Ensure config.json file is located in the configs directory of simple-image-comare.")
+            logger.error(str(e))
+            logger.error("Unable to load config. Ensure config.json file is located in the configs directory of simple-image-comare.")
 
         self.set_values(str,
                         "foreground_color",
@@ -67,21 +70,21 @@ class Config:
                 try:
                     setattr(self, name, type(self.dict[name]))
                 except Exception as e:
-                    print(e)
-                    print(f"Failed to set {name} from config.json file. Ensure the value is set and of the correct type.")
+                    logger.error(str(e))
+                    logger.error(f"Failed to set {name} from config.json file. Ensure the value is set and of the correct type.")
             else:
                 try:
                     setattr(self, name, self.dict[name])
                 except Exception as e:
-                    print(e)
-                    print(f"Failed to set {name} from config.json file. Ensure the key is set.")
+                    logger.error(str(e))
+                    logger.error(f"Failed to set {name} from config.json file. Ensure the key is set.")
 
     def print_config_settings(self):
-        print("Settings active:")
+        logger.info("Settings active:")
         if self.simple_image_compare_loc is not None:
-            print(f" - Using simple image compare path at {self.simple_image_compare_loc}")
+            logger.info(f" - Using simple image compare path at {self.simple_image_compare_loc}")
         else:
             pass
-#            print(f" - Simple image compare location is not set or invalid.")
+#            logger.info(f" - Simple image compare location is not set or invalid.")
 
 config = Config()

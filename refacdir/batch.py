@@ -13,7 +13,10 @@ from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
 from refacdir.utils.utils import Utils
+from refacdir.utils.logger import setup_logger
 
+# Set up logger for batch operations
+logger = setup_logger('batch')
 
 class BatchArgs:
     configs = {}
@@ -29,17 +32,20 @@ class BatchArgs:
 
     def validate(self):
         if len(BatchArgs.configs) == 0:
+            logger.error("No config files found!")
             raise Exception("No config files found!")
         return True
 
     @staticmethod
     def override_configs(filtered_configs):
+        logger.info(f"Overriding configs with filtered set: {list(filtered_configs.keys())}")
         BatchArgs.configs = filtered_configs
 
     @staticmethod
     def update_config_state(config_path, will_run):
         """Update a single config's will_run state without reloading from files"""
         if config_path in BatchArgs.configs:
+            logger.info(f"Updating config state: {config_path} -> {will_run}")
             BatchArgs.configs[config_path] = will_run
 
     @staticmethod
@@ -51,25 +57,26 @@ class BatchArgs:
         if not os.path.exists(master_config_file):
             master_config_file = os.path.join(Config.CONFIGS_DIR_LOC, "master_config_example.yaml")
             if not os.path.exists(master_config_file):
-                print("No master config file found, parsing config list.")
+                logger.warning("No master config file found, parsing config list.")
                 configs = sorted(glob("configs/*.yaml", recursive=False))
                 for config in configs:
                     BatchArgs.configs[config] = None
                 return
             else:
-                print("master_config.yaml not found, using master_config_example.yaml instead.")
+                logger.info("master_config.yaml not found, using master_config_example.yaml instead.")
 
         try:
             master_config_yaml = yaml.load(open(master_config_file), Loader=yaml.FullLoader)
+            logger.info(f"Successfully loaded master config from {master_config_file}")
         except yaml.YAMLError as e:
-            print(f"Error loading {master_config_file}: {e}")
+            logger.error(f"Error loading {master_config_file}: {e}")
             configs = sorted(glob("configs/*.yaml", recursive=False))
             for config in configs:
                 BatchArgs.configs[config] = None
             return
 
         for config in master_config_yaml["configs"]:
-            print(f"Config: {config}")
+            logger.info(f"Loading config: {config['config_file']} (will_run: {config['will_run']})")
             BatchArgs.configs["configs/" + config["config_file"]] = config["will_run"]
 
 class ActionType(Enum):
@@ -92,12 +99,13 @@ class BatchJob:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
     def __init__(self, args=BatchArgs()):
+        logger.info("Initializing new batch job")
         self.cwd = os.getcwd()
         self.args = args
         self.configurations = BatchArgs.configs
         self.counts_map = {}
         self.failure_counts_map = {}
-        self.app_actions = args.app_actions  # Store app_actions
+        self.app_actions = args.app_actions
         for action_type in ActionType.__members__.values():
             self.counts_map[action_type] = 0
             self.failure_counts_map[action_type] = 0
@@ -111,7 +119,7 @@ class BatchJob:
         self.current_config_index = 0
         self.total_actions = 0
         self.current_action_index = 0
-        self.skipped_actions = 0  # Track skipped actions
+        self.skipped_actions = 0
         
         temp_full_path_example = None
         for config in self.configurations:
@@ -120,12 +128,14 @@ class BatchJob:
 
         if temp_full_path_example:
             if len(self.configurations) == 1:
+                logger.error("Only example config file found - this is not allowed")
                 raise Exception("Excluded example config file! Please change name of config_example.yaml to ensure it is included.")
             del self.configurations[temp_full_path_example]
 
 
     def run(self):
         try:
+            logger.info("Starting batch job execution")
             # Count total actions across all configs
             self.total_actions = 0
             for config, will_run in self.configurations.items():
@@ -136,9 +146,11 @@ class BatchJob:
                         config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
                         if "actions" in config_wrapper:
                             self.total_actions += len(config_wrapper["actions"])
-                    except yaml.YAMLError:
+                    except yaml.YAMLError as e:
+                        logger.error(f"Error loading config {config}: {e}")
                         continue
 
+            logger.info(f"Total actions to process: {self.total_actions}")
             self.current_config_index = 0
             self.current_action_index = 0
             self.skipped_actions = 0
@@ -152,18 +164,22 @@ class BatchJob:
                     continue
                 os.chdir(self.cwd)
                 self.current_config_index += 1
+                logger.info(f"Processing config {self.current_config_index}/{self.total_configs}: {config}")
                 if self.app_actions:
                     self.app_actions.progress_text(f"Processing config {self.current_config_index}/{self.total_configs}: {config}")
                 self.run_config_file(config)
                 
             if self.app_actions:
                 if self.skipped_actions > 0:
+                    logger.info(f"Batch operations completed with {self.skipped_actions} skipped actions")
                     self.app_actions.progress_text(f"Batch operations completed (skipped {self.skipped_actions} actions)")
                 else:
+                    logger.info("Batch operations completed successfully")
                     self.app_actions.progress_text("Batch operations completed")
                 self.app_actions.progress_bar_reset()
                 
         except KeyboardInterrupt:
+            logger.warning("Batch job interrupted by user")
             print("Exiting prematurely at user request...")
             self.cancelled = True
             if self.app_actions:
@@ -171,24 +187,25 @@ class BatchJob:
                 self.app_actions.progress_bar_reset()
 
     def run_config_file(self, config):
+        logger.info(f"Running config file: {config}")
         with open(os.path.join(BatchJob.BASE_DIR, config), 'r') as f:
             try:
                 config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
             except yaml.YAMLError as e:
-                print(f"Error loading {config}: {e}")
+                logger.error(f"Error loading {config}: {e}")
                 self.failures.append(f"Config {config} failed to load: {e}")
                 return
 
             if "will_run" in config_wrapper and config_wrapper["will_run"] == False:
-                print(f"{config} is set to will run = False, skipping...")
+                logger.info(f"{config} is set to will run = False, skipping...")
                 return
 
             if "actions" not in config_wrapper:
-                print(f"Error loading {config}: No actions found in config file!")
+                logger.error(f"Error loading {config}: No actions found in config file!")
                 self.failures.append(f"Config {config} failed to load: No actions found in config file!")
                 return
 
-            print(f"Running actions for {config}")
+            logger.info(f"Running {len(config_wrapper['actions'])} actions for {config}")
 
             FilenameMappingDefinition.add_named_functions(Utils.get_from_dict(config_wrapper, "filename_mapping_functions", []))
             FiletypesDefinition.add_named_definitions(Utils.get_from_dict(config_wrapper, "filetype_definitions", []))
@@ -200,6 +217,7 @@ class BatchJob:
                     # If action fails, count remaining actions as skipped
                     remaining_actions = total_actions_in_config - (i + 1)
                     self.skipped_actions += remaining_actions
+                    logger.warning(f"Config {config} stopped after {i + 1} actions (skipped {remaining_actions} actions)")
                     if self.app_actions:
                         self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: {config} stopped after {i + 1} actions (skipped {remaining_actions} actions)")
                     return # If we fail to run an action then we stop running the config file
@@ -211,39 +229,44 @@ class BatchJob:
                     self.app_actions.progress_bar_update(None, progress)
 
     def log_results(self):
+        logger.info("Logging batch job results")
         for action_type in ActionType.__members__.values():
             count_action_type = self.counts_map[action_type]
             if count_action_type > 0:
-                print(f"{count_action_type} {action_type} job(s) completed")
+                logger.info(f"{count_action_type} {action_type} job(s) completed")
         if len(self.failures) > 0:
             for action_type in ActionType.__members__.values():
                 count_action_type = self.failure_counts_map[action_type]
                 if count_action_type > 0:
-                    print(f"{count_action_type} {action_type} job(s) failed")
+                    logger.warning(f"{count_action_type} {action_type} job(s) failed")
             for failure in self.failures:
-                print(failure)
+                logger.error(failure)
         elif not self.cancelled:
-            print("All operations completed successfully")
+            logger.info("All operations completed successfully")
 
     def run_action(self, config, action, idx):
         try:
             action_type_string = action["type"]
             action_type = ActionType[action_type_string]
             if self.args.only_observers and ActionType.DIRECTORY_OBSERVER != action_type:
-                print(f"{config} - Skipping {action_type} action")
+                logger.info(f"{config} - Skipping {action_type} action")
                 return True
             if self.app_actions:
                 self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running {action_type} action in {config}")
-            print(f"Running action type: {action_type}")
+            logger.info(f"Running action type: {action_type}")
             if action_type == ActionType.RENAMER:
                 return self.run_renamers(config, action["mappings"])
             else:
                 return self.run_multi_action(config, action_type, action["mappings"])
         except KeyError as e:
-            self.failures.append(f"Invalid action configuration in {config} index {idx}: {e}")
+            error_msg = f"Invalid action configuration in {config} index {idx}: {e}"
+            logger.error(error_msg)
+            self.failures.append(error_msg)
             return False
         except Exception as e:
-            self.failures.append(f"Failed to run action index {idx} in {config}: {e}")
+            error_msg = f"Failed to run action index {idx} in {config}: {e}"
+            logger.error(error_msg)
+            self.failures.append(error_msg)
             return False
 
     def run_multi_action(self, config, action_type, actions):
@@ -262,6 +285,7 @@ class BatchJob:
                 else:
                     _action_index = self.counts_map[action_type] - 1
                     error = f"Error in {config} {action_type} {_action_index}:  {e}"
+                logger.error(error)
                 self.failures.append(error)
                 continue
 
@@ -280,8 +304,8 @@ class BatchJob:
             except Exception as e:
                 self.failure_counts_map[action_type] += 1
                 error = f"{config} {action_type} {action.name} failed:  {e}"
+                logger.error(error)
                 self.failures.append(error)
-                print(error)
         return self.failure_counts_map[action_type] == 0
 
     def run_renamers(self, config, renamers):
@@ -298,8 +322,8 @@ class BatchJob:
                 else:
                     rename_index = self.counts_map[ActionType.RENAMER] - 1
                     error = f"Error in {config} renamer {rename_index}:  {e}"
+                logger.error(error)
                 self.failures.append(error)
-                print(error)
                 continue
 
             # Calculate sub-progress for this renamer
@@ -317,8 +341,8 @@ class BatchJob:
             except Exception as e:
                 self.failure_counts_map[ActionType.RENAMER] += 1
                 error = f"{config} renamer {renamer.name} failed:  {e}"
+                logger.error(error)
                 self.failures.append(error)
-                print(error)
         return self.failure_counts_map[ActionType.RENAMER] == 0
 
     def construct_duplicate_remover(self, yaml_dict={}):
@@ -328,6 +352,7 @@ class BatchJob:
         select_for_folder_depth = Utils.get_from_dict(yaml_dict, "select_for_folder_depth", None)
         exclude_dirs = Utils.get_from_dict(yaml_dict, "exclude_dirs", [])
         preferred_delete_dirs = Utils.get_from_dict(yaml_dict, "preferred_delete_dirs", [])
+        logger.info(f"Constructing duplicate remover: {name} with {len(source_dirs)} source directories")
         return DuplicateRemover(name, source_dirs, select_for_folder_depth=select_for_folder_depth,
                                 recursive=recursive, exclude_dirs=exclude_dirs, preferred_delete_dirs=preferred_delete_dirs)
 
@@ -341,6 +366,7 @@ class BatchJob:
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
         make_dirs = Utils.get_from_dict(yaml_dict, "make_dirs", True)
         find_unused_filenames = Utils.get_from_dict(yaml_dict, "find_unused_filenames", False)
+        logger.info(f"Constructing batch renamer: {name} with {len(mappings)} mappings and {len(locations)} locations")
         renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm,
                                recursive=recursive, make_dirs=make_dirs, find_unused_filenames=find_unused_filenames)
         return renamer, renamer_function
@@ -349,10 +375,12 @@ class BatchJob:
         name = yaml_dict["name"]
         location = Utils.get_from_dict(yaml_dict, "location", None)
         if not location:
+            logger.error("No location found for directory flattener config!")
             raise Exception("No location found for directory flattener config!")
         search_patterns = Utils.get_from_dict(yaml_dict, "search_patterns", [])
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        logger.info(f"Constructing directory flattener: {name} with {len(search_patterns)} search patterns")
         return DirectoryFlattener(name, location, search_patterns, test=test, skip_confirm=skip_confirm)
 
     def construct_backup(self, yaml_dict={}):
@@ -387,6 +415,7 @@ class BatchJob:
                                           mode=mode, file_mode=file_mode, hash_mode=hash_mode,
                                           exclude_dirs=exclude_dirs, exclude_removal_dirs=exclude_removal_dirs, will_run=will_run))
 
+        logger.info(f"Constructing backup manager: {name} with {len(mappings)} backup mappings")
         return BackupManager(name, mappings=mappings, test=test, overwrite=overwrite, warn_duplicates=warn_duplicates, skip_confirm=skip_confirm)
 
     def construct_directory_observer(self, yaml_dict={}):
@@ -396,6 +425,7 @@ class BatchJob:
         parent_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "parent_dirs", [])]
         exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "exclude_dirs", [])]
         file_types = FiletypesDefinition.get_definitions(Utils.get_from_dict(yaml_dict, "file_types", media_file_types))
+        logger.info(f"Constructing directory observer: {name} with {len(sortable_dirs)} sortable dirs, {len(extra_dirs)} extra dirs, {len(parent_dirs)} parent dirs")
         return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, parent_dirs=parent_dirs, exclude_dirs=exclude_dirs, file_types=file_types)
 
     def construct_image_categorizer(self, yaml_dict={}):
@@ -407,6 +437,7 @@ class BatchJob:
         exclude_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "exclude_dirs", [])]
         categories = Utils.get_from_dict(yaml_dict, "categories", [])
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
+        logger.info(f"Constructing image categorizer: {name} with {len(categories)} categories and {len(file_types)} file types")
         return ImageCategorizer(name, test=test, source_dir=source_dir, exclude_dirs=exclude_dirs,
                                 file_types=file_types, categories=categories, skip_confirm=skip_confirm,
                                 recursive=recursive)

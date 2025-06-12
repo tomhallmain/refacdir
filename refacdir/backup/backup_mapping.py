@@ -1,12 +1,4 @@
-from collections import defaultdict
-import datetime
-from enum import Enum
-import hashlib
-import json
 import os
-import pickle
-import shutil
-import tempfile
 from typing import List, Tuple, Optional
 
 from .backup_modes import BackupMode, FileMode, HashMode, FailureType
@@ -15,13 +7,15 @@ from .backup_state import BackupState
 from .directory_ops import DirectoryOps
 from .hash_manager import HashManager
 from .safe_file_ops import SafeFileOps
+from refacdir.utils.logger import setup_logger
 
-from refacdir.utils.utils import Utils
+# Set up logger for backup mapping
+logger = setup_logger('backup_mapping')
 
 try:
     from send2trash import send2trash
 except Exception:
-    print("Could not import trashing utility - all deleted files will be deleted instantly")
+    logger.error("Could not import trashing utility - all deleted files will be deleted instantly")
 
 
 def remove_file(path: str) -> bool:
@@ -30,13 +24,13 @@ def remove_file(path: str) -> bool:
         send2trash(os.path.normpath(path))
         return True
     except Exception as e:
-        print(f"Failed to send file to trash: {str(e)}")
-        print("Run pip install send2trash to enable trash functionality.")
+        logger.error(f"Failed to send file to trash: {str(e)}")
+        logger.error("Run pip install send2trash to enable trash functionality.")
         try:
             os.remove(path)
             return True
         except Exception as e:
-            print(f"Failed to remove file: {str(e)}")
+            logger.error(f"Failed to remove file: {str(e)}")
             return False
 
 
@@ -83,7 +77,7 @@ class BackupTransaction:
                             rollback_func(*args)
                         break
             except Exception as e:
-                print(f"Warning: Rollback operation failed: {str(e)}")
+                logger.warning(f"Warning: Rollback operation failed: {str(e)}")
 
 
 class BackupMapping:
@@ -165,7 +159,7 @@ class BackupMapping:
         """Create target directory structure"""
         parent = os.path.dirname(target_path)
         if parent and not os.path.exists(parent):
-            print(f"Creating directory: {parent}")
+            logger.info(f"Creating directory: {parent}")
             if not test:
                 success, error = DirectoryOps.atomic_create_dir(parent)
                 if not success:
@@ -197,12 +191,12 @@ class BackupMapping:
         
         try:
             if external_source:
-                print(f"Moving file within external dir to: {target_path} - previous location: {external_source}")
+                logger.info(f"Moving file within external dir to: {target_path} - previous location: {external_source}")
                 source_path = external_source
             elif os.path.exists(target_path):
-                print(f"Replacing file: {target_path}")
+                logger.info(f"Replacing file: {target_path}")
             else:
-                print(f"Creating file: {target_path}")
+                logger.info(f"Creating file: {target_path}")
                 
             if not test:
                 rollback = rollback_move if move_func == SafeFileOps.move else rollback_copy
@@ -219,11 +213,11 @@ class BackupMapping:
             
         if not os.path.exists(target_path):
             msg = f"Could not remove source file {source_path} - target file {target_path} not found"
-            print(msg)
+            logger.error(msg)
             self.failures.append([FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST, msg, target_path, source_path])
             return
             
-        print(f"Removing file already backed up: {source_path}")
+        logger.info(f"Removing file already backed up: {source_path}")
         if not test:
             try:
                 if not remove_file(source_path):

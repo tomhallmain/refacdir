@@ -1,5 +1,9 @@
 from multiprocessing.connection import Listener
 import time
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for server
+logger = setup_logger('refacdir_server')
 
 from refacdir.config import config
 
@@ -19,14 +23,14 @@ class RefacDirServer:
         self._running = True
         while self._running and not self._is_stopping:
             self._conn = self.listener.accept()
-            print('connection accepted from', self.listener.last_accepted)
+            logger.info(f'Connection accepted from {self.listener.last_accepted}')
 
             while not self._is_stopping:
                 try:
                     msg = self._conn.recv()
                     if msg is None:
                         continue
-                    print(msg)
+                    logger.info(f'Received message: {msg}')
                     if msg == 'close server' or msg == 'close connection':
                         self._conn.close()
                         if msg == 'close server':
@@ -42,7 +46,7 @@ class RefacDirServer:
                 except KeyboardInterrupt:
                     pass
                 except Exception as e:
-                    print(e)
+                    logger.error(f'Server error: {str(e)}')
                     self._conn.send({'error': 'server error', 'data': str(e)})
                     self._conn.close()
                 time.sleep(0.5)
@@ -59,9 +63,9 @@ class RefacDirServer:
         try:
             resp = self.run_callback(args)
             self._conn.send(resp)
-            print("After self._conn.send(resp)")
+            logger.debug("Response sent to client")
         except Exception as e:
-            print(e)
+            logger.error(f'Run error: {str(e)}')
             self._conn.send({'error': 'run error', 'data': str(e)})
 
     def stop(self):

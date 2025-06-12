@@ -2,6 +2,10 @@ import os
 import patoolib
 from subprocess import Popen, PIPE
 import sys
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for archive operations
+logger = setup_logger('archive')
 
 
 class Archive:
@@ -66,18 +70,18 @@ class ArchiveDirectory:
             for f in files:
                 if "/" not in f and "\\" not in f:
                     base_files.append(f)
-            print(archive.path)
-            print(f"Number of files: {len(files)}")
-            print(f"Number of base files: {len(files)}")
-            print(f"Size: {size}")
+            logger.info(f"Archive: {archive.path}")
+            logger.info(f"Number of files: {len(files)}")
+            logger.info(f"Number of base files: {len(files)}")
+            logger.info(f"Size: {size}")
             count = 0
             for f in base_files:
-                print(f)
+                logger.info(f)
                 count += 1
                 if count > 9:
-                    print("etc...")
+                    logger.info("etc...")
                     break
-            print("")
+            logger.info("")
 
     def search_archive_paths(self, search_term, cased=False):
         archive_matches = {}
@@ -86,10 +90,10 @@ class ArchiveDirectory:
             if len(file_matches) > 0:
                 archive_matches[archive] = file_matches
         for match_archive in archive_matches:
-            print("Found archive with matches: " + match_archive.path)
+            logger.info(f"Found archive with matches: {match_archive.path}")
             for f in archive_matches[match_archive]:
-                print(f)
-            print("")
+                logger.info(f)
+            logger.info("")
 
 
 if __name__ == "__main__":

@@ -12,9 +12,12 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu, QApplication
 from PySide6.QtCore import Signal, QObject, Qt
 from refacdir.utils.utils import Utils
 from refacdir.utils.translations import I18N
+from refacdir.utils.logger import setup_logger
 
 _ = I18N._
 
+# Set up logger for test results
+logger = setup_logger('test_results')
 
 class TestSignals(QObject):
     """Signals for thread-safe UI updates"""
@@ -143,6 +146,7 @@ class TestResultsWindow(QMainWindow):
         
         def run_tests_thread():
             try:
+                logger.info("Starting test suite execution")
                 # Store original stdout and cwd to restore later
                 original_stdout = sys.stdout
                 original_cwd = os.getcwd()
@@ -178,6 +182,11 @@ class TestResultsWindow(QMainWindow):
                 ]
                 
                 # Debug info
+                logger.info(f"Base directory: {base_dir}")
+                logger.info(f"Test directory: {test_dir}")
+                logger.info(f"Test files directory: {test_files_dir}")
+                logger.info(f"Python path: {sys.path[0]}")
+                
                 self.signals.update_text.emit(_("Base directory: ") + f"{base_dir}\n", "important")
                 self.signals.update_text.emit(_("Test directory: ") + f"{test_dir}\n", "important")
                 self.signals.update_text.emit(_("Test files directory: ") + f"{test_files_dir}\n", "important")
@@ -187,10 +196,12 @@ class TestResultsWindow(QMainWindow):
                 for test_file in test_files[:]:
                     if not os.path.exists(test_file):
                         error_msg = _("Test file not found: {0}").format(test_file) + "\n"
+                        logger.error(error_msg)
                         print(error_msg, file=original_stdout)
                         self.signals.update_text.emit(error_msg, "error")
                         test_files.remove(test_file)
                     else:
+                        logger.info(f"Found test file: {test_file}")
                         self.signals.update_text.emit(_("Found test file: ") + f"{test_file}\n", "important")
                 
                 if not test_files:

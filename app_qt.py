@@ -21,10 +21,13 @@ from refacdir.job_queue import JobQueue
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
 from refacdir.utils.utils import Utils
 from refacdir.utils.translations import I18N
+from refacdir.utils.logger import setup_logger
 from ui import AppActions, ThemeManager, ThemeColors, ToastNotification, TestResultsWindow
 
 _ = I18N._
 
+# Set up logger for UI
+logger = setup_logger('ui')
 
 class ProgressListener:
     def __init__(self, update_func):
@@ -307,15 +310,16 @@ class MainWindow(QMainWindow):
         server = RefacDirServer(self.server_run_callback)
         try:
             Utils.start_thread(server.start)
+            logger.info("Server started successfully")
             return server
         except Exception as e:
-            print(f"Failed to start server: {e}")
+            logger.error(f"Failed to start server: {e}")
         return None
         
     def server_run_callback(self, args):
         """Handle server callbacks"""
         if len(args) > 0:
-            print(args)
+            logger.info(f"Server callback received with args: {args}")
             self.update()
         self.run()
         return {}
@@ -341,7 +345,7 @@ class MainWindow(QMainWindow):
             self.filtered_configs[config] = state == Qt.Checked
             self.configs[config] = self.filtered_configs[config]
             BatchArgs.update_config_state(config, self.filtered_configs[config])
-            print(f"Config {config} set to {self.filtered_configs[config]}")
+            logger.info(f"Config {config} set to {self.filtered_configs[config]}")
             
     def filter_configs(self, text: str):
         """Filter configurations based on search text"""
@@ -427,7 +431,7 @@ class MainWindow(QMainWindow):
         if kind not in ("error", "warning", "info"):
             raise ValueError("Unsupported alert kind.")
             
-        print(f"Alert - Title: \"{title}\" Message: {message}")
+        logger.info(f"Alert - Title: \"{title}\" Message: {message}")
         
         # Use theme colors for message boxes
         if kind == "error":
@@ -442,8 +446,9 @@ class MainWindow(QMainWindow):
         if self.server is not None:
             try:
                 self.server.stop()
+                logger.info("Server stopped successfully")
             except Exception as e:
-                print(f"Error stopping server: {e}")
+                logger.error(f"Error stopping server: {e}")
         event.accept()
 
     def keyPressEvent(self, event):
@@ -508,7 +513,7 @@ if __name__ == "__main__":
     try:
         # Set up signal handlers for graceful shutdown
         def graceful_shutdown(signum, frame):
-            print("Caught signal, shutting down gracefully...")
+            logger.info("Caught signal, shutting down gracefully...")
             app.close()
             exit(0)
             

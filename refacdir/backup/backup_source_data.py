@@ -29,8 +29,11 @@ import errno
 import shutil
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Any, Set
-from pathlib import Path
 import zlib
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for backup source data
+logger = setup_logger('backup_source_data')
 
 class BackupLockError(Exception):
     """Raised when unable to acquire backup lock"""
@@ -353,7 +356,7 @@ class BackupSourceData:
             try:
                 os.remove(filepath)
             except Exception as e:
-                print(f"Warning: Failed to remove old backup {filepath}: {str(e)}")
+                logger.warning(f"Failed to remove old backup {filepath}: {str(e)}")
 
     def _calculate_checksum(self, filepath: str) -> str:
         """Calculate SHA-256 checksum of a file"""
@@ -852,7 +855,7 @@ class BackupSourceData:
             # First create a backup of the existing file
             success, error = self._backup_current_file(description)
             if not success:
-                print(f"Warning: {error}")
+                logger.warning(f"{error}")
 
             # Save the current data atomically
             try:
@@ -926,7 +929,7 @@ class BackupSourceData:
                     
                 return data
             except Exception as e:
-                print(f"Warning: Failed to load backup data: {str(e)}")
+                logger.warning(f"Failed to load backup data: {str(e)}")
                 # Fall through to create new data
                 
         return BackupSourceData(source_dir=source_dir)

@@ -6,6 +6,10 @@ import re
 import sys
 
 from refacdir.utils.utils import Utils
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for duplicate remover
+logger = setup_logger('duplicate_remover')
 
 # TODO maybe option to not preserve/ignore duplicates if they exist in different subdirectories within the root
 
@@ -16,6 +20,7 @@ class DuplicateRemover:
 
     def __init__(self, name, source_folders, select_for_folder_depth=False, match_dir=False,
                  recursive=True, exclude_dirs=[], preferred_delete_dirs=[]):
+        logger.info(f"Initializing duplicate remover: {name}")
         self.name = name
         self.source_folders = []
         for source_folder in source_folders:
@@ -29,20 +34,20 @@ class DuplicateRemover:
         self.preferred_delete_dirs = []
         self.skip_exclusion_check = len(exclude_dirs) == 0
         if not self.skip_exclusion_check:
-            print("Excluding directories from duplicates check:")
+            logger.info("Excluding directories from duplicates check:")
             for d in exclude_dirs:
                 full_path = self._find_full_path(d)
                 if not os.path.isdir(full_path):
                     raise Exception("Invalid exclude directory: " + d)
-                print(full_path)
+                logger.info(full_path)
                 self.exclude_dirs.append(full_path)
         if len(preferred_delete_dirs) > 0:
-            print("Preferring directories for deletion:")
+            logger.info("Preferring directories for deletion:")
             for d in preferred_delete_dirs:
                 full_path = self._find_full_path(d)
                 if not os.path.isdir(full_path):
                     raise Exception("Invalid preferred delete directory: " + d)
-                print(full_path)
+                logger.info(full_path)
                 self.preferred_delete_dirs.append(full_path)
 
     def _find_full_path(self, dirname):
@@ -57,24 +62,27 @@ class DuplicateRemover:
         return ""
 
     def run(self):
-        print(f"Running duplicate removal for: {self.source_folders}")
+        logger.info(f"Running duplicate removal for: {self.source_folders}")
         if self.find_duplicates():
             self.handle_duplicates(testing=True)
             confirm = input("Confirm all duplicates removal (Y/n): ")
             if confirm.lower() == "y":
+                logger.info("User confirmed removal of all duplicates")
                 self.handle_duplicates(testing=False)
                 return
-            print("No change made.")
+            logger.info("No change made.")
             confirm = input("Remove duplicates with confirmation one by one? (Y/n): ")
             if confirm.lower() == "y":
+                logger.info("User chose to remove duplicates with individual confirmation")
                 self.handle_duplicates(testing=False, skip_confirm=False)
                 return
-            print("No change made.")
+            logger.info("No change made.")
             confirm_report = input("Save duplicates report? (Y/n): ")
             if confirm_report.lower() == "y":
+                logger.info("User chose to save duplicates report")
                 self.save_report()
         else:
-            print("No duplicates found.")
+            logger.info("No duplicates found.")
 
     def get_file_hash(self, file_path):
         hash_obj = hashlib.md5()
@@ -92,6 +100,7 @@ class DuplicateRemover:
     def find_duplicates(self):
         file_dict = defaultdict(list)
         for source_folder in self.source_folders:
+            logger.debug(f"Scanning directory for duplicates: {source_folder}")
             for foldername, subfolders, filenames in os.walk(source_folder):
                 if not self.recursive and foldername != source_folder: # TODO better way to handle this
                     continue
@@ -101,8 +110,10 @@ class DuplicateRemover:
                         try:
                             file_dict[self.get_file_hash(file_path)].append(file_path)
                         except Exception as e: # FileNotFound error is possible
-                            print(f"Error generating hash for \"{file_path}\": {e}")
+                            logger.error(f"Error generating hash for \"{file_path}\": {e}")
         self.duplicates = {k: v for k, v in file_dict.items() if len(v) > 1}
+        if self.has_duplicates():
+            logger.info(f"Found {len(self.duplicates)} sets of duplicate files")
         return self.has_duplicates()
 
     def has_duplicates(self):
@@ -124,18 +135,22 @@ class DuplicateRemover:
             if self.match_dir and len(duplicates_to_remove) == 0:
                 continue
             if testing:
-                print("Keeping file:               " + best_duplicate)
-                print("Removing duplicate files: " + str(duplicates_to_remove))
+                logger.info("Keeping file:               " + best_duplicate)
+                logger.info("Removing duplicate files: " + str(duplicates_to_remove))
             else:
                 if not skip_confirm:
-                    print("Keeping file:               " + best_duplicate)
-                    print("Removing duplicate files: " + str(duplicates_to_remove))
+                    logger.info("Keeping file:               " + best_duplicate)
+                    logger.info("Removing duplicate files: " + str(duplicates_to_remove))
                     confirm = input(f"OK to remove? (Y/n): ")
                     if confirm.lower() != "y":
+                        logger.info("User skipped removal of duplicates")
                         continue
                 for file_path in duplicates_to_remove:
-                    print("Removing file: " + file_path)
-                    os.remove(file_path)
+                    logger.info("Removing file: " + file_path)
+                    try:
+                        os.remove(file_path)
+                    except Exception as e:
+                        logger.error(f"Failed to remove file {file_path}: {e}")
 
     def is_preferred_delete_file(self, file_path):
         for d in self.preferred_delete_dirs:
@@ -184,6 +199,7 @@ class DuplicateRemover:
         raise Exception("Impossible case")
 
     def save_report(self):
+        logger.info("Generating duplicates report")
         # Create a list of tuples with best duplicate file and its duplicates
         duplicates_list = [(self.select_best_duplicate(files), files) for files in self.duplicates.values()]
         # Sort the list based on the filename of the best duplicate
@@ -199,10 +215,11 @@ class DuplicateRemover:
                     if duplicate != best:
                         f.write(f'{duplicate}\n')
                 f.write('\n')
-        print(f'Report saved at {report_path}')
+        logger.info(f'Report saved at {report_path}')
 
 def dups_main(directory_path=".", select_deepest=False, match_dir=False, recursive=True, 
               exclude_dir_string="", preferred_delete_dirs_string=""):
+    logger.info(f"Starting duplicate removal process in directory: {directory_path}")
     exclude_dirs = Utils.get_list_from_string(exclude_dir_string)
     preferred_delete_dirs = Utils.get_list_from_string(preferred_delete_dirs_string)
     remover = DuplicateRemover("dups_main", directory_path, select_for_folder_depth=select_deepest,

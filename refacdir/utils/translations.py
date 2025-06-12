@@ -1,5 +1,9 @@
 import gettext
 import os
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for translations
+logger = setup_logger('translations')
 
 from utils.utils import Utils
 
@@ -21,7 +25,7 @@ class I18N:
         I18N.translate = gettext.translation('base', I18N.localedir, languages=[locale], fallback=True)
         I18N.translate.install()
         if verbose:
-            Utils.log("Switched locale to: " + locale)
+            logger.info("Switched locale to: " + locale)
 
     @staticmethod
     def _(s):

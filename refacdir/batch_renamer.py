@@ -3,7 +3,10 @@ import os
 from refacdir.file_renamer import FileRenamer
 from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.utils import Utils
+from refacdir.utils.logger import setup_logger
 
+# Set up logger for batch renamer
+logger = setup_logger('batch_renamer')
 
 class Location:
     def __init__(self, root, exclude_dirs=[]):
@@ -31,6 +34,7 @@ class DirectoryFlattener:
     Take all files in recursive directories and flatten them into the base directory.
     """
     def __init__(self, name, location, search_patterns=[], test=True, skip_confirm=False):
+        logger.info(f"Initializing directory flattener: {name}")
         self.name = name
         self.location = Location.construct(location)
         if search_patterns is None or len(search_patterns) == 0:
@@ -42,9 +46,11 @@ class DirectoryFlattener:
                                           skip_confirm=skip_confirm, recursive=True, make_dirs=False, find_unused_filenames=True)
 
     def run(self):
+        logger.info(f"Running directory flattener: {self.name}")
         self.flatten()
 
     def flatten(self):
+        logger.info(f"Flattening directory: {self.location.root}")
         self.batch_renamer.move_files()
 
 
@@ -57,6 +63,7 @@ class BatchRenamer:
 
     def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True,
                  preserve_alpha=False, make_dirs=False, find_unused_filenames=False):
+        logger.info(f"Initializing batch renamer: {name} with {len(mappings)} mappings and {len(locations)} locations")
         self.name = name
         self.mappings = mappings
         self.locations = locations
@@ -80,7 +87,9 @@ class BatchRenamer:
             file_renamer = FileRenamer(root=root, test=self.test, preserve_alpha=self.preserve_alpha, exclude_dirs=exclude_dirs,
                                        find_unused_filenames=self.find_unused_filenames)
         else:
-            raise Exception(f"Invalid location provided: {location}")
+            error_msg = f"Invalid location provided: {location}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
         return file_renamer
 
     def found_files(self):
@@ -105,31 +114,33 @@ class BatchRenamer:
             if temp in BatchRenamer.DESCRIPTIONS:
                 _func = temp
             else:
-                raise Exception(f"Invalid function provided: {_func}. Must be one of: {BatchRenamer.DESCRIPTIONS.keys()}")
+                error_msg = f"Invalid function provided: {_func}. Must be one of: {BatchRenamer.DESCRIPTIONS.keys()}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
         _desc = BatchRenamer.DESCRIPTIONS[_func]
+        
         if self.test:
-            print(f"\n|=============== TESTING BATCH RENAME PROCESS: {self.name} (no change to be made) ===============|")
+            logger.info(f"|=============== TESTING BATCH RENAME PROCESS: {self.name} (no change to be made) ===============|")
         elif not self.found_files():
-            print(f"{self.name} - No files found for {_desc} {Utils.stringify_list(self.locations, do_print=False)}")
+            logger.warning(f"{self.name} - No files found for {_desc} {Utils.stringify_list(self.locations, do_print=False)}")
             return
         else:
-            print(f"\n|=============== BATCH RENAME PROCESS STARTED: {self.name} ===============|")
-        print(f"About to {_desc} locations:")
-        Utils.stringify_list(self.locations)
-        print("with mapping patterns:")
-        Utils.stringify_dict(self.mappings)
+            logger.info(f"|=============== BATCH RENAME PROCESS STARTED: {self.name} ===============|")
+            
+        logger.info(f"About to {_desc} locations: {Utils.stringify_list(self.locations, do_print=False)}")
+        logger.info(f"With mapping patterns: {Utils.stringify_dict(self.mappings, do_print=False)}")
 
         if not self.test:
             if not self.skip_confirm:
                 confirm = input("Confirm (y/n) ")
-
                 if confirm.lower() != "y":
-                    print("No action taken.")
+                    logger.info("Operation cancelled by user")
                     return
 
         for location in self.locations:
+            logger.info(f"Processing location: {location}")
             file_renamer = self._get_renamer(location)
             operation = getattr(file_renamer, _func)
             operation(self.mappings, recursive=self.recursive, make_dirs=self.make_dirs)
 
-        print(f"|=============== BATCH RENAME PROCESS COMPLETE: {self.name} ===============|\n\n")
+        logger.info(f"|=============== BATCH RENAME PROCESS COMPLETE: {self.name} ===============|\n\n")

@@ -8,6 +8,10 @@ prompt += "When you are done, please also provide me with a context object detai
 
 import json
 import os
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for project refactoring
+logger = setup_logger('project_refactoring')
 
 class Context:
     def __init__(self, project_root, current_dir_cursor, files_in_current_dir):
@@ -83,14 +87,14 @@ class ProjectRefactoring:
 
     # Method to refactor the code using output of LLM
     def do_refactor(self):
-        try :
+        try:
             prompt = self.input_generator.generate_prompt()
             lm_output = self.call_llm(prompt)
             lm_output_processor = LMOutputProcessor(lm_output)
             current_file_cursor, start_line, end_line = lm_output_processor.process_and_apply()
             self.input_generator.update_context(current_file_cursor, start_line, end_line)
         except Exception as e:
-            print(e)
+            logger.error(str(e))
 
     def refactor_code(self, max_edits):
         for i in range(max_edits):

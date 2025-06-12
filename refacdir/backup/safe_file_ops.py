@@ -5,10 +5,14 @@ import tempfile
 import datetime
 import sys
 from typing import Optional, Tuple
+from refacdir.utils.logger import setup_logger
 
 if sys.platform == "win32":
     import win32file
     import pywintypes
+
+# Set up logger for safe file operations
+logger = setup_logger('safe_file_ops')
 
 class SafeFileOps:
     """Provides atomic file operations with verification for backup operations"""
@@ -209,7 +213,7 @@ class SafeFileOps:
                     # Always close the handle
                     handle.Close()
             except Exception as e:
-                print(f"Warning: Failed to set creation time on Windows: {str(e)}")
+                logger.warning(f"Failed to set creation time on Windows: {str(e)}")
         else:
             # TODO: Add specific handling for other operating systems if needed
             # Currently, only modification time is reliably settable on Unix-like systems

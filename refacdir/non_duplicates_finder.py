@@ -3,6 +3,10 @@ from collections import defaultdict
 import hashlib
 import os
 import sys
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for non-duplicates finder
+logger = setup_logger('non_duplicates_finder')
 
 from refacdir.utils.utils import Utils
 
@@ -21,12 +25,12 @@ class NonDuplicatesFinder:
         self.preferred_delete_dirs = []
         self.skip_exclusion_check = len(exclude_dirs) == 0
         if not self.skip_exclusion_check:
-            print("Excluding directories from duplicates check:")
+            logger.info("Excluding directories from duplicates check:")
             for d in exclude_dirs:
                 full_path = self._find_full_path(d)
                 if not os.path.isdir(full_path):
                     raise Exception("Invalid exclude directory: " + d)
-                print(full_path)
+                logger.info(full_path)
                 self.exclude_dirs.append(full_path)
 
     def _find_full_path(self, dirname):
@@ -41,24 +45,24 @@ class NonDuplicatesFinder:
         return ""
 
     def run(self):
-        print(f"Running duplicate removal for: {self.source_folders}")
+        logger.info(f"Running duplicate removal for: {self.source_folders}")
         if self.find_duplicates():
             self.handle_duplicates(testing=True)
             confirm = input("Confirm all duplicates removal (Y/n): ")
             if confirm.lower() == "y":
                 self.handle_duplicates(testing=False)
                 return
-            print("No change made.")
+            logger.info("No change made.")
             confirm = input("Remove duplicates with confirmation one by one? (Y/n): ")
             if confirm.lower() == "y":
                 self.handle_duplicates(testing=False, skip_confirm=False)
                 return
-            print("No change made.")
+            logger.info("No change made.")
             confirm_report = input("Save duplicates report? (Y/n): ")
             if confirm_report.lower() == "y":
                 self.save_report()
         else:
-            print("No duplicates found.")
+            logger.info("No duplicates found.")
 
     def get_file_hash(self, file_path):
         hash_obj = hashlib.md5()
@@ -85,7 +89,7 @@ class NonDuplicatesFinder:
                         try:
                             file_dict[self.get_file_hash(file_path)].append(file_path)
                         except Exception as e: # FileNotFound error is possible
-                            print(f"Error generating hash for \"{file_path}\": {e}")
+                            logger.error(f"Error generating hash for \"{file_path}\": {e}")
         self.duplicates = {k: v for k, v in file_dict.items() if len(v) > 1}
         return self.has_duplicates()
 
@@ -101,17 +105,17 @@ class NonDuplicatesFinder:
         for file_list in self.duplicates.values():
             best_duplicate, duplicates_to_remove = self.determine_duplicates(file_list)
             if testing:
-                print("Keeping file:               " + best_duplicate)
-                print("Removing duplicate files: " + str(duplicates_to_remove))
+                logger.info("Keeping file:               " + best_duplicate)
+                logger.info("Removing duplicate files: " + str(duplicates_to_remove))
             else:
                 if not skip_confirm:
-                    print("Keeping file:               " + best_duplicate)
-                    print("Removing duplicate files: " + str(duplicates_to_remove))
+                    logger.info("Keeping file:               " + best_duplicate)
+                    logger.info("Removing duplicate files: " + str(duplicates_to_remove))
                     confirm = input(f"OK to remove? (Y/n): ")
                     if confirm.lower() != "y":
                         continue
                 for file_path in duplicates_to_remove:
-                    print("Removing file: " + file_path)
+                    logger.info("Removing file: " + file_path)
                     os.remove(file_path)
 
     def is_preferred_delete_file(self, file_path):
@@ -151,7 +155,7 @@ class NonDuplicatesFinder:
                     if duplicate != best:
                         f.write(f'{duplicate}\n')
                 f.write('\n')
-        print(f'Report saved at {report_path}')
+        logger.info(f'Report saved at {report_path}')
 
 def non_dups_main(directory_path=".", recursive=True, exclude_dir_string=""):
     exclude_dirs = Utils.get_list_from_string(exclude_dir_string)

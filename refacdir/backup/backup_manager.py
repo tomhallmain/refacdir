@@ -1,3 +1,7 @@
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for backup manager
+logger = setup_logger('backup_manager')
 
 
 class BackupManager:
@@ -21,11 +25,11 @@ class BackupManager:
         self.run_backups()
 
     def run_backups(self):
-        print("TESTING BACKUPS" if self.test else "RUNNING BACKUPS")
-        print("The following backups will be run:")
+        logger.info("TESTING BACKUPS" if self.test else "RUNNING BACKUPS")
+        logger.info("The following backups will be run:")
         for mapping in self.backup_mappings:
             if mapping.will_run:
-                print(str(mapping))
+                logger.info(str(mapping))
         if not self.skip_confirm:
             self.confirm_backups()
         for mapping in self.backup_mappings:
@@ -39,10 +43,10 @@ class BackupManager:
     def confirm_backups(self):
         confirm = input("\nCONFIRM BACKUP (y/n): ")
         if not confirm.lower() == "y":
-            print("No change made.")
+            logger.info("No change made.")
             exit()
         confirm = input("\nCONFIRM BACKUP AGAIN (y/n): ")
         if not confirm.lower() == "y":
-            print("No change made.")
+            logger.info("No change made.")
             exit()
-        print("\nConfirmations received, running full backups.")
+        logger.info("\nConfirmations received, running full backups.")

@@ -3,10 +3,14 @@ import json
 import os
 
 from refacdir.utils.utils import Utils
+from refacdir.utils.logger import setup_logger
+
+# Set up logger for directory observer
+logger = setup_logger('directory_observer')
 
 media_file_types = [".bmp", ".gif", ".jpeg", ".jpg", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg", ".mpg", ".png", ".tiff", ".webm", ".webp"]
 
-def print_table(table, divider="  "):
+def format_table(table, divider="  "):
     max_field_lengths = []
     for row in table:
         for col_index in range(len(row)):
@@ -16,6 +20,7 @@ def print_table(table, divider="  "):
             elif cell_len > max_field_lengths[col_index]:
                 max_field_lengths[col_index] = cell_len
     
+    formatted_rows = []
     for row in table:
         row_string = ""
         for col_index in range(len(row)):
@@ -28,7 +33,8 @@ def print_table(table, divider="  "):
                 row_string += (spaces_to_add * " ") + cell_str + divider
             else:
                 row_string += cell_str + (spaces_to_add * " ") + divider
-        print(row_string)
+        formatted_rows.append(row_string)
+    return "\n".join(formatted_rows)
 
 class DirData:
     file_types = []
@@ -42,7 +48,7 @@ class DirData:
 
     @staticmethod
     def remove_file_types(file_types):
-        print(f"Removing file types with no files: {file_types}")
+        logger.info(f"Removing file types with no files: {file_types}")
         for t in file_types:
             try:
                 DirData.file_types.remove(t)
@@ -62,6 +68,7 @@ class DirData:
         DirData.file_types.insert(first_index, preserving_name)
 
     def __init__(self, directory):
+        logger.debug(f"Initializing DirData for directory: {directory}")
         self.directory = directory
         self.exclude_dirs = []
         self.all_files = []
@@ -72,6 +79,7 @@ class DirData:
             self.dict[t] = 0
 
     def observe(self):
+        logger.debug(f"Observing directory: {self.directory}")
         self.all_files = glob.glob("**/*", root_dir=self.directory, recursive=True)
         if len(self.exclude_dirs) > 0:
             for d in self.exclude_dirs:
@@ -85,6 +93,7 @@ class DirData:
             file_count = len(list(filter(lambda f: f.lower().endswith(file_type), self.all_files)))
             self.total_file_count_types += file_count
             self.dict[file_type] = file_count
+        logger.debug(f"Found {self.total_file_count} total files, {self.total_file_count_types} of tracked types in {self.directory}")
         return self.total_file_count, self.total_file_count_types
 
     def other_file_count(self):
@@ -112,6 +121,7 @@ class DirData:
 class DirectoryObserver:
     UNSORTED = "_unsorted"
     def __init__(self, name, sortable_dirs=[], extra_dirs=[], parent_dirs=[], exclude_dirs=[], file_types=[]):
+        logger.info(f"Initializing DirectoryObserver: {name}")
         self.name = name
         self.dir_data = {}
         self.total_file_count = 0
@@ -131,7 +141,7 @@ class DirectoryObserver:
         for d in parent_dirs:
             if not os.path.isdir(d):
                 raise Exception("Invalid directory provided: " + d)
-            print(f"Adding directories from parent: {d}")
+            logger.info(f"Adding directories from parent: {d}")
             for subdir in [ f.path for f in os.scandir(d) if f.is_dir() ]:
                 self.dir_data[subdir] = DirData(subdir)
 
@@ -150,6 +160,7 @@ class DirectoryObserver:
         self.log()
 
     def observe(self):
+        logger.info("Starting directory observation")
         # Gather data
         for dir_data in self.dir_data.values():
             total_file_count, total_file_count_types = dir_data.observe()
@@ -176,8 +187,8 @@ class DirectoryObserver:
             DirData.remove_file_types(to_remove_file_types)
 
     def log(self):
-        print("Current state of directories:")
-        print(f"Total: {self.total_file_count} files")
+        logger.info("Current state of directories:")
+        logger.info(f"Total: {self.total_file_count} files")
         rows = []
         header = ["Directory"]
         for ext in DirData.file_types:
@@ -197,7 +208,8 @@ class DirectoryObserver:
 
         rows.sort(key=lambda row: row[len(row)-1], reverse=True)
         rows.insert(0, header)
-        print_table(rows)
+        table_output = format_table(rows)
+        logger.info("\n" + table_output)
 
     def apply_exclude_dir_to_matching_dir_data(self, exclude_dir):
         for d, dir_data in self.dir_data.items():
@@ -205,11 +217,12 @@ class DirectoryObserver:
                 dir_data.apply_exclude_dir(exclude_dir)
                 return
 
-        print(f"No matching directory found for exclude directory {exclude_dir}")
+        logger.warning(f"No matching directory found for exclude directory {exclude_dir}")
 
 
 
 if __name__ == "__main__":
+    logger.info("Starting directory observation from command line")
     observed_dirs_json = json.load(open("observed_directories.json"))
     sortable_dirs = observed_dirs_json["sortable_dirs"]
     extra_dirs = observed_dirs_json["extra_dirs"]
