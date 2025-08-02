@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2025-04-03 19:22-0400\n"
-"PO-Revision-Date: 2025-04-03 19:22-0400\n"
-"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
+"POT-Creation-Date: 2025-08-02 18:58-0400\n"
+"PO-Revision-Date: 2025-08-02 18:58-0400\n"
+"Last-Translator: Translator Name <translator@example.com>\n"
 "Language-Team: ja Team <<EMAIL>>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: .\app.py:191 .\app.py:647
+#: app_qt.py:83
 msgid "RefacDir"
 msgstr "RefacDir"
 
@@ -20,15 +20,15 @@ msgstr "RefacDir"
 msgid "Configure and run file management operations with ease"
 msgstr "ファイルの管理操作を容易に構成し、実行して下さい"
 
-#: .\app.py:233
+#: app_qt.py:132
 msgid "Toggle Theme"
 msgstr "トピックス テーマ"
 
-#: .\app.py:239
+#: app_qt.py:137
 msgid "Run Backup Tests"
 msgstr "バックアップを実行 テスト"
 
-#: .\app.py:245
+#: app_qt.py:142
 msgid "Run Operations"
 msgstr "オペレーションの実行"
 
@@ -36,98 +36,97 @@ msgstr "オペレーションの実行"
 msgid "Options"
 msgstr "オプション"
 
-#: .\app.py:267
+#: app_qt.py:245
 msgid "Recur Selected Actions"
 msgstr "選択したアクションを回復する"
 
-#: .\app.py:275
+#: app_qt.py:249
 msgid "Test Mode"
 msgstr "試験モード"
 
-#: .\app.py:282
+#: app_qt.py:252
 msgid "Skip Confirmations"
 msgstr "確認をスキップする"
 
-#: .\app.py:289
+#: app_qt.py:255
 msgid "Only Observers"
 msgstr "唯一のオブザーバー"
 
-#: .\app.py:300 .\app.py:519
+#: app_qt.py:274 app_qt.py:393 app_qt.py:509
 msgid "Ready"
 msgstr "レディー"
 
-#: .\app.py:517
+#: app_qt.py:391
 msgid "Operation failed"
 msgstr "操作失敗"
 
-#: .\refacdir\ui\test_results_window.py:25
-#: .\refacdir\ui\test_results_window.py:265
+#: ui/test_results_window.py:55
 msgid "Backup System Verification"
 msgstr "バックアップシステム検証"
 
-#: .\refacdir\ui\test_results_window.py:90
+#: ui/test_results_window.py:170
 msgid "Test directory not found: {0}"
-msgstr "テストディレクトリが見つかりません: お問い合わせ"
+msgstr "テストディレクトリが見つかりません: {0}"
 
-#: .\refacdir\ui\test_results_window.py:105
+#: ui/test_results_window.py:190
 msgid "Base directory: "
 msgstr "ベースディレクトリ: "
 
-#: .\refacdir\ui\test_results_window.py:106
+#: ui/test_results_window.py:191
 msgid "Test directory: "
 msgstr "テストディレクトリ: "
 
-#: .\refacdir\ui\test_results_window.py:107
+#: ui/test_results_window.py:192
 msgid "Test files directory: "
 msgstr "ファイルディレクトリをテスト: "
 
-#: .\refacdir\ui\test_results_window.py:108
+#: ui/test_results_window.py:193
 msgid "Python path: "
 msgstr "Python パス: "
 
-#: .\refacdir\ui\test_results_window.py:113
+#: ui/test_results_window.py:198
 msgid "Test file not found: {0}"
-msgstr "見つからないテストファイル: お問い合わせ"
+msgstr "テストファイルが見つかりません: {0}"
 
-#: .\refacdir\ui\test_results_window.py:118
+#: ui/test_results_window.py:205
 msgid "Found test file: "
 msgstr "発見されたテスト ファイル: "
 
-#: .\refacdir\ui\test_results_window.py:121
+#: ui/test_results_window.py:208
 msgid "No test files found!"
 msgstr "テストファイルが見つかりません!"
 
-#: .\refacdir\ui\test_results_window.py:133
+#: ui/test_results_window.py:219
 msgid "Analyzing test suite..."
 msgstr "テストスイートの分析"
 
-#: .\refacdir\ui\test_results_window.py:148
+#: ui/test_results_window.py:234
 msgid "Found {0} tests in {1}"
 msgstr "{1} で {0} のテストを見つけました"
 
-#: .\refacdir\ui\test_results_window.py:152
+#: ui/test_results_window.py:238
 msgid "Error collecting tests from {0}: {1}"
-msgstr "{0}からテストを収集するエラー{0}: {1}"
+msgstr "{0} からテストを収集中にエラーが発生しました: {1}"
 
-#: .\refacdir\ui\test_results_window.py:172
+#: ui/test_results_window.py:257
 msgid "Running tests from {0}..."
 msgstr "{0}からテストを実行する..."
 
-#: .\refacdir\ui\test_results_window.py:178
+#: ui/test_results_window.py:260
 msgid "Running tests from {0}:"
 msgstr "{0} からテストを実行する:"
 
-#: .\refacdir\ui\test_results_window.py:210
+#: ui/test_results_window.py:285
 msgid "Error in {0}:"
 msgstr "{0}のエラー:"
 
-#: .\refacdir\ui\test_results_window.py:228
+#: ui/test_results_window.py:303
 msgid "Error running tests in {0}: {1}"
-msgstr "{0} でテストを実行するエラー: お問い合わせ"
+msgstr "{0}でテストを実行中にエラーが発生しました: {1}"
 
-#: .\refacdir\ui\test_results_window.py:243
+#: ui/test_results_window.py:318
 msgid "Unexpected error running tests: {0}"
-msgstr "予期しないエラー実行テスト: お問い合わせ"
+msgstr "テスト実行中に予期しないエラーが発生しました: {0}"
 
 #: .\refacdir\ui\test_results_window.py:270
 msgid ""
@@ -135,7 +134,7 @@ msgid ""
 "reliability"
 msgstr "バックアップシステムの完全性と信頼性を検証するための包括的なテストを実行"
 
-#: .\refacdir\ui\test_results_window.py:281
+#: ui/test_results_window.py:74
 msgid "Initializing tests..."
 msgstr "初期化テスト..."
 
@@ -147,27 +146,27 @@ msgstr "試験結果"
 msgid "Summary"
 msgstr "インフォメーション"
 
-#: .\refacdir\ui\test_results_window.py:347
+#: ui/test_results_window.py:110
 msgid "Total Tests: 0"
 msgstr "総テスト: 0 の 0"
 
-#: .\refacdir\ui\test_results_window.py:353
+#: ui/test_results_window.py:113
 msgid "Passed: 0"
 msgstr "渡された: 0"
 
-#: .\refacdir\ui\test_results_window.py:360
+#: ui/test_results_window.py:117
 msgid "Failed: 0"
 msgstr "失敗した: 0"
 
-#: .\refacdir\ui\test_results_window.py:367
+#: ui/test_results_window.py:121
 msgid "Time: 0:00"
 msgstr "時間: 0:00"
 
-#: .\refacdir\ui\test_results_window.py:379
+#: ui/test_results_window.py:130
 msgid "Close"
 msgstr "ふりがな"
 
-#: .\refacdir\ui\test_results_window.py:387
+#: ui/test_results_window.py:134
 msgid "Save Results"
 msgstr "結果を保存"
 
@@ -175,30 +174,27 @@ msgstr "結果を保存"
 msgid "Time: "
 msgstr "時間: "
 
-#: .\refacdir\ui\test_results_window.py:438
-#: .\refacdir\ui\test_results_window.py:457
+#: ui/test_results_window.py:438
 msgid "Total Tests: "
 msgstr "総テスト: "
 
-#: .\refacdir\ui\test_results_window.py:439
-#: .\refacdir\ui\test_results_window.py:458
+#: ui/test_results_window.py:439
 msgid "Passed: "
 msgstr "渡された: "
 
-#: .\refacdir\ui\test_results_window.py:440
-#: .\refacdir\ui\test_results_window.py:459
+#: ui/test_results_window.py:440
 msgid "Failed: "
 msgstr "失敗しました: "
 
-#: .\refacdir\ui\test_results_window.py:456
+#: ui/test_results_window.py:437
 msgid "Test Run Complete - "
 msgstr "テスト実行完了 - "
 
-#: .\refacdir\ui\test_results_window.py:462
+#: ui/test_results_window.py:443
 msgid "All tests passed successfully!"
 msgstr "すべてのテストが成功しました!"
 
-#: .\refacdir\ui\test_results_window.py:462
+#: ui/test_results_window.py:443
 msgid "Some tests failed - check results"
 msgstr "一部のテスト失敗 - 結果をチェック"
 
@@ -210,58 +206,140 @@ msgstr "保存した結果 "
 msgid "Error saving results: "
 msgstr "エラー保存結果: "
 
-#: .\refacdir\utils\translations.py:37
+#: refacdir/utils/translations.py:41
 msgid "Monday"
 msgstr "月曜日～金曜日"
 
-#: .\refacdir\utils\translations.py:39
+#: refacdir/utils/translations.py:43
 msgid "Tuesday"
 msgstr "火曜日"
 
-#: .\refacdir\utils\translations.py:41
+#: refacdir/utils/translations.py:45
 msgid "Wednesday"
 msgstr "水曜日"
 
-#: .\refacdir\utils\translations.py:43
+#: refacdir/utils/translations.py:47
 msgid "Thursday"
 msgstr "木曜日 木曜日"
 
-#: .\refacdir\utils\translations.py:45
+#: refacdir/utils/translations.py:49
 msgid "Friday"
 msgstr "金曜日"
 
-#: .\refacdir\utils\translations.py:47
+#: refacdir/utils/translations.py:51
 msgid "Saturday"
 msgstr "土曜日"
 
-#: .\refacdir\utils\translations.py:49
+#: refacdir/utils/translations.py:53
 msgid "Sunday"
 msgstr "日曜日"
 
-#: .\refacdir\utils\translations.py:61
+#: refacdir/utils/translations.py:65
 msgid "seconds"
 msgstr "秒単位"
 
-#: .\refacdir\utils\translations.py:63
+#: refacdir/utils/translations.py:67
 msgid "minutes"
 msgstr "交通アクセス"
 
-#: .\refacdir\utils\translations.py:65
+#: refacdir/utils/translations.py:69
 msgid "hours"
 msgstr "営業時間"
 
-#: .\refacdir\utils\translations.py:67
+#: refacdir/utils/translations.py:71
 msgid "days"
 msgstr "生年月日"
 
-#: .\refacdir\utils\translations.py:69
+#: refacdir/utils/translations.py:73
 msgid "weeks"
 msgstr "週刊"
 
-#: .\refacdir\utils\translations.py:71
+#: refacdir/utils/translations.py:75
 msgid "months"
 msgstr "月 日"
 
-#: .\refacdir\utils\translations.py:73
+#: refacdir/utils/translations.py:77
 msgid "years"
 msgstr "生年月日"
+
+#: app_qt.py:119
+msgid "File Management"
+msgstr "ファイル管理"
+
+#: app_qt.py:154
+msgid "Search Configurations"
+msgstr "設定を検索する"
+
+#: app_qt.py:159
+msgid "Type to filter..."
+msgstr "テキストを入力してフィルタリング..."
+
+#: app_qt.py:170
+msgid "Available Configurations"
+msgstr "利用可能な構成"
+
+#: app_qt.py:217
+msgid "File Management Dashboard"
+msgstr "ファイル管理ダッシュボード"
+
+#: app_qt.py:221
+msgid ""
+"Configure and run file management operations with ease. Select "
+"configurations from the sidebar and customize options below."
+msgstr "ファイル管理操作を簡単に設定して実行できます。サイドバーから設定を選択し、下のオプションをカスタマイズしてください。"
+
+#: app_qt.py:237
+msgid "Operation Settings"
+msgstr "操作設定"
+
+#: app_qt.py:270
+msgid "Operation Status"
+msgstr "運用状況"
+
+#: app_qt.py:383
+msgid "Running operations..."
+msgstr "実行中..."
+
+#: app_qt.py:419
+msgid "Failed to set target directory to receive marked files."
+msgstr "マークされたファイルを受け取るためのターゲットディレクトリを設定できませんでした。"
+
+#: ui/test_results_window.py:66
+msgid "Backup System Test Results"
+msgstr "バックアップシステム テスト結果"
+
+#: ui/test_results_window.py:145
+msgid "Running tests..."
+msgstr "テストを実行中..."
+
+#: ui/test_results_window.py:338
+msgid "Save Test Results"
+msgstr "テスト結果を保存する"
+
+#: ui/test_results_window.py:340
+msgid "Text Files (*.txt);;All Files (*)"
+msgstr "テキストファイル (*.txt);;すべてのファイル (*)"
+
+#: ui/test_results_window.py:370
+msgid "Copy"
+msgstr "コピー"
+
+#: ui/test_results_window.py:373
+msgid "Select All"
+msgstr "すべて選択"
+
+#: ui/test_results_window.py:419
+msgid "Total Tests: {0}"
+msgstr "総検査数: {0}"
+
+#: ui/test_results_window.py:420
+msgid "Passed: {0}"
+msgstr "合格：{0}"
+
+#: ui/test_results_window.py:421
+msgid "Failed: {0}"
+msgstr "失敗しました: {0}"
+
+#: ui/test_results_window.py:427
+msgid "Time: {0}:{1:02d}"
+msgstr "時間: {0}:{1:02日}"

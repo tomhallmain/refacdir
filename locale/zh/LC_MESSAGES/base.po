@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2025-04-03 19:22-0400\n"
-"PO-Revision-Date: 2025-04-03 19:22-0400\n"
-"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
+"POT-Creation-Date: 2025-08-02 18:58-0400\n"
+"PO-Revision-Date: 2025-08-02 18:58-0400\n"
+"Last-Translator: Translator Name <translator@example.com>\n"
 "Language-Team: zh Team <<EMAIL>>\n"
 "Language: zh\n"
 "MIME-Version: 1.0\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: .\app.py:191 .\app.py:647
+#: app_qt.py:83
 msgid "RefacDir"
 msgstr "RefacDir"
 
@@ -20,15 +20,15 @@ msgstr "RefacDir"
 msgid "Configure and run file management operations with ease"
 msgstr "轻松配置和运行文件管理操作"
 
-#: .\app.py:233
+#: app_qt.py:132
 msgid "Toggle Theme"
 msgstr "切换 主题"
 
-#: .\app.py:239
+#: app_qt.py:137
 msgid "Run Backup Tests"
 msgstr "运行备份 测试"
 
-#: .\app.py:245
+#: app_qt.py:142
 msgid "Run Operations"
 msgstr "运行操作"
 
@@ -36,96 +36,95 @@ msgstr "运行操作"
 msgid "Options"
 msgstr "选项"
 
-#: .\app.py:267
+#: app_qt.py:245
 msgid "Recur Selected Actions"
 msgstr "重复选中的动作"
 
-#: .\app.py:275
+#: app_qt.py:249
 msgid "Test Mode"
 msgstr "测试模式"
 
-#: .\app.py:282
+#: app_qt.py:252
 msgid "Skip Confirmations"
 msgstr "跳过确认"
 
-#: .\app.py:289
+#: app_qt.py:255
 msgid "Only Observers"
 msgstr "只有观察员"
 
-#: .\app.py:300 .\app.py:519
+#: app_qt.py:274 app_qt.py:393 app_qt.py:509
 msgid "Ready"
 msgstr "准备"
 
-#: .\app.py:517
+#: app_qt.py:391
 msgid "Operation failed"
 msgstr "操作失败"
 
-#: .\refacdir\ui\test_results_window.py:25
-#: .\refacdir\ui\test_results_window.py:265
+#: ui/test_results_window.py:55
 msgid "Backup System Verification"
 msgstr "备份系统验证"
 
-#: .\refacdir\ui\test_results_window.py:90
+#: ui/test_results_window.py:170
 msgid "Test directory not found: {0}"
 msgstr "未找到测试目录 : {0}"
 
-#: .\refacdir\ui\test_results_window.py:105
+#: ui/test_results_window.py:190
 msgid "Base directory: "
 msgstr "基准目录 : "
 
-#: .\refacdir\ui\test_results_window.py:106
+#: ui/test_results_window.py:191
 msgid "Test directory: "
 msgstr "测试目录 : "
 
-#: .\refacdir\ui\test_results_window.py:107
+#: ui/test_results_window.py:192
 msgid "Test files directory: "
 msgstr "测试文件目录 : "
 
-#: .\refacdir\ui\test_results_window.py:108
+#: ui/test_results_window.py:193
 msgid "Python path: "
 msgstr "Python 路径 : "
 
-#: .\refacdir\ui\test_results_window.py:113
+#: ui/test_results_window.py:198
 msgid "Test file not found: {0}"
 msgstr "找不到测试文件 : {0}"
 
-#: .\refacdir\ui\test_results_window.py:118
+#: ui/test_results_window.py:205
 msgid "Found test file: "
 msgstr "找到测试文件 : "
 
-#: .\refacdir\ui\test_results_window.py:121
+#: ui/test_results_window.py:208
 msgid "No test files found!"
 msgstr "找不到测试文件 !"
 
-#: .\refacdir\ui\test_results_window.py:133
+#: ui/test_results_window.py:219
 msgid "Analyzing test suite..."
 msgstr "分析测试套房..."
 
-#: .\refacdir\ui\test_results_window.py:148
+#: ui/test_results_window.py:234
 msgid "Found {0} tests in {1}"
 msgstr "在{1} 中找到{0} 测试"
 
-#: .\refacdir\ui\test_results_window.py:152
+#: ui/test_results_window.py:238
 msgid "Error collecting tests from {0}: {1}"
 msgstr "从{0} 收集测试出错 : {1}"
 
-#: .\refacdir\ui\test_results_window.py:172
+#: ui/test_results_window.py:257
 msgid "Running tests from {0}..."
 msgstr "从{0} 运行测试..."
 
-#: .\refacdir\ui\test_results_window.py:178
+#: ui/test_results_window.py:260
 msgid "Running tests from {0}:"
 msgstr "从{0} 运行测试 :"
 
-#: .\refacdir\ui\test_results_window.py:210
+#: ui/test_results_window.py:285
 msgid "Error in {0}:"
 msgstr "{0} 中的错误 :"
 
-#: .\refacdir\ui\test_results_window.py:228
+#: ui/test_results_window.py:303
 msgid "Error running tests in {0}: {1}"
 msgstr "运行{0}测试时出错 : {1}"
 
-#: .\refacdir\ui\test_results_window.py:243
+#: ui/test_results_window.py:318
 msgid "Unexpected error running tests: {0}"
 msgstr "运行中的意外错误 : {0}"
 
@@ -135,7 +134,7 @@ msgid ""
 "reliability"
 msgstr "进行综合测试,以核实备份系统的完整性和可靠性"
 
-#: .\refacdir\ui\test_results_window.py:281
+#: ui/test_results_window.py:74
 msgid "Initializing tests..."
 msgstr "初始化测试..."
 
@@ -147,27 +146,27 @@ msgstr "测试结果"
 msgid "Summary"
 msgstr "目录"
 
-#: .\refacdir\ui\test_results_window.py:347
+#: ui/test_results_window.py:110
 msgid "Total Tests: 0"
 msgstr "测试总数: 0 个"
 
-#: .\refacdir\ui\test_results_window.py:353
+#: ui/test_results_window.py:113
 msgid "Passed: 0"
 msgstr "获得通过:0"
 
-#: .\refacdir\ui\test_results_window.py:360
+#: ui/test_results_window.py:117
 msgid "Failed: 0"
 msgstr "失败: 0"
 
-#: .\refacdir\ui\test_results_window.py:367
+#: ui/test_results_window.py:121
 msgid "Time: 0:00"
 msgstr "时间: 0: 00"
 
-#: .\refacdir\ui\test_results_window.py:379
+#: ui/test_results_window.py:130
 msgid "Close"
 msgstr "关闭"
 
-#: .\refacdir\ui\test_results_window.py:387
+#: ui/test_results_window.py:134
 msgid "Save Results"
 msgstr "保存结果"
 
@@ -175,30 +174,27 @@ msgstr "保存结果"
 msgid "Time: "
 msgstr "时间 : "
 
-#: .\refacdir\ui\test_results_window.py:438
-#: .\refacdir\ui\test_results_window.py:457
+#: ui/test_results_window.py:438
 msgid "Total Tests: "
 msgstr "测试总数: "
 
-#: .\refacdir\ui\test_results_window.py:439
-#: .\refacdir\ui\test_results_window.py:458
+#: ui/test_results_window.py:439
 msgid "Passed: "
 msgstr "通过 : "
 
-#: .\refacdir\ui\test_results_window.py:440
-#: .\refacdir\ui\test_results_window.py:459
+#: ui/test_results_window.py:440
 msgid "Failed: "
 msgstr "失败 : "
 
-#: .\refacdir\ui\test_results_window.py:456
+#: ui/test_results_window.py:437
 msgid "Test Run Complete - "
 msgstr "测试运行完成 - "
 
-#: .\refacdir\ui\test_results_window.py:462
+#: ui/test_results_window.py:443
 msgid "All tests passed successfully!"
 msgstr "所有测试都顺利通过!"
 
-#: .\refacdir\ui\test_results_window.py:462
+#: ui/test_results_window.py:443
 msgid "Some tests failed - check results"
 msgstr "一些测试失败 - 检查结果"
 
@@ -210,58 +206,140 @@ msgstr "保存到 "
 msgid "Error saving results: "
 msgstr "保存结果出错 : "
 
-#: .\refacdir\utils\translations.py:37
+#: refacdir/utils/translations.py:41
 msgid "Monday"
 msgstr "星期一"
 
-#: .\refacdir\utils\translations.py:39
+#: refacdir/utils/translations.py:43
 msgid "Tuesday"
 msgstr "星期二"
 
-#: .\refacdir\utils\translations.py:41
+#: refacdir/utils/translations.py:45
 msgid "Wednesday"
 msgstr "星期三"
 
-#: .\refacdir\utils\translations.py:43
+#: refacdir/utils/translations.py:47
 msgid "Thursday"
 msgstr "星期四"
 
-#: .\refacdir\utils\translations.py:45
+#: refacdir/utils/translations.py:49
 msgid "Friday"
 msgstr "星期五"
 
-#: .\refacdir\utils\translations.py:47
+#: refacdir/utils/translations.py:51
 msgid "Saturday"
 msgstr "星期六( 星期六)"
 
-#: .\refacdir\utils\translations.py:49
+#: refacdir/utils/translations.py:53
 msgid "Sunday"
 msgstr "礼拜"
 
-#: .\refacdir\utils\translations.py:61
+#: refacdir/utils/translations.py:65
 msgid "seconds"
 msgstr "秒数"
 
-#: .\refacdir\utils\translations.py:63
+#: refacdir/utils/translations.py:67
 msgid "minutes"
 msgstr "分钟"
 
-#: .\refacdir\utils\translations.py:65
+#: refacdir/utils/translations.py:69
 msgid "hours"
 msgstr "小时"
 
-#: .\refacdir\utils\translations.py:67
+#: refacdir/utils/translations.py:71
 msgid "days"
 msgstr "天数"
 
-#: .\refacdir\utils\translations.py:69
+#: refacdir/utils/translations.py:73
 msgid "weeks"
 msgstr "周数"
 
-#: .\refacdir\utils\translations.py:71
+#: refacdir/utils/translations.py:75
 msgid "months"
 msgstr "月数"
 
-#: .\refacdir\utils\translations.py:73
+#: refacdir/utils/translations.py:77
 msgid "years"
 msgstr "年份"
+
+#: app_qt.py:119
+msgid "File Management"
+msgstr "文件管理"
+
+#: app_qt.py:154
+msgid "Search Configurations"
+msgstr "搜索配置"
+
+#: app_qt.py:159
+msgid "Type to filter..."
+msgstr "输入文本进行筛选..."
+
+#: app_qt.py:170
+msgid "Available Configurations"
+msgstr "可用配置"
+
+#: app_qt.py:217
+msgid "File Management Dashboard"
+msgstr "文件管理仪表盘"
+
+#: app_qt.py:221
+msgid ""
+"Configure and run file management operations with ease. Select "
+"configurations from the sidebar and customize options below."
+msgstr "轻松配置并执行文件管理操作。从侧边栏选择配置选项，并在下方自定义相关设置。"
+
+#: app_qt.py:237
+msgid "Operation Settings"
+msgstr "操作设置"
+
+#: app_qt.py:270
+msgid "Operation Status"
+msgstr "运行状态"
+
+#: app_qt.py:383
+msgid "Running operations..."
+msgstr "正在运行操作..."
+
+#: app_qt.py:419
+msgid "Failed to set target directory to receive marked files."
+msgstr "无法将目标目录设置为接收标记的文件。"
+
+#: ui/test_results_window.py:66
+msgid "Backup System Test Results"
+msgstr "备份系统测试结果"
+
+#: ui/test_results_window.py:145
+msgid "Running tests..."
+msgstr "正在运行测试..."
+
+#: ui/test_results_window.py:338
+msgid "Save Test Results"
+msgstr "保存测试结果"
+
+#: ui/test_results_window.py:340
+msgid "Text Files (*.txt);;All Files (*)"
+msgstr "文本文件 (*.txt)；；所有文件 (*)"
+
+#: ui/test_results_window.py:370
+msgid "Copy"
+msgstr "复制"
+
+#: ui/test_results_window.py:373
+msgid "Select All"
+msgstr "全选"
+
+#: ui/test_results_window.py:419
+msgid "Total Tests: {0}"
+msgstr "总测试次数：{0}"
+
+#: ui/test_results_window.py:420
+msgid "Passed: {0}"
+msgstr "通过：{0}"
+
+#: ui/test_results_window.py:421
+msgid "Failed: {0}"
+msgstr "失败：{0}"
+
+#: ui/test_results_window.py:427
+msgid "Time: {0}:{1:02d}"
+msgstr "时间：{0}:{1:02d}"
