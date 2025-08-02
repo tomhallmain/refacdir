@@ -66,13 +66,13 @@ class DuplicateRemover:
         if self.find_duplicates():
             self.handle_duplicates(testing=True)
             confirm = input("Confirm all duplicates removal (Y/n): ")
-            if confirm.lower() == "y":
+            if confirm.lower().strip() == "y":
                 logger.info("User confirmed removal of all duplicates")
                 self.handle_duplicates(testing=False)
                 return
             logger.info("No change made.")
             confirm = input("Remove duplicates with confirmation one by one? (Y/n): ")
-            if confirm.lower() == "y":
+            if confirm.lower().strip() == "y":
                 logger.info("User chose to remove duplicates with individual confirmation")
                 self.handle_duplicates(testing=False, skip_confirm=False)
                 return
