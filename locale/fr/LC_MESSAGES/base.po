@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2025-08-02 18:58-0400\n"
-"PO-Revision-Date: 2025-08-02 18:58-0400\n"
-"Last-Translator: Translator Name <translator@example.com>\n"
+"POT-Creation-Date: 2025-09-15 13:41-0400\n"
+"PO-Revision-Date: 2025-09-15 13:41-0400\n"
+"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
 "Language-Team: fr Team <<EMAIL>>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -12,58 +12,221 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app_qt.py:83
+#: app_qt.py:81
 msgid "RefacDir"
 msgstr "RefacDir"
 
-#: .\app.py:222
-msgid "Configure and run file management operations with ease"
-msgstr ""
-"Configurer et exécuter les opérations de gestion de fichiers avec facilité"
+#: app_qt.py:117
+msgid "File Management"
+msgstr "Gestion des fichiers"
 
-#: app_qt.py:132
+#: app_qt.py:130
 msgid "Toggle Theme"
-msgstr "Basculer Thème"
+msgstr "Basculer le thème"
 
-#: app_qt.py:137
+#: app_qt.py:135
 msgid "Run Backup Tests"
-msgstr "Exécuter le sauvegarde Essais"
+msgstr "Exécuter les tests de sauvegarde"
 
-#: app_qt.py:142
+#: app_qt.py:140
 msgid "Run Operations"
-msgstr "Exécution des opérations"
+msgstr "Exécuter les opérations"
 
-#: .\app.py:261
-msgid "Options"
-msgstr "Options"
+#: app_qt.py:152
+msgid "Search Configurations"
+msgstr "Rechercher les configurations"
 
-#: app_qt.py:245
+#: app_qt.py:157
+msgid "Type to filter..."
+msgstr "Entrez le texte à filtrer..."
+
+#: app_qt.py:168
+msgid "Available Configurations"
+msgstr "Configurations disponibles"
+
+#: app_qt.py:215
+msgid "File Management Dashboard"
+msgstr "Tableau de bord de gestion des fichiers"
+
+#: app_qt.py:219
+msgid ""
+"Configure and run file management operations with ease. Select "
+"configurations from the sidebar and customize options below."
+msgstr ""
+"Configurez et exécutez facilement des opérations de gestion de fichiers. "
+"Sélectionnez les configurations dans la barre latérale et personnalisez les "
+"options ci-dessous."
+
+#: app_qt.py:235
+msgid "Operation Settings"
+msgstr "Paramètres de fonctionnement"
+
+#: app_qt.py:243
 msgid "Recur Selected Actions"
 msgstr "Récurer les actions sélectionnées"
 
-#: app_qt.py:249
+#: app_qt.py:247
 msgid "Test Mode"
 msgstr "Mode d'essai"
 
-#: app_qt.py:252
+#: app_qt.py:250
 msgid "Skip Confirmations"
 msgstr "Passer les confirmations"
 
-#: app_qt.py:255
+#: app_qt.py:253
 msgid "Only Observers"
 msgstr "Seuls les observateurs"
 
-#: app_qt.py:274 app_qt.py:393 app_qt.py:509
+#: app_qt.py:268
+msgid "Operation Status"
+msgstr "État de fonctionnement"
+
+#: app_qt.py:272 app_qt.py:391 app_qt.py:507
 msgid "Ready"
 msgstr "Prêt"
 
-#: app_qt.py:391
+#: app_qt.py:381
+msgid "Running operations..."
+msgstr "Opérations en cours..."
+
+#: app_qt.py:389
 msgid "Operation failed"
-msgstr "L'opération a échoué"
+msgstr "Opération échouée"
+
+#: app_qt.py:417
+msgid "Failed to set target directory to receive marked files."
+msgstr ""
+"Impossible de définir le répertoire cible pour recevoir les fichiers "
+"marqués."
+
+#: refacdir/batch.py:161
+msgid "Starting batch operations..."
+msgstr "Démarrage des opérations par lots..."
+
+#: refacdir/batch.py:177
+msgid "Batch operations completed (skipped {0} actions)"
+msgstr "Opérations par lots terminées ({0} actions ignorées)"
+
+#: refacdir/batch.py:180
+msgid "Batch operations completed"
+msgstr "Opérations par lots terminées"
+
+#: refacdir/batch.py:188
+msgid "Operations cancelled by user"
+msgstr "Opérations annulées par l'utilisateur"
+
+#: refacdir/batch.py:224
+msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
+msgstr ""
+"Config {0}/{1} : {2} s'est arrêté après {3} actions ({4} actions ignorées)"
+
+#: refacdir/batch.py:257
+msgid "Config {0}/{1}: Running {2} action in {3}"
+msgstr "Config {0}/{1} : Exécution de l'action {2} dans {3}"
+
+#: refacdir/batch.py:302
+msgid "Config {0}/{1}: Running {2} {3}/{4} in {5}"
+msgstr "Config {0}/{1} : Exécution de {2} {3}/{4} dans {5}"
+
+#: refacdir/batch.py:339
+msgid "Config {0}/{1}: Running renamer mapping {2}/{3} in {4}"
+msgstr "Config {0}/{1} : Exécution du mappage du renommeur {2}/{3} dans {4}"
+
+#: refacdir/utils/translations.py:40
+msgid "Monday"
+msgstr "Lundi"
+
+#: refacdir/utils/translations.py:42
+msgid "Tuesday"
+msgstr "Mardi"
+
+#: refacdir/utils/translations.py:44
+msgid "Wednesday"
+msgstr "Mercredi"
+
+#: refacdir/utils/translations.py:46
+msgid "Thursday"
+msgstr "Jeudi"
+
+#: refacdir/utils/translations.py:48
+msgid "Friday"
+msgstr "Vendredi"
+
+#: refacdir/utils/translations.py:50
+msgid "Saturday"
+msgstr "Samedi"
+
+#: refacdir/utils/translations.py:52
+msgid "Sunday"
+msgstr "Dimanche"
+
+#: refacdir/utils/translations.py:64
+msgid "seconds"
+msgstr "secondes"
+
+#: refacdir/utils/translations.py:66
+msgid "minutes"
+msgstr "minutes"
+
+#: refacdir/utils/translations.py:68
+msgid "hours"
+msgstr "heures"
+
+#: refacdir/utils/translations.py:70
+msgid "days"
+msgstr "jours"
+
+#: refacdir/utils/translations.py:72
+msgid "weeks"
+msgstr "semaines"
+
+#: refacdir/utils/translations.py:74
+msgid "months"
+msgstr "mois"
+
+#: refacdir/utils/translations.py:76
+msgid "years"
+msgstr "années"
 
 #: ui/test_results_window.py:55
 msgid "Backup System Verification"
 msgstr "Vérification du système de sauvegarde"
+
+#: ui/test_results_window.py:66
+msgid "Backup System Test Results"
+msgstr "Résultats des tests du système de sauvegarde"
+
+#: ui/test_results_window.py:74
+msgid "Initializing tests..."
+msgstr "Initialisation des essais..."
+
+#: ui/test_results_window.py:110
+msgid "Total Tests: 0"
+msgstr "Total des essais: 0"
+
+#: ui/test_results_window.py:113
+msgid "Passed: 0"
+msgstr "Décédé : 0"
+
+#: ui/test_results_window.py:117
+msgid "Failed: 0"
+msgstr "Échec : 0"
+
+#: ui/test_results_window.py:121
+msgid "Time: 0:00"
+msgstr "Heure: 0:00"
+
+#: ui/test_results_window.py:130
+msgid "Close"
+msgstr "Fermer"
+
+#: ui/test_results_window.py:134
+msgid "Save Results"
+msgstr "Enregistrer les résultats"
+
+#: ui/test_results_window.py:145
+msgid "Running tests..."
+msgstr "Tests en cours..."
 
 #: ui/test_results_window.py:170
 msgid "Test directory not found: {0}"
@@ -99,7 +262,7 @@ msgstr "Aucun fichier de test trouvé !"
 
 #: ui/test_results_window.py:219
 msgid "Analyzing test suite..."
-msgstr "Analyse de la suite..."
+msgstr "Analyse de la suite de tests..."
 
 #: ui/test_results_window.py:234
 msgid "Found {0} tests in {1}"
@@ -119,7 +282,7 @@ msgstr "Essais effectués à partir de {0}:"
 
 #: ui/test_results_window.py:285
 msgid "Error in {0}:"
-msgstr "Erreur dans {0} & #160;:"
+msgstr "Erreur dans {0} :"
 
 #: ui/test_results_window.py:303
 msgid "Error running tests in {0}: {1}"
@@ -128,197 +291,6 @@ msgstr "Erreur lors de tests dans {0} : {1}"
 #: ui/test_results_window.py:318
 msgid "Unexpected error running tests: {0}"
 msgstr "Erreur inattendue lors des tests : {0}"
-
-#: .\refacdir\ui\test_results_window.py:270
-msgid ""
-"Running comprehensive tests to verify backup system integrity and "
-"reliability"
-msgstr ""
-"Exécution de tests complets pour vérifier l'intégrité et la fiabilité du "
-"système de sauvegarde"
-
-#: ui/test_results_window.py:74
-msgid "Initializing tests..."
-msgstr "Initialisation des essais..."
-
-#: .\refacdir\ui\test_results_window.py:306
-msgid "Test Results"
-msgstr "Résultats des essais"
-
-#: .\refacdir\ui\test_results_window.py:341
-msgid "Summary"
-msgstr "Résumé"
-
-#: ui/test_results_window.py:110
-msgid "Total Tests: 0"
-msgstr "Total des essais: 0"
-
-#: ui/test_results_window.py:113
-msgid "Passed: 0"
-msgstr "Décédé : 0"
-
-#: ui/test_results_window.py:117
-msgid "Failed: 0"
-msgstr "Échec : 0"
-
-#: ui/test_results_window.py:121
-msgid "Time: 0:00"
-msgstr "Heure: 0:00"
-
-#: ui/test_results_window.py:130
-msgid "Close"
-msgstr "Fermer"
-
-#: ui/test_results_window.py:134
-msgid "Save Results"
-msgstr "Enregistrer les résultats"
-
-#: .\refacdir\ui\test_results_window.py:408
-msgid "Time: "
-msgstr "Heure: "
-
-#: ui/test_results_window.py:438
-msgid "Total Tests: "
-msgstr "Total des essais: "
-
-#: ui/test_results_window.py:439
-msgid "Passed: "
-msgstr "Décédé : "
-
-#: ui/test_results_window.py:440
-msgid "Failed: "
-msgstr "Échec : "
-
-#: ui/test_results_window.py:437
-msgid "Test Run Complete - "
-msgstr "Essai terminé - "
-
-#: ui/test_results_window.py:443
-msgid "All tests passed successfully!"
-msgstr "Tous les tests ont réussi!"
-
-#: ui/test_results_window.py:443
-msgid "Some tests failed - check results"
-msgstr "Quelques tests ont échoué - vérifier les résultats"
-
-#: .\refacdir\ui\test_results_window.py:476
-msgid "Results saved to "
-msgstr "Résultats enregistrés dans "
-
-#: .\refacdir\ui\test_results_window.py:478
-msgid "Error saving results: "
-msgstr "Erreur dans l'enregistrement des résultats & #160;: "
-
-#: refacdir/utils/translations.py:41
-msgid "Monday"
-msgstr "Lundi"
-
-#: refacdir/utils/translations.py:43
-msgid "Tuesday"
-msgstr "Mardi"
-
-#: refacdir/utils/translations.py:45
-msgid "Wednesday"
-msgstr "Mercredi"
-
-#: refacdir/utils/translations.py:47
-msgid "Thursday"
-msgstr "Jeudi"
-
-#: refacdir/utils/translations.py:49
-msgid "Friday"
-msgstr "Vendredi"
-
-#: refacdir/utils/translations.py:51
-msgid "Saturday"
-msgstr "Samedi"
-
-#: refacdir/utils/translations.py:53
-msgid "Sunday"
-msgstr "Dimanche"
-
-#: refacdir/utils/translations.py:65
-msgid "seconds"
-msgstr "secondes"
-
-#: refacdir/utils/translations.py:67
-msgid "minutes"
-msgstr "minutes"
-
-#: refacdir/utils/translations.py:69
-msgid "hours"
-msgstr "heures"
-
-#: refacdir/utils/translations.py:71
-msgid "days"
-msgstr "jours"
-
-#: refacdir/utils/translations.py:73
-msgid "weeks"
-msgstr "semaines"
-
-#: refacdir/utils/translations.py:75
-msgid "months"
-msgstr "mois"
-
-#: refacdir/utils/translations.py:77
-msgid "years"
-msgstr "années"
-
-#: app_qt.py:119
-msgid "File Management"
-msgstr "Gestion des fichiers"
-
-#: app_qt.py:154
-msgid "Search Configurations"
-msgstr "Rechercher les configurations"
-
-#: app_qt.py:159
-msgid "Type to filter..."
-msgstr "Entrez le texte à filtrer..."
-
-#: app_qt.py:170
-msgid "Available Configurations"
-msgstr "Configurations disponibles"
-
-#: app_qt.py:217
-msgid "File Management Dashboard"
-msgstr "Tableau de bord de gestion des fichiers"
-
-#: app_qt.py:221
-msgid ""
-"Configure and run file management operations with ease. Select "
-"configurations from the sidebar and customize options below."
-msgstr ""
-"Configurez et exécutez facilement des opérations de gestion de fichiers. "
-"Sélectionnez les configurations dans la barre latérale et personnalisez les "
-"options ci-dessous."
-
-#: app_qt.py:237
-msgid "Operation Settings"
-msgstr "Paramètres de fonctionnement"
-
-#: app_qt.py:270
-msgid "Operation Status"
-msgstr "État de fonctionnement"
-
-#: app_qt.py:383
-msgid "Running operations..."
-msgstr "Opérations en cours..."
-
-#: app_qt.py:419
-msgid "Failed to set target directory to receive marked files."
-msgstr ""
-"Impossible de définir le répertoire cible pour recevoir les fichiers "
-"marqués."
-
-#: ui/test_results_window.py:66
-msgid "Backup System Test Results"
-msgstr "Résultats des tests du système de sauvegarde"
-
-#: ui/test_results_window.py:145
-msgid "Running tests..."
-msgstr "Tests en cours..."
 
 #: ui/test_results_window.py:338
 msgid "Save Test Results"
@@ -351,3 +323,27 @@ msgstr "Échec : {0}"
 #: ui/test_results_window.py:427
 msgid "Time: {0}:{1:02d}"
 msgstr "Temps écoulé : {0} : {1:02d}"
+
+#: ui/test_results_window.py:437
+msgid "Test Run Complete - "
+msgstr "Essai terminé - "
+
+#: ui/test_results_window.py:438
+msgid "Total Tests: "
+msgstr "Total des essais: "
+
+#: ui/test_results_window.py:439
+msgid "Passed: "
+msgstr "Décédé : "
+
+#: ui/test_results_window.py:440
+msgid "Failed: "
+msgstr "Échec : "
+
+#: ui/test_results_window.py:443
+msgid "All tests passed successfully!"
+msgstr "Tous les tests ont réussi!"
+
+#: ui/test_results_window.py:443
+msgid "Some tests failed - check results"
+msgstr "Quelques tests ont échoué - vérifier les résultats"

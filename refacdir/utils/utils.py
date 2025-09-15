@@ -274,6 +274,19 @@ class Utils:
             pass # TODO
 
     @staticmethod
+    def get_default_user_language():
+        if sys.platform == 'win32':
+            import ctypes
+            import locale
+            windll = ctypes.windll.kernel32
+            windll.GetUserDefaultUILanguage()
+            _locale = locale.windows_locale[windll.GetUserDefaultUILanguage()]
+            if _locale is not None and "_" in _locale:
+                return _locale[:_locale.index("_")]
+        # TODO support finding default languages on other platforms
+        return 'en'
+
+    @staticmethod
     def stringify_list(l, one_line=False, do_print=True):
         s = "["
         for item in l:

@@ -1,9 +1,7 @@
 from copy import deepcopy
 import os
 import signal
-import time
 import traceback
-from typing import Dict, Optional
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,

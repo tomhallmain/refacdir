@@ -12,7 +12,6 @@ if not _locale or _locale == '':
     _locale = Utils.get_default_user_language()
 elif _locale is not None and "_" in _locale:
     _locale = _locale[:_locale.index("_")]
-_locale = Utils.get_default_user_language()
 
 class I18N:
     localedir = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(os.path.dirname(__file__)))), 'locale')

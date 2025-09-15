@@ -12,11 +12,13 @@ from refacdir.directory_observer import DirectoryObserver, media_file_types
 from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
+from refacdir.utils.translations import I18N
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for batch operations
 logger = setup_logger('batch')
+_ = I18N._
 
 class BatchArgs:
     configs = {}
@@ -156,7 +158,7 @@ class BatchJob:
             self.skipped_actions = 0
             
             if self.app_actions:
-                self.app_actions.progress_text("Starting batch operations...")
+                self.app_actions.progress_text(_("Starting batch operations..."))
                 self.app_actions.progress_bar_update(None, 0.0)
 
             for config, will_run in self.configurations.items():
@@ -172,10 +174,10 @@ class BatchJob:
             if self.app_actions:
                 if self.skipped_actions > 0:
                     logger.info(f"Batch operations completed with {self.skipped_actions} skipped actions")
-                    self.app_actions.progress_text(f"Batch operations completed (skipped {self.skipped_actions} actions)")
+                    self.app_actions.progress_text(_("Batch operations completed (skipped {0} actions)").format(self.skipped_actions))
                 else:
                     logger.info("Batch operations completed successfully")
-                    self.app_actions.progress_text("Batch operations completed")
+                    self.app_actions.progress_text(_("Batch operations completed"))
                 self.app_actions.progress_bar_reset()
                 
         except KeyboardInterrupt:
@@ -183,7 +185,7 @@ class BatchJob:
             print("Exiting prematurely at user request...")
             self.cancelled = True
             if self.app_actions:
-                self.app_actions.progress_text("Operations cancelled by user")
+                self.app_actions.progress_text(_("Operations cancelled by user"))
                 self.app_actions.progress_bar_reset()
 
     def run_config_file(self, config):
@@ -219,7 +221,7 @@ class BatchJob:
                     self.skipped_actions += remaining_actions
                     logger.warning(f"Config {config} stopped after {i + 1} actions (skipped {remaining_actions} actions)")
                     if self.app_actions:
-                        self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: {config} stopped after {i + 1} actions (skipped {remaining_actions} actions)")
+                        self.app_actions.progress_text(_("Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)").format(self.current_config_index, self.total_configs, config, i + 1, remaining_actions))
                     return # If we fail to run an action then we stop running the config file
                 
                 # Update progress after action completes successfully
@@ -252,7 +254,7 @@ class BatchJob:
                 logger.info(f"{config} - Skipping {action_type} action")
                 return True
             if self.app_actions:
-                self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running {action_type} action in {config}")
+                self.app_actions.progress_text(_("Config {0}/{1}: Running {2} action in {3}").format(self.current_config_index, self.total_configs, action_type, config))
             logger.info(f"Running action type: {action_type}")
             if action_type == ActionType.RENAMER:
                 return self.run_renamers(config, action["mappings"])
@@ -297,7 +299,7 @@ class BatchJob:
                 # Interpolate based on which sub-action we're on
                 sub_progress = current_action_progress + (next_action_progress - current_action_progress) * (action_index / total_actions)
                 self.app_actions.progress_bar_update(None, sub_progress)
-                self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running {action_type} {action_index + 1}/{total_actions} in {config}")
+                self.app_actions.progress_text(_("Config {0}/{1}: Running {2} {3}/{4} in {5}").format(self.current_config_index, self.total_configs, action_type, action_index + 1, total_actions, config))
 
             try:
                 action.run()
@@ -334,7 +336,7 @@ class BatchJob:
                 # Interpolate based on which renamer we're on
                 sub_progress = current_action_progress + (next_action_progress - current_action_progress) * (renamer_index / total_renamers)
                 self.app_actions.progress_bar_update(None, sub_progress)
-                self.app_actions.progress_text(f"Config {self.current_config_index}/{self.total_configs}: Running renamer mapping {renamer_index + 1}/{total_renamers} in {config}")
+                self.app_actions.progress_text(_("Config {0}/{1}: Running renamer mapping {2}/{3} in {4}").format(self.current_config_index, self.total_configs, renamer_index + 1, total_renamers, config))
 
             try:
                 renamer.execute(renamer_function)

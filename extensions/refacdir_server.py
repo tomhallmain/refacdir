@@ -22,35 +22,46 @@ class RefacDirServer:
         self.listener = Listener((self._host, self._port), authkey=str.encode(config.server_password))
         self._running = True
         while self._running and not self._is_stopping:
-            self._conn = self.listener.accept()
-            logger.info(f'Connection accepted from {self.listener.last_accepted}')
+            try:
+                self._conn = self.listener.accept()
+                logger.info(f'Connection accepted from {self.listener.last_accepted}')
 
-            while not self._is_stopping:
-                try:
-                    msg = self._conn.recv()
-                    if msg is None:
-                        continue
-                    logger.info(f'Received message: {msg}')
-                    if msg == 'close server' or msg == 'close connection':
+                while not self._is_stopping:
+                    try:
+                        msg = self._conn.recv()
+                        if msg is None:
+                            continue
+                        logger.info(f'Received message: {msg}')
+                        if msg == 'close server' or msg == 'close connection':
+                            self._conn.close()
+                            if msg == 'close server':
+                                self._running = False
+                            break
+                        if msg == 'validate':
+                            self._conn.send('valid')
+                        elif isinstance(msg, dict):
+                            if "command" not in msg or "args" not in msg:
+                                self._conn.send({"error": "invalid command", "data": msg})
+                            else:
+                                self.run_command(msg["command"], msg["args"])
+                    except KeyboardInterrupt:
+                        pass
+                    except Exception as e:
+                        logger.error(f'Server error: {str(e)}')
+                        self._conn.send({'error': 'server error', 'data': str(e)})
                         self._conn.close()
-                        if msg == 'close server':
-                            self._running = False
-                        break
-                    if msg == 'validate':
-                        self._conn.send('valid')
-                    elif isinstance(msg, dict):
-                        if "command" not in msg or "args" not in msg:
-                            self._conn.send({"error": "invalid command", "data": msg})
-                        else:
-                            self.run_command(msg["command"], msg["args"])
-                except KeyboardInterrupt:
-                    pass
-                except Exception as e:
-                    logger.error(f'Server error: {str(e)}')
-                    self._conn.send({'error': 'server error', 'data': str(e)})
-                    self._conn.close()
-                time.sleep(0.5)
-        self.listener.close()
+                    time.sleep(0.5)
+            except Exception as e:
+                if self._is_stopping:
+                    # Server is being stopped, exit gracefully
+                    logger.info("Server listener closed during shutdown")
+                    break
+                else:
+                    logger.error(f'Listener error: {str(e)}')
+                    time.sleep(0.5)
+        
+        if self.listener:
+            self.listener.close()
         self._running = False
         self._is_stopping = False
 
@@ -70,6 +81,8 @@ class RefacDirServer:
 
     def stop(self):
         self._is_stopping = True
+        if self.listener:
+            self.listener.close()  # This will interrupt the accept() call
         timeout = 2
         while self._is_stopping and timeout > 0:
             time.sleep(1) # Await other thread to end the start() method
