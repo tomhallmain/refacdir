@@ -9,7 +9,7 @@ This module provides functionality to:
 """
 
 from PySide6.QtWidgets import QWidget, QApplication, QMainWindow
-from PySide6.QtCore import Qt, QRect, QSettings
+from PySide6.QtCore import Qt, QRect
 import platform
 import logging
 import os
@@ -598,72 +598,67 @@ class SmartMainWindow(QMainWindow):
                 # ... setup UI ...
     """
     
-    def __init__(self, parent=None, restore_geometry=False, settings_key="MainWindow/Geometry", **kwargs):
+    def __init__(self, parent=None, restore_geometry=False, **kwargs):
         """
         Initialize a SmartMainWindow.
         
         Args:
             parent: Parent widget (usually None for main window)
-            restore_geometry: If True, save/restore window geometry across sessions
-            settings_key: Key to use for storing geometry in QSettings
+            restore_geometry: If True, save/restore window geometry across sessions using app_info_cache
             **kwargs: Additional arguments passed to QMainWindow constructor
         """
         super().__init__(parent, **kwargs)
         
         self._restore_geometry = restore_geometry
-        self._settings_key = settings_key
         self._geometry_restored = False
     
     def restore_window_geometry(self):
         """
-        Restore window geometry from settings.
+        Restore window geometry from app_info_cache.
         Call this after setup_ui() to ensure the window has its default size first.
         """
         if self._geometry_restored:
             return  # Already restored
             
         try:
-            settings = QSettings()
-            geometry_str = settings.value(self._settings_key)
+            from refacdir.utils.app_info_cache import app_info_cache
             
-            if geometry_str:
-                # Parse geometry string: "x,y,width,height"
-                parts = geometry_str.split(',')
-                if len(parts) == 4:
-                    x, y, width, height = map(int, parts)
-                    
-                    # Verify the saved position is on a valid screen
-                    screens = QApplication.screens()
-                    position_valid = False
-                    
-                    for screen in screens:
-                        screen_geometry = screen.geometry()
-                        # Check if the saved position is within any screen's bounds
-                        # (with some tolerance for windows that might be partially off-screen)
-                        if (screen_geometry.x() - 100 <= x <= screen_geometry.x() + screen_geometry.width() + 100 and
-                            screen_geometry.y() - 100 <= y <= screen_geometry.y() + screen_geometry.height() + 100):
-                            position_valid = True
-                            break
-                    
-                    if position_valid:
-                        # Restore both position and size
-                        self.setGeometry(QRect(x, y, width, height))
-                        logger.debug(f"Restored window geometry: {x}, {y}, {width}, {height}")
-                        self._geometry_restored = True
-                        return
-                    else:
-                        # Position is not on any valid screen, center on primary display
-                        logger.debug("Saved window position not on any valid screen, centering on primary")
-                        self._center_on_primary_display()
-                        self._geometry_restored = True
-                        return
+            position_data = app_info_cache.get_display_position()
+            
+            if position_data and position_data.is_valid():
+                x = position_data.x
+                y = position_data.y
+                width = position_data.width
+                height = position_data.height
+                
+                # Verify the saved position is on a valid screen
+                screens = QApplication.screens()
+                position_valid = False
+                
+                for screen in screens:
+                    screen_geometry = screen.geometry()
+                    # Check if the saved position is within any screen's bounds
+                    # (with some tolerance for windows that might be partially off-screen)
+                    if (screen_geometry.x() - 100 <= x <= screen_geometry.x() + screen_geometry.width() + 100 and
+                        screen_geometry.y() - 100 <= y <= screen_geometry.y() + screen_geometry.height() + 100):
+                        position_valid = True
+                        break
+                
+                if position_valid:
+                    # Restore both position and size
+                    self.setGeometry(QRect(x, y, width, height))
+                    logger.debug(f"Restored window geometry from app_info_cache: {x}, {y}, {width}, {height}")
+                    self._geometry_restored = True
+                    return
                 else:
-                    logger.warning(f"Invalid geometry format in settings: {geometry_str}")
+                    # Position is not on any valid screen, center on primary display
+                    logger.debug("Saved window position not on any valid screen, centering on primary")
                     self._center_on_primary_display()
                     self._geometry_restored = True
                     return
             else:
                 # No saved geometry, center on primary display
+                logger.debug("No saved window geometry found, centering on primary display")
                 self._center_on_primary_display()
                 self._geometry_restored = True
         except Exception as e:
@@ -691,11 +686,22 @@ class SmartMainWindow(QMainWindow):
         """Handle window close event - save geometry if enabled"""
         if self._restore_geometry:
             try:
-                settings = QSettings()
+                from refacdir.utils.app_info_cache import app_info_cache
+                
+                # Save window position using app_info_cache
+                app_info_cache.set_display_position(self)
+                
+                # Also save virtual screen info for multi-display validation
+                try:
+                    app_info_cache.set_virtual_screen_info(self)
+                except Exception as e:
+                    logger.debug(f"Could not save virtual screen info: {e}")
+                
+                # Store the cache to disk
+                app_info_cache.store()
+                
                 geometry = self.geometry()
-                geometry_str = f"{geometry.x()},{geometry.y()},{geometry.width()},{geometry.height()}"
-                settings.setValue(self._settings_key, geometry_str)
-                logger.debug(f"Saved window geometry: {geometry_str}")
+                logger.debug(f"Saved window geometry to app_info_cache: {geometry.x()}, {geometry.y()}, {geometry.width()}, {geometry.height()}")
             except Exception as e:
                 logger.error(f"Error saving window geometry: {e}")
         

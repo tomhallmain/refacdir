@@ -1,0 +1,2 @@
+# Quantum-safe cryptography (not available on PyPI)
+git+https://github.com/open-quantum-safe/liboqs-python.git

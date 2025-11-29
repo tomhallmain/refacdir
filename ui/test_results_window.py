@@ -10,10 +10,9 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEd
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu, QApplication
 from PySide6.QtCore import Signal, QObject, Qt
-from refacdir.utils.utils import Utils
-from refacdir.utils.translations import I18N
+from refacdir.lib.multi_display import SmartWindow
 from refacdir.utils.logger import setup_logger
-from lib.multi_display import SmartWindow
+from refacdir.utils.translations import I18N
 
 _ = I18N._
 

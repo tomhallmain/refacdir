@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QCheckBox, QProgressBar, QFrame,
     QMessageBox, QScrollArea, QSizePolicy, QTextEdit, QFileDialog, QLineEdit, QGridLayout, QStyle
 )
-from lib.multi_display import SmartMainWindow
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread
 from PySide6.QtGui import QFont, QPalette, QColor
 
@@ -17,10 +16,12 @@ from extensions.refacdir_server import RefacDirServer
 from refacdir.batch import BatchArgs
 from refacdir.config import config as _config
 from refacdir.job_queue import JobQueue
+from refacdir.lib.multi_display import SmartMainWindow
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
-from refacdir.utils.utils import Utils
-from refacdir.utils.translations import I18N
+from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import I18N
+from refacdir.utils.utils import Utils
 from ui import AppActions, ThemeManager, ThemeColors, ToastNotification, TestResultsWindow
 
 _ = I18N._
@@ -48,8 +49,8 @@ class MainWindow(SmartMainWindow):
     progress_bar_reset_signal = Signal()
     
     def __init__(self):
-        # Initialize SmartMainWindow with geometry persistence
-        super().__init__(restore_geometry=True, settings_key="RefacDir/MainWindow")
+        # Initialize SmartMainWindow with geometry persistence using app_info_cache
+        super().__init__(restore_geometry=True)
         self.configs = {}
         self.filtered_configs = {}
         self.filter_text = ""
@@ -78,6 +79,9 @@ class MainWindow(SmartMainWindow):
         self.setup_connections()
         self.load_configs()
         
+        # Restore UI settings from app_info_cache
+        self.restore_ui_settings()
+        
         # Restore window geometry after UI is set up
         if self._restore_geometry:
             self.restore_window_geometry()
@@ -99,7 +103,7 @@ class MainWindow(SmartMainWindow):
         self._create_sidebar(main_layout)
         self._create_main_content(main_layout)
         
-        # Apply initial theme
+        # Apply initial theme (will be overridden by restore_ui_settings if cached)
         self.apply_theme(is_dark=True)
         
     def _create_sidebar(self, parent_layout):
@@ -251,12 +255,15 @@ class MainWindow(SmartMainWindow):
         options_grid.addWidget(self.recur_check, 0, 0)
         
         self.test_check = QCheckBox(_("Test Mode"))
+        self.test_check.stateChanged.connect(lambda: self.store_ui_settings())
         options_grid.addWidget(self.test_check, 0, 1)
         
         self.skip_confirm_check = QCheckBox(_("Skip Confirmations"))
+        self.skip_confirm_check.stateChanged.connect(lambda: self.store_ui_settings())
         options_grid.addWidget(self.skip_confirm_check, 1, 0)
         
         self.only_observers_check = QCheckBox(_("Only Observers"))
+        self.only_observers_check.stateChanged.connect(lambda: self.store_ui_settings())
         options_grid.addWidget(self.only_observers_check, 1, 1)
         
         options_layout.addLayout(options_grid)
@@ -290,13 +297,17 @@ class MainWindow(SmartMainWindow):
         """Apply the selected theme to the application"""
         self.is_dark_theme = is_dark
         ThemeManager.apply_theme(QApplication.instance(), is_dark)
-        
+        # Save theme preference
+        app_info_cache.set_ui_theme(is_dark)
+
     def toggle_theme(self):
         """Toggle between light and dark themes"""
         self.apply_theme(not self.is_dark_theme)
         self.toast.show_message(
             "Theme switched to light." if not self.is_dark_theme else "Theme switched to dark."
         )
+        # Save settings when theme changes
+        self.store_ui_settings()
 
     def setup_connections(self):
         """Set up signal/slot connections"""
@@ -350,6 +361,8 @@ class MainWindow(SmartMainWindow):
             self.configs[config] = self.filtered_configs[config]
             BatchArgs.update_config_state(config, self.filtered_configs[config])
             logger.info(f"Config {config} set to {self.filtered_configs[config]}")
+            # Save settings when config selection changes
+            self.store_ui_settings()
             
     def filter_configs(self, text: str):
         """Filter configurations based on search text"""
@@ -406,6 +419,8 @@ class MainWindow(SmartMainWindow):
         if self.recurring_action_config.is_running:
             self.skip_confirm_check.setChecked(True)
             start_thread(self.run_recurring_actions)
+        # Save settings when operation settings change
+        self.store_ui_settings()
             
     @periodic("recurring_action_config")
     async def run_recurring_actions(self, **kwargs):
@@ -445,8 +460,99 @@ class MainWindow(SmartMainWindow):
         else:
             QMessageBox.information(self, title, message)
         
+    def restore_ui_settings(self):
+        """Restore UI settings from app_info_cache"""
+        try:
+            # Restore theme preference
+            cached_theme = app_info_cache.get_ui_theme(default=True)
+            if cached_theme != self.is_dark_theme:
+                self.apply_theme(cached_theme)
+            
+            # Restore operation settings (checkboxes)
+            operation_settings = app_info_cache.get_operation_settings()
+            self.recur_check.setChecked(operation_settings.get('recur', False))
+            self.test_check.setChecked(operation_settings.get('test_mode', False))
+            self.skip_confirm_check.setChecked(operation_settings.get('skip_confirm', False))
+            self.only_observers_check.setChecked(operation_settings.get('only_observers', False))
+            
+            # Restore selected configurations
+            cached_configs = app_info_cache.get_selected_configs()
+            if cached_configs:
+                # Update configs dict with cached selections
+                for config_path, enabled in cached_configs.items():
+                    if config_path in self.configs:
+                        self.configs[config_path] = enabled
+                        self.filtered_configs[config_path] = enabled
+                        BatchArgs.update_config_state(config_path, enabled)
+                # Refresh the UI to reflect restored selections
+                self.add_config_widgets()
+            
+            # Restore search filter text (optional - might be annoying)
+            # Uncomment if you want to restore search text:
+            # cached_filter = app_info_cache.get_search_filter()
+            # if cached_filter:
+            #     self.filter_text = cached_filter
+            #     self.search_input.setText(cached_filter)
+            #     self.filter_configs(cached_filter)
+            
+            logger.debug("UI settings restored from app_info_cache")
+        except Exception as e:
+            logger.error(f"Error restoring UI settings: {e}")
+    
+    def store_ui_settings(self):
+        """Save current UI settings to app_info_cache"""
+        try:
+            # Save theme preference
+            app_info_cache.set_ui_theme(self.is_dark_theme)
+            
+            # Save operation settings
+            operation_settings = {
+                'recur': self.recur_check.isChecked(),
+                'test_mode': self.test_check.isChecked(),
+                'skip_confirm': self.skip_confirm_check.isChecked(),
+                'only_observers': self.only_observers_check.isChecked()
+            }
+            app_info_cache.set_operation_settings(operation_settings)
+            
+            # Save selected configurations (only enabled ones)
+            selected_configs = {
+                config_path: enabled 
+                for config_path, enabled in self.configs.items() 
+                if enabled
+            }
+            app_info_cache.set_selected_configs(selected_configs)
+            
+            # Save search filter text (optional)
+            # app_info_cache.set_search_filter(self.filter_text)
+            
+            # Persist to disk (handles credential errors gracefully)
+            app_info_cache.store()
+            
+            logger.debug("UI settings saved to app_info_cache")
+        except Exception as e:
+            # Log but don't raise - UI settings save failures shouldn't crash the app
+            error_str = str(e)
+            error_repr = repr(e)
+            
+            # Check for Windows Credential Manager errors
+            is_cred_error = (
+                'CredRead' in error_str or 
+                'CredRead' in error_repr or
+                'Element not found' in error_str or 
+                '1168' in error_str or
+                (isinstance(e, tuple) and len(e) >= 2 and 'CredRead' in str(e[1]))
+            )
+            
+            if is_cred_error:
+                logger.debug(f"Credential manager error saving UI settings (likely first run): {e}")
+            else:
+                logger.error(f"Error saving UI settings: {e}")
+    
     def closeEvent(self, event):
         """Handle window close event"""
+        # Save UI settings before closing
+        self.store_ui_settings()
+        
         if self.server is not None:
             try:
                 self.server.stop()
