@@ -4,10 +4,11 @@ import signal
 import traceback
 
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QCheckBox, QProgressBar, QFrame,
     QMessageBox, QScrollArea, QSizePolicy, QTextEdit, QFileDialog, QLineEdit, QGridLayout, QStyle
 )
+from lib.multi_display import SmartMainWindow
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread
 from PySide6.QtGui import QFont, QPalette, QColor
 
@@ -38,7 +39,7 @@ class ProgressListener:
         self.update_func(None, None, status)
 
 
-class MainWindow(QMainWindow):
+class MainWindow(SmartMainWindow):
     """Main application window"""
     
     # Define signals for progress updates
@@ -47,7 +48,8 @@ class MainWindow(QMainWindow):
     progress_bar_reset_signal = Signal()
     
     def __init__(self):
-        super().__init__()
+        # Initialize SmartMainWindow with geometry persistence
+        super().__init__(restore_geometry=True, settings_key="RefacDir/MainWindow")
         self.configs = {}
         self.filtered_configs = {}
         self.filter_text = ""
@@ -75,6 +77,10 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.setup_connections()
         self.load_configs()
+        
+        # Restore window geometry after UI is set up
+        if self._restore_geometry:
+            self.restore_window_geometry()
         
     def setup_ui(self):
         """Initialize the main UI components"""
@@ -447,7 +453,8 @@ class MainWindow(QMainWindow):
                 logger.info("Server stopped successfully")
             except Exception as e:
                 logger.error(f"Error stopping server: {e}")
-        event.accept()
+        # Call parent closeEvent to save window geometry
+        super().closeEvent(event)
 
     def keyPressEvent(self, event):
         """Handle keyboard events"""

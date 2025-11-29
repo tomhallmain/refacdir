@@ -6,13 +6,14 @@ from io import StringIO
 import threading
 from datetime import datetime
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QProgressBar, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QProgressBar, QPushButton
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu, QApplication
 from PySide6.QtCore import Signal, QObject, Qt
 from refacdir.utils.utils import Utils
 from refacdir.utils.translations import I18N
 from refacdir.utils.logger import setup_logger
+from lib.multi_display import SmartWindow
 
 _ = I18N._
 
@@ -28,10 +29,20 @@ class TestSignals(QObject):
     test_complete = Signal()
 
 
-class TestResultsWindow(QMainWindow):
+class TestResultsWindow(SmartWindow):
     """Window for displaying test results"""
     def __init__(self, parent=None):
-        super().__init__(parent)
+        # Initialize SmartWindow with automatic positioning
+        super().__init__(
+            persistent_parent=parent,
+            position_parent=parent,
+            title=_("Backup System Verification"),
+            geometry="800x600",
+            offset_x=50,
+            offset_y=50
+        )
+        self.setMinimumSize(600, 400)
+        
         self.signals = TestSignals()
         self.setup_ui()
         self.setup_signals()
@@ -52,14 +63,9 @@ class TestResultsWindow(QMainWindow):
         
     def setup_ui(self):
         """Initialize the test results window UI"""
-        self.setWindowTitle(_("Backup System Verification"))
-        self.resize(800, 600)
-        self.setMinimumSize(600, 400)
-        
-        # Main widget and layout
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
+        # SmartWindow handles title and size via __init__ parameters
+        # Since SmartWindow is a QWidget (not QMainWindow), we use direct layout
+        layout = QVBoxLayout(self)
         layout.setSpacing(10)
         
         # Header
