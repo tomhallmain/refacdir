@@ -1,5 +1,6 @@
 import glob
 import os
+import re
 import sys
 from refacdir.utils.logger import setup_logger
 
@@ -32,6 +33,7 @@ def alpha_basename_part(basename):
     return "" if alpha_str == "" else "_" + alpha_str
 
 class FileRenamer:
+    TIMESTAMP_REGEX = r'_(\d{17})(?=_|$)'
     FILE_EXISTS_MESSAGE = "Cannot create a file when that file already exists"
     
     def __init__(self, root=".", test=False, log_changes=True, preserve_alpha=True, exclude_dirs=[], find_unused_filenames=False):
@@ -150,9 +152,26 @@ class FileRenamer:
 
     def os_stat_rename_func(self, attr, rename_base):
         def rename_func(filename, increment=0, positive=True):
-            time_str = str(getattr(os.stat(filename), attr)).replace(".", "")
-            while len(time_str) < 17:
-                time_str += "0"
+            basename, extension = os.path.splitext(filename)
+            
+            # Check if there's already a 17-digit timestamp in the filename
+            # Look for pattern: _ followed by exactly 17 digits, then either _ or end of string
+            timestamp_match = re.search(FileRenamer.TIMESTAMP_REGEX, basename)
+            
+            if timestamp_match:
+                # Use existing timestamp from filename
+                time_str = timestamp_match.group(1)
+                # Extract everything after the timestamp (including potential alpha part)
+                rest_start = timestamp_match.end()
+                rest = basename[rest_start:] if rest_start < len(basename) else ""
+            else:
+                # Use current behavior with os.stat
+                time_str = str(getattr(os.stat(filename), attr)).replace(".", "")
+                while len(time_str) < 17:
+                    time_str += "0"
+                rest = ""
+            
+            # Apply increment if needed (for collision resolution)
             if increment > 0:
                 time = int(time_str)
                 if positive:
@@ -162,12 +181,17 @@ class FileRenamer:
                 time_str = str(time)
                 while len(time_str) < 17:
                     time_str += "0"
-            basename, extension = os.path.splitext(filename)
+            
             if self.preserve_alpha:
-                alpha_part = alpha_basename_part(basename)
+                # For files with existing timestamp, preserve everything after it
+                if timestamp_match and rest:
+                    alpha_part = rest
+                else:
+                    alpha_part = alpha_basename_part(basename)
                 new_filename = rename_base + time_str + alpha_part + extension
             else:
-                new_filename = rename_base + time_str + extension
+                new_filename = rename_base + time_str + rest + extension
+
             return new_filename
         return rename_func
 
