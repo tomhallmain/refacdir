@@ -232,6 +232,10 @@ class BatchJob:
 
     def log_results(self):
         logger.info("Logging batch job results")
+        # Calculate totals
+        total_completed = sum(self.counts_map.values())
+        total_skipped = self.skipped_actions
+        
         for action_type in ActionType.__members__.values():
             count_action_type = self.counts_map[action_type]
             if count_action_type > 0:
@@ -243,6 +247,24 @@ class BatchJob:
                     logger.warning(f"{count_action_type} {action_type} job(s) failed")
             for failure in self.failures:
                 logger.error(failure)
+            
+            # Call alert if app_actions is available and there are failures
+            if self.app_actions:
+                message_parts = []
+                if total_completed > 0:
+                    message_parts.append(f"{total_completed} completed")
+                if total_skipped > 0:
+                    message_parts.append(f"{total_skipped} skipped")
+                
+                # List specific failures
+                failure_list = "\n".join(self.failures)
+                
+                if message_parts:
+                    message = f"{', '.join(message_parts)}.\n\nFailures:\n{failure_list}"
+                else:
+                    message = f"Failures:\n{failure_list}"
+                
+                self.app_actions.alert("Batch Operations Failed", message, "error")
         elif not self.cancelled:
             logger.info("All operations completed successfully")
 
