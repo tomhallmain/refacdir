@@ -1,2 +1,2 @@
-"""RefacDir library modules for multi-display support."""
+"""Library modules for application support."""
 
