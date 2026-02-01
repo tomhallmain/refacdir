@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import sys
 
 from refacdir.lib.position_data import PositionData
 from refacdir.utils.constants import AppInfo

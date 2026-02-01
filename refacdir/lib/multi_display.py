@@ -8,11 +8,10 @@ This module provides functionality to:
 4. SmartWindow class that automatically handles positioning
 """
 
-from PySide6.QtWidgets import QWidget, QApplication, QMainWindow
+from PySide6.QtWidgets import QWidget, QApplication, QMainWindow, QDialog
 from PySide6.QtCore import Qt, QRect
 import platform
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +124,8 @@ class MultiDisplayManager:
     
     def position_window_on_same_display(self, parent_window, new_window, 
                                       offset_x=50, offset_y=50, 
-                                      center=False, geometry=None):
+                                      center=False, center_relative_to=None,
+                                      geometry=None):
         """
         Position a new window on the same display as the parent window.
         
@@ -134,7 +134,9 @@ class MultiDisplayManager:
             new_window: The new window to position
             offset_x: X offset from parent window (default: 50)
             offset_y: Y offset from parent window (default: 50)
-            center: If True, center the window on the display (default: False)
+            center: If True, center the window (default: False)
+            center_relative_to: When center=True, center relative to this window if provided;
+                otherwise center on the display. Use None for display-centered.
             geometry: Custom geometry string (e.g., "400x300"). If None, uses window's natural size
             
         Returns:
@@ -158,19 +160,22 @@ class MultiDisplayManager:
             # logger.debug(f"Parent window - x={parent_x}, y={parent_y}, width={parent_width}, height={parent_height}")
             
             if center:
-                # Center the window on the same display as parent
                 width, height = self._extract_window_dimensions(geometry, new_window)
-                
-                # Calculate center position relative to parent
-                center_x = parent_x + (parent_width - width) // 2
-                center_y = parent_y + (parent_height - height) // 2
-                
-                # Ensure window stays within screen bounds
                 screen_x = screen_geometry.x()
                 screen_y = screen_geometry.y()
                 screen_width = screen_geometry.width()
                 screen_height = screen_geometry.height()
                 
+                if center_relative_to is not None:
+                    # Center relative to the given window (e.g. position_parent)
+                    center_x = center_relative_to.x() + (center_relative_to.width() - width) // 2
+                    center_y = center_relative_to.y() + (center_relative_to.height() - height) // 2
+                else:
+                    # Center on the display
+                    center_x = screen_x + (screen_width - width) // 2
+                    center_y = screen_y + (screen_height - height) // 2
+                
+                # Clamp so the window stays on the display (e.g. if dialog is larger than screen)
                 center_x = max(screen_x, min(center_x, screen_x + screen_width - width))
                 center_y = max(screen_y, min(center_y, screen_y + screen_height - height))
                 
@@ -189,10 +194,10 @@ class MultiDisplayManager:
                 screen_height = screen_geometry.height()
                 
                 if new_y + height > screen_y + screen_height - BUFFER_DISTANCE_FROM_SCREEN_BOTTOM:
-                    # Wrap to top and add horizontal offset
+                    # Wrap to top; keep same horizontal offset so window aligns with others
                     new_y = screen_y + 50  # Start near top of screen
-                    new_x = parent_x + offset_x + 100  # Add extra horizontal offset
-                    logger.debug(f"Window would go off-screen, wrapping to top with increased horizontal offset")
+                    new_x = parent_x + offset_x
+                    logger.debug(f"Window would go off-screen, wrapping to top")
                 
                 # For multi-display setups, we need to allow coordinates outside primary screen
                 # Only apply minimal bounds checking to prevent windows from being completely off-screen
@@ -356,6 +361,7 @@ class SmartWindow(QWidget):
                     offset_x=offset_x, 
                     offset_y=offset_y, 
                     center=center,
+                    center_relative_to=position_parent,
                     geometry=geometry
                 )
                 
@@ -381,10 +387,10 @@ class SmartWindow(QWidget):
                     
                     # Check if window would go off bottom of screen
                     if new_y + window_height > screen_y + screen_height - BUFFER_DISTANCE_FROM_SCREEN_BOTTOM:
-                        # Wrap to top and add horizontal offset
+                        # Wrap to top; keep same horizontal offset
                         new_y = screen_y + 50  # Start near top of screen
-                        new_x = parent_x + offset_x + 100  # Add extra horizontal offset
-                        logger.debug(f"Window would go off-screen, wrapping to top with increased horizontal offset")
+                        new_x = parent_x + offset_x
+                        logger.debug(f"Window would go off-screen, wrapping to top")
                     
                     width, height = self._extract_window_dimensions(geometry, self)
                     fallback_rect = QRect(new_x, new_y, width, height)
@@ -414,10 +420,10 @@ class SmartWindow(QWidget):
                 
                 # Check if window would go off bottom of screen
                 if new_y + window_height > screen_y + screen_height - BUFFER_DISTANCE_FROM_SCREEN_BOTTOM:
-                    # Wrap to top and add horizontal offset
+                    # Wrap to top; keep same horizontal offset
                     new_y = screen_y + 50  # Start near top of screen
-                    new_x = parent_x + offset_x + 100  # Add extra horizontal offset
-                    logger.debug(f"Window would go off-screen, wrapping to top with increased horizontal offset")
+                    new_x = parent_x + offset_x
+                    logger.debug(f"Window would go off-screen, wrapping to top")
                 
                 # Create geometry with calculated position
                 width, height = self._extract_window_dimensions(geometry, self)
@@ -429,7 +435,20 @@ class SmartWindow(QWidget):
                 logger.warning(f"Failed to position relative to parent: {e}")
         else:
             if geometry_has_position:
-                logger.debug(f"Skipping positioning - geometry already includes position: {geometry}")
+                # Apply position from geometry string (e.g. "900x700+100+0").
+                # Use move() + resize() so x,y are frame position (including title bar);
+                # setGeometry() uses client area, so y=0 would put the title bar off-screen.
+                try:
+                    size_part, pos_part = geometry.split("+", 1)
+                    width, height = map(int, size_part.split("x"))
+                    parts = pos_part.split("+", 1)
+                    x = int(parts[0])
+                    y = int(parts[1]) if len(parts) > 1 else 0
+                    self.move(x, y)
+                    self.resize(width, height)
+                    logger.debug(f"Applied positioned geometry: {geometry}")
+                except (ValueError, AttributeError) as e:
+                    logger.warning(f"Failed to parse positioned geometry {geometry!r}: {e}")
             else:
                 logger.debug(f"Skipping positioning - position_parent={position_parent}, auto_position={auto_position}")
 
@@ -573,6 +592,76 @@ class SmartWindow(QWidget):
 
 # Backward compatibility alias
 SmartToplevel = SmartWindow
+
+
+class SmartDialog(QDialog):
+    """
+    A QDialog subclass that positions on the same display as its parent,
+    with optional center=True or pre-positioned geometry (e.g. "900x700+100+0" with auto_position=False).
+
+    Usage:
+        # Centered on same display as parent (e.g. password dialog)
+        dlg = SmartDialog(parent=master, position_parent=master, title="Password", geometry="450x300", center=True)
+
+        # Pre-positioned (e.g. admin window at top of screen)
+        geo = "900x700+{}+0".format(master.geometry().x() + 50)
+        dlg = SmartDialog(parent=master, position_parent=master, title="Admin", geometry=geo, auto_position=False)
+    """
+
+    def __init__(
+        self,
+        parent=None,
+        position_parent=None,
+        title=None,
+        geometry=None,
+        offset_x=50,
+        offset_y=50,
+        center=False,
+        auto_position=True,
+        **kwargs,
+    ):
+        super().__init__(parent, **kwargs)
+        # position_parent is not defaulted to parent: when None, center_relative_to=None (center on display).
+
+        if title:
+            self.setWindowTitle(title)
+
+        if geometry:
+            if "+" in geometry:
+                size_part = geometry.split("+")[0]
+                width, height = map(int, size_part.split("x"))
+            else:
+                width, height = map(int, geometry.split("x"))
+            self.resize(width, height)
+
+        geometry_has_position = geometry and "+" in geometry
+
+        if geometry_has_position:
+            try:
+                size_part, pos_part = geometry.split("+", 1)
+                width, height = map(int, size_part.split("x"))
+                parts = pos_part.split("+", 1)
+                x = int(parts[0])
+                y = int(parts[1]) if len(parts) > 1 else 0
+                self.move(x, y)
+                self.resize(width, height)
+            except (ValueError, AttributeError):
+                pass
+        elif (position_parent or parent) and auto_position:
+            try:
+                # Use position_parent or parent to resolve which display; center_relative_to
+                # controls centering: when None, center on display; when set, center on that window.
+                display_manager.position_window_on_same_display(
+                    position_parent or parent,
+                    self,
+                    offset_x=offset_x,
+                    offset_y=offset_y,
+                    center=center,
+                    center_relative_to=position_parent,
+                    geometry=geometry,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to position SmartDialog on same display: {e}")
 
 
 class SmartMainWindow(QMainWindow):
