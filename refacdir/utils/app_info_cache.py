@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import threading
 
 from refacdir.lib.position_data import PositionData
 from refacdir.utils.constants import AppInfo
@@ -18,6 +19,7 @@ class AppInfoCache:
     NUM_BACKUPS = 4  # Number of backup files to maintain
 
     def __init__(self):
+        self._lock = threading.RLock()
         self._cache = {AppInfoCache.META_INFO_KEY: {}, AppInfoCache.DIRECTORIES_KEY: {}}
         self.load()
         self.validate()
@@ -27,38 +29,39 @@ class AppInfoCache:
         Store the cache to disk with encryption.
         Handles credential manager errors gracefully (e.g., on first run when keys don't exist yet).
         """
-        try:
-            cache_data = json.dumps(self._cache).encode('utf-8')
-            encrypt_data_to_file(
-                cache_data,
-                AppInfo.SERVICE_NAME,
-                AppInfo.APP_IDENTIFIER,
-                AppInfoCache.CACHE_LOC
-            )
-        except Exception as e:
-            # Check if it's a Windows Credential Manager error (credential not found)
-            # This can happen on first run when keys haven't been generated yet
-            # Error format: (1168, 'CredRead', 'Element not found.')
-            error_str = str(e)
-            error_repr = repr(e)
-            
-            # Check for Windows Credential Manager errors
-            is_cred_error = (
-                'CredRead' in error_str or 
-                'CredRead' in error_repr or
-                'Element not found' in error_str or 
-                '1168' in error_str or
-                (isinstance(e, tuple) and len(e) >= 2 and 'CredRead' in str(e[1]))
-            )
-            
-            if is_cred_error:
-                logger.debug(f"Credential manager error (likely first run): {e}. Keys will be generated on next access.")
-                # Don't raise - this is expected on first run
-                return
-            else:
-                logger.error(f"Error storing cache: {e}")
-                # Only raise for unexpected errors
-                raise e
+        with self._lock:
+            try:
+                cache_data = json.dumps(self._cache).encode('utf-8')
+                encrypt_data_to_file(
+                    cache_data,
+                    AppInfo.SERVICE_NAME,
+                    AppInfo.APP_IDENTIFIER,
+                    AppInfoCache.CACHE_LOC
+                )
+            except Exception as e:
+                # Check if it's a Windows Credential Manager error (credential not found)
+                # This can happen on first run when keys haven't been generated yet
+                # Error format: (1168, 'CredRead', 'Element not found.')
+                error_str = str(e)
+                error_repr = repr(e)
+                
+                # Check for Windows Credential Manager errors
+                is_cred_error = (
+                    'CredRead' in error_str or 
+                    'CredRead' in error_repr or
+                    'Element not found' in error_str or 
+                    '1168' in error_str or
+                    (isinstance(e, tuple) and len(e) >= 2 and 'CredRead' in str(e[1]))
+                )
+                
+                if is_cred_error:
+                    logger.debug(f"Credential manager error (likely first run): {e}. Keys will be generated on next access.")
+                    # Don't raise - this is expected on first run
+                    return
+                else:
+                    logger.error(f"Error storing cache: {e}")
+                    # Only raise for unexpected errors
+                    raise e
 
     def _try_load_cache_from_file(self, path):
         """Attempt to load and decrypt the cache from the given file path. Raises on failure."""
@@ -70,63 +73,68 @@ class AppInfoCache:
         return json.loads(encrypted_data.decode('utf-8'))
 
     def load(self):
-        try:
-            if os.path.exists(AppInfoCache.JSON_LOC):
-                logger.info(f"Removing old cache file: {AppInfoCache.JSON_LOC}")
-                # Get the old data first
-                with open(AppInfoCache.JSON_LOC, "r", encoding="utf-8") as f:
-                    self._cache = json.load(f)
-                self.store() # store encrypted cache
-                os.remove(AppInfoCache.JSON_LOC)
-                return
+        with self._lock:
+            try:
+                if os.path.exists(AppInfoCache.JSON_LOC):
+                    logger.info(f"Removing old cache file: {AppInfoCache.JSON_LOC}")
+                    # Get the old data first
+                    with open(AppInfoCache.JSON_LOC, "r", encoding="utf-8") as f:
+                        self._cache = json.load(f)
+                    self.store() # store encrypted cache
+                    os.remove(AppInfoCache.JSON_LOC)
+                    return
 
-            # Try encrypted cache and backups in order
-            cache_paths = [self.CACHE_LOC] + self._get_backup_paths()
-            any_exist = any(os.path.exists(path) for path in cache_paths)
-            if not any_exist:
-                logger.info(f"No cache file found at {self.CACHE_LOC}, creating new cache")
-                return
+                # Try encrypted cache and backups in order
+                cache_paths = [self.CACHE_LOC] + self._get_backup_paths()
+                any_exist = any(os.path.exists(path) for path in cache_paths)
+                if not any_exist:
+                    logger.info(f"No cache file found at {self.CACHE_LOC}, creating new cache")
+                    return
 
-            for path in cache_paths:
-                if os.path.exists(path):
-                    try:
-                        self._cache = self._try_load_cache_from_file(path)
-                        # Only rotate backups if we loaded from the main file
-                        if path == self.CACHE_LOC:
-                            message = f"Loaded cache from {self.CACHE_LOC}"
-                            rotated_count = self._rotate_backups()
-                            if rotated_count > 0:
-                                message += f", rotated {rotated_count} backups"
-                            logger.info(message)
-                        else:
-                            logger.warning(f"Loaded cache from backup: {path}")
-                        return
-                    except Exception as e:
-                        logger.error(f"Failed to load cache from {path}: {e}")
-                        continue
-            # If we get here, all attempts failed (but at least one file existed)
-            raise Exception(f"Failed to load cache from all locations: {cache_paths}")
-        except Exception as e:
-            logger.error(f"Error loading cache: {e}")
-            raise e
+                for path in cache_paths:
+                    if os.path.exists(path):
+                        try:
+                            self._cache = self._try_load_cache_from_file(path)
+                            # Only rotate backups if we loaded from the main file
+                            if path == self.CACHE_LOC:
+                                message = f"Loaded cache from {self.CACHE_LOC}"
+                                rotated_count = self._rotate_backups()
+                                if rotated_count > 0:
+                                    message += f", rotated {rotated_count} backups"
+                                logger.info(message)
+                            else:
+                                logger.warning(f"Loaded cache from backup: {path}")
+                            return
+                        except Exception as e:
+                            logger.error(f"Failed to load cache from {path}: {e}")
+                            continue
+                # If we get here, all attempts failed (but at least one file existed)
+                raise Exception(f"Failed to load cache from all locations: {cache_paths}")
+            except Exception as e:
+                logger.error(f"Error loading cache: {e}")
+                raise e
 
     def validate(self):
-        return True
+        with self._lock:
+            return True
 
     def _get_directory_info(self):
+        """Get directory info dict. Must be called from within a locked context."""
         if AppInfoCache.DIRECTORIES_KEY not in self._cache:
             self._cache[AppInfoCache.DIRECTORIES_KEY] = {}
         return self._cache[AppInfoCache.DIRECTORIES_KEY]
 
     def set(self, key, value):
-        if AppInfoCache.META_INFO_KEY not in self._cache:
-            self._cache[AppInfoCache.META_INFO_KEY] = {}
-        self._cache[AppInfoCache.META_INFO_KEY][key] = value
+        with self._lock:
+            if AppInfoCache.META_INFO_KEY not in self._cache:
+                self._cache[AppInfoCache.META_INFO_KEY] = {}
+            self._cache[AppInfoCache.META_INFO_KEY][key] = value
 
     def get(self, key, default_val=None):
-        if AppInfoCache.META_INFO_KEY not in self._cache or key not in self._cache[AppInfoCache.META_INFO_KEY]:
-            return default_val
-        return self._cache[AppInfoCache.META_INFO_KEY][key]
+        with self._lock:
+            if AppInfoCache.META_INFO_KEY not in self._cache or key not in self._cache[AppInfoCache.META_INFO_KEY]:
+                return default_val
+            return self._cache[AppInfoCache.META_INFO_KEY][key]
 
     def set_display_position(self, master):
         """Store the main window's display position and size."""
@@ -224,8 +232,9 @@ class AppInfoCache:
         """Export the current cache as a JSON file (not encrypted)."""
         if json_path is None:
             json_path = AppInfoCache.JSON_LOC
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(self._cache, f, ensure_ascii=False, indent=2)
+        with self._lock:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(self._cache, f, ensure_ascii=False, indent=2)
         return json_path
 
     def clear_directory_cache(self, base_dir: str) -> None:
@@ -233,31 +242,32 @@ class AppInfoCache:
         Clear all cache entries related to a specific base directory.
         This includes secondary_base_dirs, per-directory settings, and meta base_dir.
         """
-        normalized_base_dir = self.normalize_directory_key(base_dir)
-        
-        # Remove from secondary_base_dirs
-        try:
-            secondary_base_dirs = self.get("secondary_base_dirs", default_val=[])
-            if base_dir in secondary_base_dirs:
-                secondary_base_dirs = [d for d in secondary_base_dirs if d != base_dir]
-                self.set("secondary_base_dirs", secondary_base_dirs)
-        except Exception as e:
-            logger.error(f"Error updating secondary base dirs during delete: {e}")
+        with self._lock:
+            normalized_base_dir = self.normalize_directory_key(base_dir)
+            
+            # Remove from secondary_base_dirs
+            try:
+                secondary_base_dirs = self.get("secondary_base_dirs", default_val=[])
+                if base_dir in secondary_base_dirs:
+                    secondary_base_dirs = [d for d in secondary_base_dirs if d != base_dir]
+                    self.set("secondary_base_dirs", secondary_base_dirs)
+            except Exception as e:
+                logger.error(f"Error updating secondary base dirs during delete: {e}")
 
-        # Clear per-directory cached settings (favorites, cursors, etc.)
-        try:
-            directory_info = self._get_directory_info()
-            if normalized_base_dir in directory_info:
-                del directory_info[normalized_base_dir]
-        except Exception as e:
-            logger.error(f"Error clearing directory cache during delete: {e}")
+            # Clear per-directory cached settings (favorites, cursors, etc.)
+            try:
+                directory_info = self._get_directory_info()
+                if normalized_base_dir in directory_info:
+                    del directory_info[normalized_base_dir]
+            except Exception as e:
+                logger.error(f"Error clearing directory cache during delete: {e}")
 
-        # If this was the stored main base_dir, clear it
-        try:
-            if self.get("base_dir") == base_dir:
-                self.set("base_dir", "")
-        except Exception as e:
-            logger.error(f"Error clearing meta base_dir during delete: {e}")
+            # If this was the stored main base_dir, clear it
+            try:
+                if self.get("base_dir") == base_dir:
+                    self.set("base_dir", "")
+            except Exception as e:
+                logger.error(f"Error clearing meta base_dir during delete: {e}")
 
     def _get_backup_paths(self):
         """Get list of backup file paths in order of preference"""
