@@ -43,10 +43,11 @@ class ProgressListener:
 class MainWindow(SmartMainWindow):
     """Main application window"""
     
-    # Define signals for progress updates
+    # Define signals for progress updates and cross-thread alert
     progress_text_signal = Signal(str)
     progress_bar_update_signal = Signal(float)
     progress_bar_reset_signal = Signal()
+    alert_signal = Signal(str, str, str)  # title, message, kind
     
     def __init__(self):
         # Initialize SmartMainWindow with geometry persistence using app_info_cache
@@ -74,6 +75,7 @@ class MainWindow(SmartMainWindow):
         self.progress_text_signal.connect(self._progress_text)
         self.progress_bar_update_signal.connect(self._progress_bar_update)
         self.progress_bar_reset_signal.connect(self._progress_bar_reset)
+        self.alert_signal.connect(self._show_alert)
         
         self.setup_ui()
         self.setup_connections()
@@ -446,13 +448,17 @@ class MainWindow(SmartMainWindow):
         self._toast.show_message(message)
 
     def alert(self, title: str, message: str, kind: str = "info"):
-        """Show an alert dialog"""
+        """Show an alert dialog (thread-safe: marshals to main thread if needed)."""
         if kind not in ("error", "warning", "info"):
             raise ValueError("Unsupported alert kind.")
-            
         logger.info(f"Alert - Title: \"{title}\" Message: {message}")
-        
-        # Use theme colors for message boxes
+        if QThread.currentThread() is QApplication.instance().thread():
+            self._show_alert(title, message, kind)
+        else:
+            self.alert_signal.emit(title, message, kind)
+
+    def _show_alert(self, title: str, message: str, kind: str):
+        """Show an alert dialog on the main thread (slot for alert_signal)."""
         if kind == "error":
             QMessageBox.critical(self, title, message)
         elif kind == "warning":
