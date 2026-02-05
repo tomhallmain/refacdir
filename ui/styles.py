@@ -5,14 +5,49 @@ This module provides centralized theme management including:
 - Color definitions for light and dark themes
 - Application-wide stylesheet generation
 - Custom title bar and frameless window styling
+- Integration with refacdir config for custom colors
 """
 
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtCore import Qt
 
 
+def _adjust_color_brightness(hex_color: str, factor: float) -> str:
+    """
+    Adjust the brightness of a hex color.
+    
+    Args:
+        hex_color: Color in #RRGGBB format
+        factor: < 1.0 darkens, > 1.0 lightens
+        
+    Returns:
+        Adjusted color in #RRGGBB format
+    """
+    hex_color = hex_color.lstrip('#')
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    
+    if factor < 1.0:
+        # Darken
+        r = int(r * factor)
+        g = int(g * factor)
+        b = int(b * factor)
+    else:
+        # Lighten
+        r = int(r + (255 - r) * (factor - 1.0))
+        g = int(g + (255 - g) * (factor - 1.0))
+        b = int(b + (255 - b) * (factor - 1.0))
+    
+    r = max(0, min(255, r))
+    g = max(0, min(255, g))
+    b = max(0, min(255, b))
+    
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
 class ThemeColors:
-    """Theme color definitions"""
+    """Theme color definitions (defaults, can be overridden by config)"""
     DARK_BG = "#26242f"
     DARK_FG = "#ffffff"
     DARK_SIDEBAR = "#1e1c26"  # Slightly darker than main background
@@ -74,27 +109,75 @@ class ThemeManager:
     
     @classmethod
     def get_colors(cls, is_dark: bool = None) -> dict:
-        """Get color dictionary for the specified theme."""
+        """
+        Get color dictionary for the specified theme.
+        
+        Respects custom foreground_color and background_color from refacdir config
+        if they are set, deriving other colors (sidebar, accent, hover, border)
+        from the custom background color.
+        """
         if is_dark is None:
             is_dark = cls._is_dark
-            
+        
+        # Check for custom colors from config
+        custom_bg = None
+        custom_fg = None
+        try:
+            from refacdir.config import config
+            if config.background_color:
+                custom_bg = config.background_color
+            if config.foreground_color:
+                custom_fg = config.foreground_color
+        except Exception:
+            pass  # Config not available, use defaults
+        
         if is_dark:
+            bg = custom_bg if custom_bg else ThemeColors.DARK_BG
+            fg = custom_fg if custom_fg else ThemeColors.DARK_FG
+            
+            # Derive other colors from background if custom
+            if custom_bg:
+                sidebar = _adjust_color_brightness(bg, 0.8)  # Darker
+                accent = _adjust_color_brightness(bg, 1.3)   # Lighter
+                hover = _adjust_color_brightness(bg, 1.5)    # Even lighter
+                border = _adjust_color_brightness(bg, 1.3)   # Same as accent
+            else:
+                sidebar = ThemeColors.DARK_SIDEBAR
+                accent = ThemeColors.DARK_ACCENT
+                hover = ThemeColors.DARK_HOVER
+                border = ThemeColors.DARK_BORDER
+            
             return {
-                'bg': ThemeColors.DARK_BG,
-                'fg': ThemeColors.DARK_FG,
-                'sidebar': ThemeColors.DARK_SIDEBAR,
-                'accent': ThemeColors.DARK_ACCENT,
-                'hover': ThemeColors.DARK_HOVER,
-                'border': ThemeColors.DARK_BORDER,
+                'bg': bg,
+                'fg': fg,
+                'sidebar': sidebar,
+                'accent': accent,
+                'hover': hover,
+                'border': border,
             }
         else:
+            bg = custom_bg if custom_bg else ThemeColors.LIGHT_BG
+            fg = custom_fg if custom_fg else ThemeColors.LIGHT_FG
+            
+            # Derive other colors from background if custom
+            if custom_bg:
+                sidebar = _adjust_color_brightness(bg, 0.95)  # Slightly darker
+                accent = _adjust_color_brightness(bg, 0.9)    # Darker
+                hover = _adjust_color_brightness(bg, 0.85)    # Even darker
+                border = _adjust_color_brightness(bg, 0.75)   # Border darker
+            else:
+                sidebar = ThemeColors.LIGHT_SIDEBAR
+                accent = ThemeColors.LIGHT_ACCENT
+                hover = ThemeColors.LIGHT_HOVER
+                border = ThemeColors.LIGHT_BORDER
+            
             return {
-                'bg': ThemeColors.LIGHT_BG,
-                'fg': ThemeColors.LIGHT_FG,
-                'sidebar': ThemeColors.LIGHT_SIDEBAR,
-                'accent': ThemeColors.LIGHT_ACCENT,
-                'hover': ThemeColors.LIGHT_HOVER,
-                'border': ThemeColors.LIGHT_BORDER,
+                'bg': bg,
+                'fg': fg,
+                'sidebar': sidebar,
+                'accent': accent,
+                'hover': hover,
+                'border': border,
             }
     
     @classmethod
