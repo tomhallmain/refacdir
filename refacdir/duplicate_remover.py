@@ -37,7 +37,7 @@ class DuplicateRemover:
             logger.info("Excluding directories from duplicates check:")
             for d in exclude_dirs:
                 full_path = self._find_full_path(d)
-                if not os.path.isdir(full_path):
+                if not Utils.isdir_with_retry(full_path):
                     raise Exception("Invalid exclude directory: " + d)
                 logger.info(full_path)
                 self.exclude_dirs.append(full_path)
@@ -45,7 +45,7 @@ class DuplicateRemover:
             logger.info("Preferring directories for deletion:")
             for d in preferred_delete_dirs:
                 full_path = self._find_full_path(d)
-                if not os.path.isdir(full_path):
+                if not Utils.isdir_with_retry(full_path):
                     raise Exception("Invalid preferred delete directory: " + d)
                 logger.info(full_path)
                 self.preferred_delete_dirs.append(full_path)

@@ -146,7 +146,7 @@ class DirectoryObserver:
                 self.dir_data[subdir] = DirData(subdir)
 
         for d in exclude_dirs:
-            if not os.path.isdir(d):
+            if not Utils.isdir_with_retry(d):
                 raise Exception("Invalid exclude directory provided: " + d)
             self.apply_exclude_dir_to_matching_dir_data(d)
 

@@ -39,7 +39,7 @@ class ImageCategorizer:
         if not simple_image_compare_imported:
             raise Exception("Invalid ImageCategorizer config - Simple image compare not imported")
 
-        if not os.path.isdir(source_dir):
+        if not Utils.isdir_with_retry(source_dir):
             raise Exception(f"Source directory {source_dir} is invalid")
         
         logger.info("Excluding directories from image categorization:")
@@ -48,7 +48,7 @@ class ImageCategorizer:
                 full_path = d
             else:
                 full_path = os.path.join(os.path.abspath(self.source_dir), d)
-            if not os.path.isdir(full_path):
+            if not Utils.isdir_with_retry(full_path):
                 raise Exception("Invalid exclude directory: " + d)
             logger.info(full_path)
             self.exclude_dirs.append(full_path)

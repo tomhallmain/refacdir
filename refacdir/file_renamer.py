@@ -3,6 +3,7 @@ import os
 import re
 import sys
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.utils import Utils
 
 # Set up logger for file renamer
 logger = setup_logger('file_renamer')
@@ -37,7 +38,7 @@ class FileRenamer:
     FILE_EXISTS_MESSAGE = "Cannot create a file when that file already exists"
     
     def __init__(self, root=".", test=False, log_changes=True, preserve_alpha=True, exclude_dirs=[], find_unused_filenames=False):
-        if not os.path.isdir(root):
+        if not Utils.isdir_with_retry(root):
             raise Exception(f"Invalid root directory {root}")
         self.root = root
         self.test = test
@@ -47,7 +48,7 @@ class FileRenamer:
         self.exclude_dirs = []
         self.check_exclusions = len(exclude_dirs) > 0
         for d in exclude_dirs:
-            if not os.path.isdir(os.path.join(root, d)):
+            if not Utils.isdir_with_retry(os.path.join(root, d)):
                 raise Exception(f"Invalid exclude directory: {d}")
             self.exclude_dirs.append(os.path.normpath(d))
 

@@ -311,3 +311,46 @@ class Utils:
         s += "]"
         if do_print: print(s)
         return s
+
+    @staticmethod
+    def isdir_with_retry(path, max_retries=3, retry_delay=1.0, wake_drive=True):
+        """
+        Check if a path is a directory, with retry logic for sleeping external drives.
+        
+        On Windows, external drives may be in a sleep/standby state and report paths
+        as invalid before they have time to spin up. This function retries the check
+        with delays to allow the drive to wake.
+        
+        Args:
+            path: The path to check
+            max_retries: Maximum number of retry attempts (default: 3)
+            retry_delay: Seconds to wait between retries (default: 1.0)
+            wake_drive: If True, attempt to wake the drive by accessing its root first
+            
+        Returns:
+            bool: True if the path is a valid directory, False otherwise
+        """
+        import time
+        
+        # Extract drive root (e.g., "F:\\" from "F:\\img\\subdir")
+        drive_root = os.path.splitdrive(path)[0]
+        if drive_root:
+            drive_root = drive_root + os.sep
+        
+        for attempt in range(max_retries + 1):
+            # On first attempt or if wake_drive is enabled, try to access the drive root
+            # This can help wake up sleeping external drives on Windows
+            if wake_drive and drive_root and attempt == 0:
+                try:
+                    os.path.exists(drive_root)
+                except OSError:
+                    pass  # Drive may not be accessible yet
+            
+            if os.path.isdir(path):
+                return True
+            
+            if attempt < max_retries:
+                logger.debug(f"Directory check failed for '{path}', retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})")
+                time.sleep(retry_delay)
+        
+        return False
