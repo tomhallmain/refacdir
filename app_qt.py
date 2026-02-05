@@ -22,7 +22,7 @@ from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.translations import I18N
 from refacdir.utils.utils import Utils
-from ui import AppActions, ThemeManager, ThemeColors, ToastNotification, TestResultsWindow
+from ui import AppActions, ThemeManager, ThemeColors, ToastNotification, TestResultsWindow, FramelessWindowMixin, CustomTitleBar, WindowResizeHandler
 
 _ = I18N._
 
@@ -40,8 +40,8 @@ class ProgressListener:
         self.update_func(None, None, status)
 
 
-class MainWindow(SmartMainWindow):
-    """Main application window"""
+class MainWindow(FramelessWindowMixin, SmartMainWindow):
+    """Main application window with custom title bar"""
     
     # Define signals for progress updates and cross-thread alert
     progress_text_signal = Signal(str)
@@ -52,6 +52,10 @@ class MainWindow(SmartMainWindow):
     def __init__(self):
         # Initialize SmartMainWindow with geometry persistence using app_info_cache
         super().__init__(restore_geometry=True)
+        
+        # Set up frameless window with custom title bar
+        self.setup_frameless_window(title=_("RefacDir"))
+        
         self.configs = {}
         self.filtered_configs = {}
         self.filter_text = ""
@@ -94,16 +98,46 @@ class MainWindow(SmartMainWindow):
         self.resize(1000, 700)  # Slightly larger default size
         self.setMinimumSize(800, 600)
         
-        # Main widget and layout
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        main_layout = QHBoxLayout(main_widget)
+        grip_size = getattr(self, '_frameless_grip_size', 8)
+        
+        # Outer widget for translucent background (needed for rounded corners)
+        outer_widget = QWidget()
+        outer_widget.setObjectName("transparentOuter")
+        outer_widget.setAttribute(Qt.WA_TranslucentBackground)
+        self.setCentralWidget(outer_widget)
+        outer_layout = QVBoxLayout(outer_widget)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+        
+        # Main container frame with rounded corners
+        self._main_frame = QFrame()
+        self._main_frame.setObjectName("mainFrame")
+        outer_layout.addWidget(self._main_frame)
+        
+        root_layout = QVBoxLayout(self._main_frame)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        
+        # Add the custom title bar at the top
+        title_bar = self.get_title_bar()
+        if title_bar:
+            root_layout.addWidget(title_bar)
+        
+        # Content area below title bar
+        content_widget = QWidget()
+        content_widget.setObjectName("contentArea")
+        main_layout = QHBoxLayout(content_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins for full-width design
         main_layout.setSpacing(0)  # Remove spacing between main sections
         
         # Create sections
         self._create_sidebar(main_layout)
         self._create_main_content(main_layout)
+        
+        root_layout.addWidget(content_widget)
+        
+        # Install resize handler for edge resizing (uses event filter, no overlay)
+        self._resize_handler = WindowResizeHandler(self, grip_size)
         
         # Apply initial theme (will be overridden by restore_ui_settings if cached)
         self.apply_theme(is_dark=True)
@@ -298,7 +332,11 @@ class MainWindow(SmartMainWindow):
     def apply_theme(self, is_dark: bool):
         """Apply the selected theme to the application"""
         self.is_dark_theme = is_dark
-        ThemeManager.apply_theme(QApplication.instance(), is_dark)
+        radius = getattr(self, '_frameless_corner_radius', 10)
+        # ThemeManager handles all styling including title bar and rounded corners
+        ThemeManager.apply_theme(QApplication.instance(), is_dark, corner_radius=radius)
+        # Apply theme to custom title bar
+        self.apply_frameless_theme(is_dark)
         # Save theme preference
         app_info_cache.set_ui_theme(is_dark)
 
@@ -596,6 +634,7 @@ class MainWindow(SmartMainWindow):
         if event.text():
             self.filter_text += event.text()
             self.filter_configs(self.filter_text)
+    
 
     def progress_text(self, text: str):
         """Update the progress status text (thread-safe)"""
