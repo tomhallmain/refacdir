@@ -22,7 +22,17 @@ from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.translations import I18N
 from refacdir.utils.utils import Utils
-from ui import AppActions, ThemeManager, ThemeColors, ToastNotification, TestResultsWindow, FramelessWindowMixin, CustomTitleBar, WindowResizeHandler
+from ui import (
+    AppActions,
+    ThemeManager,
+    ThemeColors,
+    ToastNotification,
+    TestResultsWindow,
+    FramelessWindowMixin,
+    CustomTitleBar,
+    WindowResizeHandler,
+    ConfigEditorWindow,
+)
 
 _ = I18N._
 
@@ -48,6 +58,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     progress_bar_update_signal = Signal(float)
     progress_bar_reset_signal = Signal()
     alert_signal = Signal(str, str, str)  # title, message, kind
+    refresh_configs_signal = Signal()
     
     def __init__(self):
         # Initialize SmartMainWindow with geometry persistence using app_info_cache
@@ -64,6 +75,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.server = self.setup_server()
         self.recurring_action_config = RecurringActionConfig()
         self._toast = ToastNotification()
+        self._config_editor_window = None
         self.is_dark_theme = True
 
         app_actions = {
@@ -72,6 +84,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             "progress_text": self.progress_text,
             "progress_bar_update": self.progress_bar_update,
             "progress_bar_reset": self.progress_bar_reset,
+            "refresh_configs": self.refresh_configs,
         }
         self.app_actions = AppActions(app_actions)
         
@@ -80,6 +93,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.progress_bar_update_signal.connect(self._progress_bar_update)
         self.progress_bar_reset_signal.connect(self._progress_bar_reset)
         self.alert_signal.connect(self._show_alert)
+        self.refresh_configs_signal.connect(self._refresh_configs)
         
         self.setup_ui()
         self.setup_connections()
@@ -187,6 +201,11 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.run_btn.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
         self.run_btn.clicked.connect(self.run)
         actions_layout.addWidget(self.run_btn)
+
+        self.config_editor_btn = QPushButton(_("Edit Configs"))
+        self.config_editor_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+        self.config_editor_btn.clicked.connect(self.open_config_editor)
+        actions_layout.addWidget(self.config_editor_btn)
         
         sidebar_layout.addWidget(actions_frame)
         
@@ -471,6 +490,43 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         test_window = TestResultsWindow(self)
         test_window.show()
         test_window.run_tests()
+
+    def open_config_editor(self):
+        """Open (or focus) the config editor window."""
+        if self._config_editor_window is None:
+            self._config_editor_window = ConfigEditorWindow(parent=self, app_actions=self.app_actions)
+            self._config_editor_window.config_saved.connect(self._on_config_saved)
+        # If the sidebar filter narrows to one config, load it directly in editor.
+        if len(self.filtered_configs) == 1:
+            selected_config = next(iter(self.filtered_configs.keys()))
+            self._config_editor_window.load_config(selected_config)
+        self._config_editor_window.show()
+        self._config_editor_window.raise_()
+        self._config_editor_window.activateWindow()
+
+    def _on_config_saved(self, config_path: str):
+        """Handle config editor save callback."""
+        logger.info(f"Config saved from editor: {config_path}")
+        self._refresh_configs()
+        self.toast(f"Config saved: {config_path}")
+
+    def refresh_configs(self):
+        """Thread-safe config refresh callback for app actions."""
+        if QThread.currentThread() is QApplication.instance().thread():
+            self._refresh_configs()
+        else:
+            self.refresh_configs_signal.emit()
+
+    def _refresh_configs(self):
+        """Reload batch config states and refresh config list UI."""
+        try:
+            BatchArgs.setup_configs(recache=True)
+            self.configs = deepcopy(BatchArgs.configs)
+            self.filtered_configs = deepcopy(BatchArgs.configs)
+            self.add_config_widgets()
+            logger.info("Config list refreshed.")
+        except Exception as exc:
+            logger.error(f"Failed refreshing configs: {exc}")
         
     def run_config(self, config: str):
         """Run operations for a specific config"""

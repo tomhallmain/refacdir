@@ -120,7 +120,7 @@ class CustomTitleBar(QWidget):
         """Apply theme to the title bar using ThemeManager."""
         self._is_dark = is_dark
         # Import here to avoid circular imports
-        from .styles import ThemeManager
+        from .app_style import ThemeManager
         ThemeManager.apply_to_title_bar(self, is_dark)
             
     def _on_minimize(self):
@@ -497,7 +497,7 @@ class FramelessWindowMixin:
             self.setAttribute(Qt.WA_TranslucentBackground)
         
         # Create the custom title bar
-        from .styles import ThemeManager
+        from .app_style import ThemeManager
         ThemeManager.set_corner_radius(corner_radius)
         self._title_bar = CustomTitleBar(self, title, corner_radius=corner_radius)
         self._title_bar.setFixedHeight(title_bar_height)
@@ -534,7 +534,7 @@ def install_title_bar_to_layout(window, layout, title: str = "", is_dark: bool =
     Returns:
         The created CustomTitleBar widget
     """
-    from .styles import ThemeManager
+    from .app_style import ThemeManager
     title_bar = CustomTitleBar(window, title)
     title_bar.apply_theme(is_dark)
     layout.insertWidget(0, title_bar)
