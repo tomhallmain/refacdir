@@ -1,6 +1,7 @@
 from copy import deepcopy
 import os
 import signal
+import threading
 import traceback
 
 from PySide6.QtWidgets import (
@@ -32,6 +33,7 @@ from ui import (
     CustomTitleBar,
     WindowResizeHandler,
     ConfigEditorWindow,
+    run_duplicate_review_dialog,
 )
 
 _ = I18N._
@@ -59,6 +61,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     progress_bar_reset_signal = Signal()
     alert_signal = Signal(str, str, str)  # title, message, kind
     refresh_configs_signal = Signal()
+    review_duplicates_signal = Signal(object, object)
     
     def __init__(self):
         # Initialize SmartMainWindow with geometry persistence using app_info_cache
@@ -85,6 +88,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             "progress_bar_update": self.progress_bar_update,
             "progress_bar_reset": self.progress_bar_reset,
             "refresh_configs": self.refresh_configs,
+            "review_duplicates": self.review_duplicates,
         }
         self.app_actions = AppActions(app_actions)
         
@@ -94,6 +98,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.progress_bar_reset_signal.connect(self._progress_bar_reset)
         self.alert_signal.connect(self._show_alert)
         self.refresh_configs_signal.connect(self._refresh_configs)
+        self.review_duplicates_signal.connect(self._handle_review_duplicates_request)
         
         self.setup_ui()
         self.setup_connections()
@@ -527,6 +532,34 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             logger.info("Config list refreshed.")
         except Exception as exc:
             logger.error(f"Failed refreshing configs: {exc}")
+
+    def review_duplicates(self, payload: dict):
+        """Thread-safe duplicate review callback for backend operations."""
+        if QThread.currentThread() is QApplication.instance().thread():
+            return self._show_duplicate_review(payload)
+
+        context = {
+            "event": threading.Event(),
+            "result": {"action": "cancel", "files": []},
+        }
+        self.review_duplicates_signal.emit(payload, context)
+        context["event"].wait()
+        return context["result"]
+
+    def _handle_review_duplicates_request(self, payload: dict, context: dict):
+        """Handle duplicate review request on UI thread."""
+        try:
+            context["result"] = self._show_duplicate_review(payload)
+        except Exception as exc:
+            logger.error(f"Duplicate review UI failed: {exc}")
+            context["result"] = {"action": "cancel", "files": []}
+        finally:
+            context["event"].set()
+
+    def _show_duplicate_review(self, payload: dict) -> dict:
+        if payload.get("total_duplicate_files", 0) == 0:
+            return {"action": "cancel", "files": []}
+        return run_duplicate_review_dialog(self, payload)
         
     def run_config(self, config: str):
         """Run operations for a specific config"""

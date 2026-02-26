@@ -4,6 +4,7 @@ import hashlib
 import os
 import re
 import sys
+from typing import Iterable
 
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
@@ -19,7 +20,7 @@ class DuplicateRemover:
     STARTS_WITH_ALPHA_REGEX = re.compile(r'^[A-Za-z]')
 
     def __init__(self, name, source_folders, select_for_folder_depth=False, match_dir=False,
-                 recursive=True, exclude_dirs=[], preferred_delete_dirs=[]):
+                 recursive=True, exclude_dirs=[], preferred_delete_dirs=[], skip_confirm=False, app_actions=None):
         logger.info(f"Initializing duplicate remover: {name}")
         self.name = name
         self.source_folders = []
@@ -32,6 +33,8 @@ class DuplicateRemover:
         self.dir_separator_char = "\\" if sys.platform.startswith("win") else "/"
         self.exclude_dirs = []
         self.preferred_delete_dirs = []
+        self.skip_confirm = skip_confirm
+        self.app_actions = app_actions
         self.skip_exclusion_check = len(exclude_dirs) == 0
         if not self.skip_exclusion_check:
             logger.info("Excluding directories from duplicates check:")
@@ -64,6 +67,28 @@ class DuplicateRemover:
     def run(self):
         logger.info(f"Running duplicate removal for: {self.source_folders}")
         if self.find_duplicates():
+            if self.skip_confirm:
+                logger.info("skip_confirm set. Removing all duplicates without prompt.")
+                self.handle_duplicates(testing=False, skip_confirm=True)
+                return
+
+            if self.app_actions and hasattr(self.app_actions, "review_duplicates"):
+                review_payload = self.build_review_payload()
+                if review_payload.get("total_duplicate_files", 0) == 0:
+                    logger.info("No duplicates found after review payload generation.")
+                    return
+                decision = self.app_actions.review_duplicates(review_payload)
+                action = (decision or {}).get("action", "cancel")
+                selected_files = set((decision or {}).get("files", []))
+                if action == "remove_all":
+                    self.remove_files(self.flatten_duplicate_files())
+                    return
+                if action == "remove_selected":
+                    self.remove_files(selected_files)
+                    return
+                logger.info("Duplicate review cancelled by user.")
+                return
+
             self.handle_duplicates(testing=True)
             confirm = input("Confirm all duplicates removal (Y/n): ")
             if confirm.lower().strip() == "y":
@@ -83,6 +108,62 @@ class DuplicateRemover:
                 self.save_report()
         else:
             logger.info("No duplicates found.")
+
+    def _remove_index_suffix(self, basename_no_ext: str) -> str:
+        return re.sub(r'\s\(\d+\)$', '', basename_no_ext)
+
+    def is_obvious_index_duplicate(self, keep_file: str, duplicate_file: str) -> bool:
+        keep_base, keep_ext = os.path.splitext(os.path.basename(keep_file))
+        dup_base, dup_ext = os.path.splitext(os.path.basename(duplicate_file))
+        if keep_ext.lower() != dup_ext.lower():
+            return False
+        keep_norm = self._remove_index_suffix(keep_base).strip().lower()
+        dup_norm = self._remove_index_suffix(dup_base).strip().lower()
+        if not keep_norm or not dup_norm:
+            return False
+        return keep_norm == dup_norm
+
+    def build_review_payload(self) -> dict:
+        groups = []
+        obvious_count = 0
+        non_obvious_count = 0
+
+        for file_list in self.duplicates.values():
+            keep_file, remove_files = self.determine_duplicates(file_list)
+            if self.match_dir and len(remove_files) == 0:
+                continue
+            obvious = all(self.is_obvious_index_duplicate(keep_file, f) for f in remove_files)
+            if obvious:
+                obvious_count += len(remove_files)
+            else:
+                non_obvious_count += len(remove_files)
+            groups.append({
+                "keep_file": keep_file,
+                "remove_files": remove_files,
+                "obvious": obvious,
+            })
+
+        return {
+            "total_duplicate_files": obvious_count + non_obvious_count,
+            "obvious_count": obvious_count,
+            "non_obvious_count": non_obvious_count,
+            "groups": groups,
+        }
+
+    def flatten_duplicate_files(self) -> list[str]:
+        payload = self.build_review_payload()
+        files = []
+        for group in payload["groups"]:
+            files.extend(group["remove_files"])
+        return files
+
+    def remove_files(self, files: Iterable[str]):
+        for file_path in files:
+            logger.info("Removing file: " + file_path)
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Failed to remove file {file_path}: {e}")
 
     def get_file_hash(self, file_path):
         hash_obj = hashlib.md5()
@@ -145,12 +226,7 @@ class DuplicateRemover:
                     if confirm.lower() != "y":
                         logger.info("User skipped removal of duplicates")
                         continue
-                for file_path in duplicates_to_remove:
-                    logger.info("Removing file: " + file_path)
-                    try:
-                        os.remove(file_path)
-                    except Exception as e:
-                        logger.error(f"Failed to remove file {file_path}: {e}")
+                self.remove_files(duplicates_to_remove)
 
     def is_preferred_delete_file(self, file_path):
         for d in self.preferred_delete_dirs:

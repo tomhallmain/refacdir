@@ -9,6 +9,7 @@ from .test_results_window import TestResultsWindow
 from .custom_title_bar import CustomTitleBar, FramelessWindowMixin, TitleBarButton, ResizeGrip, WindowResizeHandler
 from .config_editor_window import ConfigEditorWindow
 from .renamer_rule_suggester_dialog import RenamerRuleSuggesterDialog
+from .duplicate_review_dialogs import run_duplicate_review_dialog
 
 __all__ = [
     'AppActions',
@@ -23,4 +24,5 @@ __all__ = [
     'WindowResizeHandler',
     'ConfigEditorWindow',
     'RenamerRuleSuggesterDialog',
+    'run_duplicate_review_dialog',
 ] 
