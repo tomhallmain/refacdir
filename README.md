@@ -18,7 +18,7 @@ Available batch actions include:
   - `MIRROR_DUPLICATES`
   - `FILES_AND_DIRS` or `DIRS_ONLY` (both exclusive of the other modes)
 - Observe directory state by counts of file types
-- Image categorization using CLIP (requires [this project](https://github.com/tomhallmain/simple_image_compare))
+- Image categorization using CLIP (requires [Weidr](https://github.com/tomhallmain/Weidr))
 
 Define custom named functions and sets of file types in the config YAML `filename_mapping_functions` and `filetype_definitions` headers to be referenced in the other parts of the config. Similarly, define custom functions in `custom_file_name_search_funcs.py` and add the function name refs to the config YAML to add custom search logic for gathering files to rename or move.
 
@@ -30,6 +30,6 @@ Start the UI by running `app.py`.
 
 # Server
 
-Set configuration options in config_example.json for a server port to make use of the server while the UI is running. Calls to the server made with Python's multiprocessing client will update the UI as specified, but leave anything unspecified as already set in the UI. This can be helpful to use in conjunction with other applications that involve images. For an example, see [this class](https://github.com/tomhallmain/simple_image_compare/blob/master/extensions/refacdir_client.py).
+Set configuration options in config_example.json for a server port to make use of the server while the UI is running. Calls to the server made with Python's multiprocessing client will update the UI as specified, but leave anything unspecified as already set in the UI. This can be helpful to use in conjunction with other applications that involve images. For an example, see [this class](https://github.com/tomhallmain/Weidr/blob/master/extensions/refacdir_client.py).
 
 
