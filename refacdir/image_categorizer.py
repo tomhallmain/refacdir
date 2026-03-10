@@ -8,13 +8,13 @@ from refacdir.utils.logger import setup_logger
 # Set up logger for image categorizer
 logger = setup_logger('image_categorizer')
 
-simple_image_compare_imported = False
+weidr_imported = False
 
-if config.simple_image_compare_loc is not None:
+if config.weidr_loc is not None:
     try:
-        sys.path.insert(0, config.simple_image_compare_loc)
+        sys.path.insert(0, config.weidr_loc)
         from compare.compare_embeddings_clip import CompareEmbedding
-        simple_image_compare_imported = True
+        weidr_imported = True
     except Exception as e:
         logger.error(f"Failed to import Simple Image Compare: {e}")
 
@@ -36,7 +36,7 @@ class ImageCategorizer:
         self.exclude_dirs = []
         self.segregation_map = {}
 
-        if not simple_image_compare_imported:
+        if not weidr_imported:
             raise Exception("Invalid ImageCategorizer config - Simple image compare not imported")
 
         if not Utils.isdir_with_retry(source_dir):

@@ -167,7 +167,7 @@ class TestResultsWindow(SmartWindow):
                     sys.path.insert(0, base_dir)
                     
                 # Remove any other paths that might interfere
-                sys.path = [p for p in sys.path if not p.endswith('simple_image_compare')]
+                sys.path = [p for p in sys.path if not p.lower().endswith('weidr')]
                 
                 # Use proper directory name for tests
                 test_dir = os.path.join(base_dir, "test", "backup")

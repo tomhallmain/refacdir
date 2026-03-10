@@ -12,7 +12,7 @@ class Config:
         self.dict = {}
         self.foreground_color = None
         self.background_color = None
-        self.simple_image_compare_loc = None
+        self.weidr_loc = None
         self.print_settings = False
         self.debug = False
         self.server_port = 6001
@@ -47,7 +47,7 @@ class Config:
         self.set_values(bool, "debug")
 
         if dict_set:
-            self.simple_image_compare_loc = self.validate_and_set_directory(key="simple_image_compare_loc")
+            self.weidr_loc = self.validate_and_set_directory(key="weidr_loc")
 
         if self.print_settings:
             self.print_config_settings()
@@ -81,8 +81,8 @@ class Config:
 
     def print_config_settings(self):
         logger.info("Settings active:")
-        if self.simple_image_compare_loc is not None:
-            logger.info(f" - Using simple image compare path at {self.simple_image_compare_loc}")
+        if self.weidr_loc is not None:
+            logger.info(f" - Using simple image compare path at {self.weidr_loc}")
         else:
             pass
 #            logger.info(f" - Simple image compare location is not set or invalid.")

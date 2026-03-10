@@ -84,7 +84,7 @@ class I18N:
     Run personal script C:\Scripts\i18n_manager.py to generate new PO files and look for invalid translations.
 
     Bonus command:
-        ```git diff simple_image_compare\locale\de\LC_MESSAGES\base.po simple_image_compare\locale\de\LC_MESSAGES\base1.po | rg -v "^.*#" | rg -C 3 "^(-|\+)"```
+        ```git diff Weidr\locale\de\LC_MESSAGES\base.po Weidr\locale\de\LC_MESSAGES\base1.po | rg -v "^.*#" | rg -C 3 "^(-|\+)"```
 
     Then for each locale once the PO files are set up as desired, run below in the deepest locale directory to produce the MO file from the PO file:
         ```python C:\Python310\Tools\i18n\msgfmt.py -o base.mo base```
