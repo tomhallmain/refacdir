@@ -376,12 +376,14 @@ class BatchJob:
         select_for_folder_depth = Utils.get_from_dict(yaml_dict, "select_for_folder_depth", None)
         exclude_dirs = Utils.get_from_dict(yaml_dict, "exclude_dirs", [])
         preferred_delete_dirs = Utils.get_from_dict(yaml_dict, "preferred_delete_dirs", [])
+        use_hash_cache = Utils.get_from_dict(yaml_dict, "use_hash_cache", True)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         logger.info(f"Constructing duplicate remover: {name} with {len(source_dirs)} source directories")
         return DuplicateRemover(name, source_dirs, select_for_folder_depth=select_for_folder_depth,
                                 recursive=recursive, exclude_dirs=exclude_dirs,
                                 preferred_delete_dirs=preferred_delete_dirs,
-                                skip_confirm=skip_confirm, app_actions=self.app_actions)
+                                skip_confirm=skip_confirm, app_actions=self.app_actions,
+                                use_hash_cache=use_hash_cache)
 
     def construct_batch_renamer(self, yaml_dict={}):
         name = yaml_dict["name"]

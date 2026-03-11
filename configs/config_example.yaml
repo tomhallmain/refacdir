@@ -33,6 +33,7 @@ actions:
   mappings:
   - name: "Downloads duplicates cleaner"
     source_dirs: ["{{USER_HOME}}\\Downloads"]
+    use_hash_cache: true
     select_for_folder_depth: false
     match_dir: false
     recursive: true

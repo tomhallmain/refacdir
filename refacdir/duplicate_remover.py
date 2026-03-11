@@ -1,11 +1,14 @@
 import argparse
 from collections import defaultdict
+from datetime import datetime
 import hashlib
 import os
 import re
+import stat
 import sys
 from typing import Iterable
 
+from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
@@ -14,13 +17,111 @@ logger = setup_logger('duplicate_remover')
 
 # TODO maybe option to not preserve/ignore duplicates if they exist in different subdirectories within the root
 
+class DuplicateRemoverHashCache:
+    HASH_CACHE_KEY = "cache"
+    HASH_CACHE_LAST_UPDATE_KEY = "last_update"
+    HASH_CACHE_META_KEY = "duplicate_remover_hash_cache"
+
+    def __init__(self):
+        self.cache_map = {}
+        self.cached_hashes_for_source = {}
+        self.last_cache_update_timestamp = None
+        self.replacement_cache_for_source = {}
+
+    def relative_path(self, source_folder, file_path):
+        return os.path.normpath(os.path.relpath(file_path, source_folder))
+
+    def normalize_directory_key(self, directory):
+        return os.path.normpath(os.path.abspath(directory))
+
+    def get_hash_cache(self):
+        try:
+            loaded_cache = app_info_cache.get(self.HASH_CACHE_META_KEY, default_val={})
+            self.cache_map = loaded_cache if isinstance(loaded_cache, dict) else {}
+        except Exception as e:
+            logger.error(f"Failed to load duplicate remover hash cache: {e}")
+            self.cache_map = {}
+        return self.cache_map
+
+    def read_hash_cache_entry(self, source_folder):
+        source_folder_key = self.normalize_directory_key(source_folder)
+        directory_data = self.cache_map.get(source_folder_key, {})
+        self.replacement_cache_for_source = {}
+        if not isinstance(directory_data, dict):
+            self.cached_hashes_for_source = {}
+            self.last_cache_update_timestamp = None
+            return self.cached_hashes_for_source
+        cache = directory_data.get(self.HASH_CACHE_KEY, {})
+        last_update = directory_data.get(self.HASH_CACHE_LAST_UPDATE_KEY)
+        self.cached_hashes_for_source = cache if isinstance(cache, dict) else {}
+        try:
+            self.last_cache_update_timestamp = datetime.fromisoformat(last_update).timestamp() if last_update else None
+        except Exception:
+            self.last_cache_update_timestamp = None
+        return self.cached_hashes_for_source
+
+    def write_hash_cache_entry(self, source_folder):
+        source_folder_key = self.normalize_directory_key(source_folder)
+        existing = self.cache_map.get(source_folder_key, {})
+        if not isinstance(existing, dict):
+            existing = {}
+        self.cache_map[source_folder_key] = {
+            **existing,
+            self.HASH_CACHE_KEY: dict(self.replacement_cache_for_source),
+            self.HASH_CACHE_LAST_UPDATE_KEY: datetime.now().astimezone().isoformat()
+        }
+
+    def cleanup_hash_cache_entries(self, source_folders):
+        active_keys = set(self.normalize_directory_key(d) for d in source_folders)
+        stale_hash_cache_keys = []
+        for directory_key, directory_data in self.cache_map.items():
+            if not isinstance(directory_data, dict):
+                continue
+            if self.HASH_CACHE_KEY not in directory_data:
+                continue
+            if directory_key not in active_keys:
+                stale_hash_cache_keys.append(directory_key)
+        for stale_key in stale_hash_cache_keys:
+            del self.cache_map[stale_key]
+
+    def get_file_hash(self, source_folder, file_path, file_mtime, use_hash_cache):
+        rel_path = self.relative_path(source_folder, file_path)
+        if (use_hash_cache and
+            rel_path in self.cached_hashes_for_source and
+            self.last_cache_update_timestamp is not None and
+            file_mtime is not None and
+            file_mtime <= self.last_cache_update_timestamp):
+            file_hash = self.cached_hashes_for_source[rel_path]
+        else:
+            hash_obj = hashlib.md5()
+            with open(file_path, 'rb') as file:
+                for chunk in iter(lambda: file.read(4096), b""):
+                    hash_obj.update(chunk)
+            file_hash = hash_obj.hexdigest()
+        if use_hash_cache:
+            self.replacement_cache_for_source[rel_path] = file_hash
+        return file_hash
+
+    def persist_hash_cache(self):
+        app_info_cache.set(self.HASH_CACHE_META_KEY, self.cache_map)
+        app_info_cache.store()
+
+    def finalize_and_persist(self, source_folders):
+        try:
+            self.cleanup_hash_cache_entries(source_folders)
+            self.persist_hash_cache()
+        except Exception as e:
+            logger.error(f"Failed to persist hash cache updates: {e}")
+
+
 class DuplicateRemover:
     INDEX_REGEX = re.compile(r'\s\(\d+\)(.[a-z0-9]{1,5})?$') # regex to match files with indices like " (1)" or " (2)"
     NORMAL_FILE_CHARS_REGEX = re.compile(r'^[\w_\-. ]+$')
     STARTS_WITH_ALPHA_REGEX = re.compile(r'^[A-Za-z]')
 
     def __init__(self, name, source_folders, select_for_folder_depth=False, match_dir=False,
-                 recursive=True, exclude_dirs=[], preferred_delete_dirs=[], skip_confirm=False, app_actions=None):
+                 recursive=True, exclude_dirs=[], preferred_delete_dirs=[], skip_confirm=False,
+                 app_actions=None, use_hash_cache=True):
         logger.info(f"Initializing duplicate remover: {name}")
         self.name = name
         self.source_folders = []
@@ -35,6 +136,8 @@ class DuplicateRemover:
         self.preferred_delete_dirs = []
         self.skip_confirm = skip_confirm
         self.app_actions = app_actions
+        self.use_hash_cache = use_hash_cache
+        self.hash_cache = DuplicateRemoverHashCache()
         self.skip_exclusion_check = len(exclude_dirs) == 0
         if not self.skip_exclusion_check:
             logger.info("Excluding directories from duplicates check:")
@@ -165,33 +268,56 @@ class DuplicateRemover:
             except Exception as e:
                 logger.error(f"Failed to remove file {file_path}: {e}")
 
-    def get_file_hash(self, file_path):
-        hash_obj = hashlib.md5()
-        with open(file_path, 'rb') as file:
-            for chunk in iter(lambda: file.read(4096), b""):
-                hash_obj.update(chunk)
-        return hash_obj.hexdigest()
-
     def is_excluded(self, file_path):
         for d in self.exclude_dirs:
             if file_path.startswith(d):
                 return True
         return False
 
+    def _iter_files_with_mtime(self, source_folder):
+        stack = [source_folder]
+        while stack:
+            folder = stack.pop()
+            try:
+                with os.scandir(folder) as entries:
+                    for entry in entries:
+                        file_path = os.path.normpath(entry.path)
+                        try:
+                            entry_stat = entry.stat(follow_symlinks=False)
+                            mode = entry_stat.st_mode
+                            if stat.S_ISDIR(mode):
+                                if self.recursive and (self.skip_exclusion_check or not self.is_excluded(file_path)):
+                                    stack.append(file_path)
+                                continue
+                            if not stat.S_ISREG(mode):
+                                continue
+                            if not self.skip_exclusion_check and self.is_excluded(file_path):
+                                continue
+                            file_mtime = entry_stat.st_mtime
+                            yield file_path, file_mtime
+                        except Exception as e:
+                            logger.error(f"Error reading file info for \"{file_path}\": {e}")
+            except Exception as e:
+                logger.error(f"Error scanning directory \"{folder}\": {e}")
+
     def find_duplicates(self):
         file_dict = defaultdict(list)
+        if self.use_hash_cache:
+            self.hash_cache.get_hash_cache()
         for source_folder in self.source_folders:
             logger.debug(f"Scanning directory for duplicates: {source_folder}")
-            for foldername, subfolders, filenames in os.walk(source_folder):
-                if not self.recursive and foldername != source_folder: # TODO better way to handle this
-                    continue
-                for filename in filenames:
-                    file_path = os.path.normpath(os.path.join(foldername, filename))
-                    if self.skip_exclusion_check or not self.is_excluded(file_path):
-                        try:
-                            file_dict[self.get_file_hash(file_path)].append(file_path)
-                        except Exception as e: # FileNotFound error is possible
-                            logger.error(f"Error generating hash for \"{file_path}\": {e}")
+            if self.use_hash_cache:
+                self.hash_cache.read_hash_cache_entry(source_folder)
+            for file_path, file_mtime in self._iter_files_with_mtime(source_folder):
+                try:
+                    file_hash = self.hash_cache.get_file_hash(source_folder, file_path, file_mtime, self.use_hash_cache)
+                    file_dict[file_hash].append(file_path)
+                except Exception as e: # FileNotFound error is possible
+                    logger.error(f"Error generating hash for \"{file_path}\": {e}")
+            if self.use_hash_cache:
+                self.hash_cache.write_hash_cache_entry(source_folder)
+        if self.use_hash_cache:
+            self.hash_cache.finalize_and_persist(self.source_folders)
         self.duplicates = {k: v for k, v in file_dict.items() if len(v) > 1}
         if self.has_duplicates():
             logger.info(f"Found {len(self.duplicates)} sets of duplicate files")
@@ -294,13 +420,14 @@ class DuplicateRemover:
         logger.info(f'Report saved at {report_path}')
 
 def dups_main(directory_path=".", select_deepest=False, match_dir=False, recursive=True, 
-              exclude_dir_string="", preferred_delete_dirs_string=""):
+              exclude_dir_string="", preferred_delete_dirs_string="", use_hash_cache=True):
     logger.info(f"Starting duplicate removal process in directory: {directory_path}")
     exclude_dirs = Utils.get_list_from_string(exclude_dir_string)
     preferred_delete_dirs = Utils.get_list_from_string(preferred_delete_dirs_string)
     remover = DuplicateRemover("dups_main", directory_path, select_for_folder_depth=select_deepest,
                                match_dir=match_dir, recursive=recursive, 
-                               exclude_dirs=exclude_dirs, preferred_delete_dirs=preferred_delete_dirs)
+                               exclude_dirs=exclude_dirs, preferred_delete_dirs=preferred_delete_dirs,
+                               use_hash_cache=use_hash_cache)
     remover.run()
 
 if __name__ == "__main__":
