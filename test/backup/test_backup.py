@@ -167,6 +167,50 @@ def test_manager_dry_run_leaves_target_empty():
     assert not os.path.exists(os.path.join(TARGET_DIR, 'only.txt'))
 
 
+def test_mirror_removes_file_that_exists_only_on_target():
+    """Stale removal: files on target with no counterpart on source are deleted."""
+    create_test_structure(SOURCE_DIR, {'synced.txt': 'same'})
+    os.makedirs(TARGET_DIR, exist_ok=True)
+    with open(os.path.join(TARGET_DIR, 'synced.txt'), 'w', encoding='utf-8') as f:
+        f.write('same')
+    with open(os.path.join(TARGET_DIR, 'target_only.txt'), 'w', encoding='utf-8') as f:
+        f.write('orphan')
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.MIRROR,
+    )
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
+    manager.run()
+    assert os.path.isfile(os.path.join(TARGET_DIR, 'synced.txt'))
+    assert not os.path.isfile(os.path.join(TARGET_DIR, 'target_only.txt'))
+
+
+def test_mirror_dirs_only_leaves_stray_target_files():
+    """
+    With FileMode.DIRS_ONLY, _is_file_excluded is true for every file path, so
+    _mirror_remove_stale skips removing loose files on the target (they look 'excluded').
+    Directory structure still syncs. Documents current coupling; change mapping if removal is desired.
+    """
+    structure = {'dir1': {'subdir': {}}}
+    create_test_structure(SOURCE_DIR, structure)
+    os.makedirs(TARGET_DIR, exist_ok=True)
+    with open(os.path.join(TARGET_DIR, 'loose.txt'), 'w', encoding='utf-8') as f:
+        f.write('x')
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.MIRROR,
+        file_mode=FileMode.DIRS_ONLY,
+    )
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
+    manager.run()
+    assert os.path.isdir(os.path.join(TARGET_DIR, 'dir1', 'subdir'))
+    assert os.path.isfile(os.path.join(TARGET_DIR, 'loose.txt'))
+
+
 def test_mirror():
     """Test MIRROR mode with file deletions in source"""
     # Initial structure
@@ -312,7 +356,10 @@ def test_file_mode_dirs_only():
     assert not os.path.exists(os.path.join(TARGET_DIR, 'file1.txt'))
     assert not os.path.exists(os.path.join(TARGET_DIR, 'dir1', 'file2.txt'))
 
-@pytest.mark.skipif(sys.platform == "win32", reason="chmod on a directory does not block writes the same way as on POSIX")
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="chmod on a directory does not block writes the same way as on POSIX; see docs/BACKUP_TEST_COVERAGE.md",
+)
 def test_error_handling():
     """Test error handling when the target directory is not writable."""
     structure = {'file1.txt': 'content1'}

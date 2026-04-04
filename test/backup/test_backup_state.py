@@ -229,6 +229,47 @@ def test_verify_integrity_hash_mismatch():
     assert not success
     assert 'Hash mismatch' in error
 
+def test_verify_integrity_filename_hash_ignores_content():
+    """
+    HashMode.FILENAME uses basename only; integrity can pass when file bytes differ.
+    Documents current behavior (not SHA256).
+    """
+    create_test_structure(SOURCE_DIR, {'only.txt': 'aaa'})
+    create_test_structure(TARGET_DIR, {'only.txt': 'bbb'})
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.MIRROR,
+        hash_mode=HashMode.FILENAME,
+    )
+    state = BackupState(mapping)
+    state.validate_source()
+    state.validate_target()
+    success, error = state.verify_integrity()
+    assert success
+    assert error is None
+
+
+def test_verify_integrity_filename_and_parent_hash():
+    """HashMode.FILENAME_AND_PARENT includes parent directory name in the key."""
+    create_test_structure(SOURCE_DIR, {'p': {'f.txt': 'a'}})
+    create_test_structure(TARGET_DIR, {'p': {'f.txt': 'a'}})
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.MIRROR,
+        hash_mode=HashMode.FILENAME_AND_PARENT,
+    )
+    state = BackupState(mapping)
+    state.validate_source()
+    state.validate_target()
+    success, error = state.verify_integrity()
+    assert success
+    assert error is None
+
+
 def test_clear():
     """Test clearing backup state"""
     structure = {
