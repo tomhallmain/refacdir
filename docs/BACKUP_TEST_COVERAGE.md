@@ -2,6 +2,8 @@
 
 Tracks automated coverage for `refacdir/backup/` and batch YAML loading. See `test/backup/*.py`.
 
+For **other** `ActionType`s (renamer, duplicate remover, etc.), see [NON_BACKUP_ACTIONS_TEST_COVERAGE.md](./NON_BACKUP_ACTIONS_TEST_COVERAGE.md).
+
 ## Action types (`BackupMode`)
 
 | Mode | Intent | Integration tests (`test_backup.py`) | `BackupState.verify_integrity` (`test_backup_state.py`) |
