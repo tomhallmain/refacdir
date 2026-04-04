@@ -324,8 +324,8 @@ class BackupSourceData:
         return int(time.time() * 1000)
 
     def _get_backup_filepath(self) -> str:
-        """Generate timestamped backup filepath"""
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        """Generate timestamped backup filepath (microseconds avoid collisions in fast loops)."""
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         return os.path.join(self.backup_dir, f"{self.FILEPATH}.{timestamp}")
 
     def _get_available_backups(self) -> List[Tuple[float, str]]:
