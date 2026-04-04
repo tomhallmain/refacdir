@@ -1,9 +1,11 @@
+import logging
 import os
 import sys
 import pytest
 import shutil
 import time
 from pathlib import Path
+from unittest.mock import patch
 
 from refacdir.backup.backup_manager import BackupManager
 from refacdir.backup.backup_mapping import BackupMapping, BackupMode, BackupTransaction, FileMode, HashMode
@@ -328,6 +330,94 @@ def test_duplicate_handling():
     assert os.path.isfile(p1) and os.path.isfile(p2)
     assert open(p1, encoding='utf-8').read() == 'same content'
     assert open(p2, encoding='utf-8').read() == 'same content'
+
+
+@pytest.mark.parametrize("overwrite", [False, True])
+def test_backup_manager_passes_overwrite_to_source_data_load(overwrite):
+    """BackupManager forwards overwrite to BackupSourceData.load (via BackupMapping.setup)."""
+    structure = {'file1.txt': 'content1'}
+    create_test_structure(SOURCE_DIR, structure)
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH,
+    )
+
+    recorded = []
+    # Capture real load before patching: BackupMapping and BackupSourceData share one class,
+    # so calling BackupSourceData.load from inside the stub would recurse into the mock.
+    real_load = BackupSourceData.load
+
+    def _load(source_dir, overwrite=False):
+        recorded.append(overwrite)
+        return real_load(source_dir, overwrite=overwrite)
+
+    with patch("refacdir.backup.backup_mapping.BackupSourceData.load", side_effect=_load):
+        manager = BackupManager(
+            mappings=[mapping],
+            skip_confirm=True,
+            test=False,
+            overwrite=overwrite,
+        )
+        manager.run()
+
+    assert recorded == [overwrite]
+
+
+def test_warn_duplicates_logs_when_enabled(caplog):
+    """When warn_duplicates is True, setup logs one line per duplicate content hash."""
+    structure = {
+        'dir1': {'file.txt': 'same'},
+        'dir2': {'file.txt': 'same'},
+    }
+    create_test_structure(SOURCE_DIR, structure)
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH,
+        hash_mode=HashMode.SHA256,
+    )
+    with caplog.at_level(logging.INFO):
+        manager = BackupManager(
+            mappings=[mapping],
+            skip_confirm=True,
+            test=False,
+            warn_duplicates=True,
+        )
+        manager.run()
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert any("Duplicate content hash" in m for m in messages)
+
+
+def test_warn_duplicates_no_log_when_disabled(caplog):
+    """When warn_duplicates is False, duplicate hashes do not emit duplicate-warning logs."""
+    structure = {
+        'dir1': {'file.txt': 'same'},
+        'dir2': {'file.txt': 'same'},
+    }
+    create_test_structure(SOURCE_DIR, structure)
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH,
+        hash_mode=HashMode.SHA256,
+    )
+    with caplog.at_level(logging.INFO):
+        manager = BackupManager(
+            mappings=[mapping],
+            skip_confirm=True,
+            test=False,
+            warn_duplicates=False,
+        )
+        manager.run()
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert not any("Duplicate content hash" in m for m in messages)
+
 
 def test_file_mode_dirs_only():
     """Test DIRS_ONLY file mode"""
