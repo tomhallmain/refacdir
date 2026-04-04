@@ -13,12 +13,17 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import keyring
 
-try:
-    from oqs import KeyEncapsulation
-    print("oqs library found. OQS key encapsulation will be available.")
-except ImportError:
-    print("Warning: oqs library not found. OQS key encapsulation will not be available.")
+# Same flag as AppInfoCache: pytest sets it so imports (e.g. batch → duplicate_remover)
+# do not load liboqs or touch persisted cache. Unset in the environment for full crypto.
+if os.environ.get("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"):
     KeyEncapsulation = None
+else:
+    try:
+        from oqs import KeyEncapsulation
+        print("oqs library found. OQS key encapsulation will be available.")
+    except ImportError:
+        print("Warning: oqs library not found. OQS key encapsulation will not be available.")
+        KeyEncapsulation = None
 
 
 ENCRYPTOR_TYPE_KEY = "encryptor_type"

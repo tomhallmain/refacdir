@@ -30,6 +30,11 @@ class AppInfoCache:
         Handles credential manager errors gracefully (e.g., on first run when keys don't exist yet).
         """
         with self._lock:
+            if os.environ.get("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"):
+                logger.debug(
+                    "Skipping persisted app info cache store (REFACDIR_DISABLE_APP_INFO_CACHE_LOAD is set)"
+                )
+                return
             try:
                 cache_data = json.dumps(self._cache).encode('utf-8')
                 encrypt_data_to_file(
@@ -74,6 +79,14 @@ class AppInfoCache:
 
     def load(self):
         with self._lock:
+            # Pytest sets REFACDIR_DISABLE_APP_INFO_CACHE_LOAD via test/conftest.py so imports
+            # like ``batch`` → ``duplicate_remover`` do not read/write encrypted cache or touch
+            # crypto. ``store`` uses the same guard. Unset to exercise real persistence.
+            if os.environ.get("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"):
+                logger.debug(
+                    "Skipping persisted app info cache load (REFACDIR_DISABLE_APP_INFO_CACHE_LOAD is set)"
+                )
+                return
             try:
                 if os.path.exists(AppInfoCache.JSON_LOC):
                     logger.info(f"Removing old cache file: {AppInfoCache.JSON_LOC}")

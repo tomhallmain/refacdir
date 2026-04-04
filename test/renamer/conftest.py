@@ -5,6 +5,11 @@ Reserve ``FileRenamer(test=True)`` / ``BatchRenamer(test=True)`` / YAML ``test: 
 only for assertions about *user* dry-run behavior (no ``os.rename``). For other tests,
 use ``test=False`` (the default) so the flag is not confused with pytest.
 """
+import os
+
+# Before any refacdir import: ``batch`` pulls in ``encryptor`` / optional oqs.
+os.environ.setdefault("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD", "1")
+
 import pytest
 
 from refacdir.batch import BatchArgs

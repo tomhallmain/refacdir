@@ -8,6 +8,12 @@ from the repo ``configs/`` directory or the user's live config set during tests.
 
 Use :func:`patch_batch_job_base_dir` together with :func:`posix_path` for
 location strings embedded in YAML.
+
+**App cache / crypto:** ``test/conftest.py`` sets
+``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD`` so ``AppInfoCache`` skips both
+``load`` and ``store``, and ``refacdir.utils.encryptor`` skips importing
+``oqs`` (same env var). That keeps tests off user-local cache and avoids
+pulling liboqs during unrelated imports.
 """
 
 
