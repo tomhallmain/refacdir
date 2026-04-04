@@ -41,10 +41,14 @@ def test_rename_by_mtime_renames_on_disk_when_not_dry_run(tmp_path, restore_cwd)
     assert any(n.startswith("out_") and n.endswith(".txt") for n in names)
 
 
-def test_rename_by_ctime_matches_glob_non_recursive(tmp_path, restore_cwd):
+def test_rename_by_ctime_renames_on_disk_when_not_dry_run(tmp_path, restore_cwd):
+    """Non–dry-run path: ``rename_by_ctime`` with ``test=False`` applies renames."""
     root = str(tmp_path)
-    (tmp_path / "c.txt").write_text("z", encoding="utf-8")
-    fr = FileRenamer(root, test=True)
+    p = tmp_path / "c.txt"
+    p.write_text("z", encoding="utf-8")
+    fixed = 1_702_000_000.0
+    os.utime(p, (fixed, fixed))
+    fr = FileRenamer(root, test=False, preserve_alpha=False)
     fr.rename_by_ctime("c.txt", "ct_", recursive=False)
-    # Dry-run: original still present
-    assert (tmp_path / "c.txt").exists()
+    assert not p.exists()
+    assert any(n.startswith("ct_") and n.endswith(".txt") for n in (x.name for x in tmp_path.iterdir()))

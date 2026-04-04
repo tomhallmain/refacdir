@@ -24,6 +24,8 @@ def test_batch_renamer_rename_by_mtime_dry_run_does_not_rename(tmp_path):
 
 
 def test_batch_renamer_rename_by_ctime_runs_without_confirm_when_skip_confirm(tmp_path):
+    """``skip_confirm=True`` avoids blocking on input; real renames use ``test=False``."""
+    (tmp_path / "note.md").write_text("x", encoding="utf-8")
     mappings = FilenameMappingDefinition.construct_mappings(
         [{"search_patterns": "*.md", "rename_tag": "c_"}]
     )
@@ -31,10 +33,10 @@ def test_batch_renamer_rename_by_ctime_runs_without_confirm_when_skip_confirm(tm
         "unit2",
         mappings,
         [Location(str(tmp_path))],
-        test=True,
+        test=False,
         skip_confirm=True,
         recursive=False,
     )
-    (tmp_path / "note.md").write_text("x", encoding="utf-8")
     br.rename_by_ctime()
-    assert (tmp_path / "note.md").exists()
+    assert not (tmp_path / "note.md").exists()
+    assert any(f.name.startswith("c_") and f.suffix == ".md" for f in tmp_path.iterdir())

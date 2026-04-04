@@ -3,11 +3,14 @@ Batch + YAML integration for BACKUP actions.
 
 Configs are written under pytest's tmp_path and BatchJob.BASE_DIR is patched to that path
 so tests never read from the repo `configs/` tree or the user's live config set.
+See :mod:`test.test_utils` for shared isolation helpers.
 """
 import os
 import textwrap
 
 import pytest
+
+from test.test_utils import patch_batch_job_base_dir, posix_path
 
 from refacdir.batch import BatchArgs, BatchJob
 from refacdir.filename_ops import FiletypesDefinition, FilenameMappingDefinition
@@ -32,10 +35,6 @@ def restore_batch_configs():
     BatchArgs.configs = prev
 
 
-def _posix_path(p: str) -> str:
-    return p.replace("\\", "/")
-
-
 def test_batch_yaml_backup_resolves_named_filetypes_and_runs(
     tmp_path, monkeypatch, restore_batch_registries, restore_batch_configs
 ):
@@ -43,7 +42,7 @@ def test_batch_yaml_backup_resolves_named_filetypes_and_runs(
     Load a YAML file from an isolated directory (not configs/), register filetype_definitions,
     resolve '{{yaml_test_types}}' via FiletypesDefinition, and run BACKUP through BatchJob.
     """
-    monkeypatch.setattr(BatchJob, "BASE_DIR", str(tmp_path))
+    patch_batch_job_base_dir(monkeypatch, str(tmp_path), BatchJob)
 
     src = tmp_path / "src"
     tgt = tmp_path / "tgt"
@@ -66,8 +65,8 @@ actions:
         skip_confirm: true
         backup_mappings:
           - name: mapping_one
-            source_dir: "{_posix_path(str(src))}"
-            target_dir: "{_posix_path(str(tgt))}"
+            source_dir: "{posix_path(str(src))}"
+            target_dir: "{posix_path(str(tgt))}"
             mode: PUSH
             file_types: "{{{{yaml_test_types}}}}"
 """

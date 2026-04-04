@@ -2,15 +2,13 @@
 
 import os
 
-import pytest
-
 from refacdir.file_renamer import FileRenamer
 
 
 def test_os_stat_rename_preserves_existing_seventeen_digit_timestamp_preserve_alpha(tmp_path):
     """Basename already contains ``_<17 digits>_<rest>``; digits and tail are kept."""
     root = str(tmp_path)
-    fr = FileRenamer(root, test=True, preserve_alpha=True)
+    fr = FileRenamer(root, test=False, preserve_alpha=True)
     fn = fr.os_stat_rename_func("st_mtime", "img_")
     rel = "shot_12345678901234567_tail.txt"
     (tmp_path / rel).write_text("x", encoding="utf-8")
@@ -21,7 +19,7 @@ def test_os_stat_rename_preserves_existing_seventeen_digit_timestamp_preserve_al
 def test_os_stat_rename_preserves_timestamp_without_preserve_alpha(tmp_path):
     """With ``preserve_alpha=False``, ``rest`` after the timestamp is still appended."""
     root = str(tmp_path)
-    fr = FileRenamer(root, test=True, preserve_alpha=False)
+    fr = FileRenamer(root, test=False, preserve_alpha=False)
     fn = fr.os_stat_rename_func("st_mtime", "z_")
     rel = "a_99999999999999999_suffix.txt"
     (tmp_path / rel).write_text("x", encoding="utf-8")
@@ -32,7 +30,7 @@ def test_os_stat_rename_preserves_timestamp_without_preserve_alpha(tmp_path):
 def test_os_stat_rename_uses_stat_mtime_when_no_timestamp_in_basename(tmp_path):
     """No ``_<17d>`` match: ``st_mtime`` (or ctime) is padded to 17 digits."""
     root = str(tmp_path)
-    fr = FileRenamer(root, test=True, preserve_alpha=True)
+    fr = FileRenamer(root, test=False, preserve_alpha=True)
     fn = fr.os_stat_rename_func("st_mtime", "pfx_")
     rel = "plain.txt"
     p = tmp_path / rel
@@ -51,7 +49,7 @@ def test_os_stat_rename_uses_stat_mtime_when_no_timestamp_in_basename(tmp_path):
 
 def test_os_stat_rename_ctime_attr_uses_st_ctime(tmp_path):
     root = str(tmp_path)
-    fr = FileRenamer(root, test=True, preserve_alpha=False)
+    fr = FileRenamer(root, test=False, preserve_alpha=False)
     fn = fr.os_stat_rename_func("st_ctime", "c_")
     rel = "only.txt"
     p = tmp_path / rel
@@ -62,9 +60,9 @@ def test_os_stat_rename_ctime_attr_uses_st_ctime(tmp_path):
     assert fn(str(p)) == f"c_{stat_str}.txt"
 
 
-def test_os_stat_rename_collision_increment_adjusts_time_str():
+def test_os_stat_rename_collision_increment_adjusts_time_str(tmp_path):
     """``increment`` / ``positive`` branch mutates the 17-digit time string."""
-    fr = FileRenamer(".", test=True, preserve_alpha=True)
+    fr = FileRenamer(str(tmp_path), test=False, preserve_alpha=True)
     fn = fr.os_stat_rename_func("st_mtime", "x_")
     # Synthetic path only — no stat read on this branch if timestamp_match
     out = fn("dir_11111111111111111_a.txt", increment=2, positive=True)

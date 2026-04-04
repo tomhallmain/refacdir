@@ -1,26 +1,17 @@
 """
 Batch + YAML integration for RENAMER actions.
 
-Configs live under pytest ``tmp_path`` with ``BatchJob.BASE_DIR`` patched so tests
-never read or write the repo ``configs/`` directory.
+Configs live under pytest ``tmp_path`` with :func:`test.test_utils.patch_batch_job_base_dir`
+so tests never read or write the repo ``configs/`` directory.
 """
 import textwrap
 
 import pytest
 
+from test.test_utils import patch_batch_job_base_dir, posix_path
+
 from refacdir.batch import BatchArgs, BatchJob
 from refacdir.filename_ops import FilenameMappingDefinition
-
-
-@pytest.fixture
-def restore_batch_configs():
-    prev = dict(BatchArgs.configs)
-    yield
-    BatchArgs.configs = prev
-
-
-def _posix_path(p: str) -> str:
-    return p.replace("\\", "/")
 
 
 def test_batch_yaml_renamer_runs_rename_by_mtime_dry_run(
@@ -28,9 +19,10 @@ def test_batch_yaml_renamer_runs_rename_by_mtime_dry_run(
 ):
     """
     Load YAML from an isolated dir (not ``configs/``) and run RENAMER via ``BatchJob``.
-    ``test: true`` in YAML is the user dry-run flag, not pytest.
+    ``test: true`` in YAML is the user dry-run flag, not pytest — kept here only to
+    assert dry-run behavior (no on-disk renames).
     """
-    monkeypatch.setattr(BatchJob, "BASE_DIR", str(tmp_path))
+    patch_batch_job_base_dir(monkeypatch, str(tmp_path), BatchJob)
 
     loc = tmp_path / "rename_root"
     loc.mkdir()
@@ -51,7 +43,7 @@ actions:
           - search_patterns: "*.txt"
             rename_tag: "yaml_"
         locations:
-          - root: "{_posix_path(str(loc))}"
+          - root: "{posix_path(str(loc))}"
 """
     cfg_path.write_text(textwrap.dedent(yaml_body).strip(), encoding="utf-8")
 
@@ -74,7 +66,6 @@ def test_construct_batch_renamer_from_dict_matches_programmatic_mappings():
     yaml_dict = {
         "name": "direct",
         "function": "rename_by_mtime",
-        "test": True,
         "skip_confirm": True,
         "recursive": False,
         "mappings": [{"search_patterns": "*.txt", "rename_tag": "t_"}],

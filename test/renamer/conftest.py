@@ -1,12 +1,22 @@
 """
 Shared fixtures for renamer tests.
 
-Note: ``FileRenamer(test=True)`` and ``BatchRenamer(test=True)`` mean the *user*
-dry-run mode (no ``os.rename``), not pytest. Prefer the term "dry-run" in docstrings.
+Reserve ``FileRenamer(test=True)`` / ``BatchRenamer(test=True)`` / YAML ``test: true``
+only for assertions about *user* dry-run behavior (no ``os.rename``). For other tests,
+use ``test=False`` (the default) so the flag is not confused with pytest.
 """
 import pytest
 
+from refacdir.batch import BatchArgs
 from refacdir.filename_ops import FilenameMappingDefinition
+
+
+@pytest.fixture
+def restore_batch_configs():
+    """Restore ``BatchArgs.configs`` after tests that call ``override_configs``."""
+    prev = dict(BatchArgs.configs)
+    yield
+    BatchArgs.configs = prev
 
 
 @pytest.fixture
