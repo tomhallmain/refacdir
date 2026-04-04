@@ -298,33 +298,40 @@ class BackupMapping:
     def _has_duplicates_in_target(self, content_hash: str) -> bool:
         return list(self._target_hash_dict.values()).count(content_hash) > 1
 
+    def _move_func_for_path(self, source_path: str, default_move_func):
+        """PUSH_AND_REMOVE uses copy (not move) when removal from this path is excluded — source must remain."""
+        if self.mode == BackupMode.PUSH_AND_REMOVE and self._is_file_removal_excluded(source_path):
+            return SafeFileOps.copy
+        return default_move_func
+
     def _ensure_files(self, source_hash: str, source_files: List[str],
                       move_func=SafeFileOps.copy, test: bool = True) -> None:
         source_files = list(source_files)
         hashes_on_target = list(self._target_hash_dict.values())
         if source_hash not in hashes_on_target:
             for source_path in source_files:
-                self._move_file(source_path, move_func=move_func, test=test)
+                self._move_file(source_path, move_func=self._move_func_for_path(source_path, move_func), test=test)
             return
         for source_path in source_files:
+            eff = self._move_func_for_path(source_path, move_func)
             target_path = self._build_target_path(source_path)
             current = self._target_hash_dict.get(target_path)
             if not os.path.exists(target_path) or current != source_hash:
                 if self._has_duplicates_in_target(source_hash):
-                    self._move_file(source_path, move_func=move_func, test=test)
+                    self._move_file(source_path, move_func=eff, test=test)
                 else:
                     found = False
                     for fp, th in self._target_hash_dict.items():
                         if th == source_hash and fp not in self.modified_target_files and os.path.exists(fp):
-                            self._move_file(source_path, external_source=fp, move_func=move_func, test=test)
-                            if move_func == SafeFileOps.move:
+                            self._move_file(source_path, external_source=fp, move_func=eff, test=test)
+                            if eff == SafeFileOps.move:
                                 self._remove_source_file(source_path, target_path, test=test)
                             found = True
                             break
                     if not found:
                         logger.warning("Could not reuse an existing target file; copying from source.")
-                        self._move_file(source_path, move_func=move_func, test=test)
-            elif move_func == SafeFileOps.move:
+                        self._move_file(source_path, move_func=eff, test=test)
+            elif eff == SafeFileOps.move:
                 self._remove_source_file(source_path, target_path, test=test)
 
     def _push(self, move_func=SafeFileOps.copy, test: bool = True) -> None:

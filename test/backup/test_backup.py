@@ -78,6 +78,95 @@ def test_push_and_remove():
                 remaining.append(os.path.join(root, f))
     assert len(remaining) == 0, f"Source should have no user files left, found: {remaining}"
 
+def test_mirror_duplicates_mode():
+    """MIRROR_DUPLICATES should sync target to source like MIRROR (smoke test)."""
+    structure = {
+        'a.txt': 'a',
+        'b.txt': 'b',
+    }
+    create_test_structure(SOURCE_DIR, structure)
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.MIRROR_DUPLICATES,
+    )
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
+    manager.run()
+    os.remove(os.path.join(SOURCE_DIR, 'b.txt'))
+    manager.run()
+    identical, diffs = compare_directories(
+        SOURCE_DIR, TARGET_DIR, ignore=['backup_mapping_data.pkl', '.backup_data', 'backup_metadata']
+    )
+    assert identical, diffs
+    assert not os.path.exists(os.path.join(TARGET_DIR, 'b.txt'))
+
+
+def test_exclude_removal_dirs_with_push_and_remove():
+    """Files under exclude_removal_dirs are copied but not deleted from source."""
+    structure = {
+        'root.txt': 'root',
+        'preserve_me': {'kept.txt': 'kept'},
+    }
+    create_test_structure(SOURCE_DIR, structure)
+    preserve = os.path.join(SOURCE_DIR, 'preserve_me')
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH_AND_REMOVE,
+        exclude_removal_dirs=[preserve],
+    )
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
+    manager.run()
+    assert os.path.isfile(os.path.join(TARGET_DIR, 'root.txt'))
+    assert os.path.isfile(os.path.join(TARGET_DIR, 'preserve_me', 'kept.txt'))
+    assert not os.path.exists(os.path.join(SOURCE_DIR, 'root.txt'))
+    assert os.path.isfile(os.path.join(SOURCE_DIR, 'preserve_me', 'kept.txt'))
+
+
+def test_will_run_false_skips_mapping():
+    """Mappings with will_run=False are not executed."""
+    s1 = os.path.join(SOURCE_DIR, 's1')
+    s2 = os.path.join(SOURCE_DIR, 's2')
+    t1 = os.path.join(TARGET_DIR, 't1')
+    t2 = os.path.join(TARGET_DIR, 't2')
+    create_test_structure(s1, {'a.txt': 'a'})
+    create_test_structure(s2, {'b.txt': 'b'})
+    m1 = BackupMapping(
+        name="run",
+        source_dir=s1,
+        target_dir=t1,
+        mode=BackupMode.PUSH,
+        will_run=True,
+    )
+    m2 = BackupMapping(
+        name="skip",
+        source_dir=s2,
+        target_dir=t2,
+        mode=BackupMode.PUSH,
+        will_run=False,
+    )
+    manager = BackupManager(mappings=[m1, m2], skip_confirm=True, test=False)
+    manager.run()
+    assert os.path.isfile(os.path.join(t1, 'a.txt'))
+    assert not os.path.isfile(os.path.join(t2, 'b.txt'))
+
+
+def test_manager_dry_run_leaves_target_empty():
+    """With test=True, BackupManager performs no file copies."""
+    create_test_structure(SOURCE_DIR, {'only.txt': 'x'})
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH,
+    )
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=True)
+    manager.run()
+    assert not os.path.exists(os.path.join(TARGET_DIR, 'only.txt'))
+
+
 def test_mirror():
     """Test MIRROR mode with file deletions in source"""
     # Initial structure

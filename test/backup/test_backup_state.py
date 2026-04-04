@@ -92,6 +92,64 @@ def test_validate_target_nonexistent():
     assert not success
     assert 'does not exist' in error
 
+def test_verify_integrity_push_duplicates():
+    """PUSH_DUPLICATES uses the same integrity path as PUSH when files match."""
+    structure = {'file1.txt': 'content1', 'dir1': {'file2.txt': 'content2'}}
+    create_test_structure(SOURCE_DIR, structure)
+    create_test_structure(TARGET_DIR, structure)
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH_DUPLICATES,
+    )
+    state = BackupState(mapping)
+    state.validate_source()
+    state.validate_target()
+    success, error = state.verify_integrity()
+    assert success
+    assert error is None
+
+
+def test_verify_integrity_push_and_remove_uses_cached_source_hash():
+    """After source files are removed, integrity still passes if hashes were cached at validate_source."""
+    structure = {'file1.txt': 'content1'}
+    create_test_structure(SOURCE_DIR, structure)
+    create_test_structure(TARGET_DIR, structure)
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.PUSH_AND_REMOVE,
+        hash_mode=HashMode.SHA256,
+    )
+    state = BackupState(mapping)
+    state.validate_source()
+    state.validate_target()
+    os.remove(os.path.join(SOURCE_DIR, 'file1.txt'))
+    success, error = state.verify_integrity()
+    assert success
+    assert error is None
+
+
+def test_verify_integrity_mirror_duplicates_mismatch():
+    """MIRROR_DUPLICATES integrity matches MIRROR (relative path sets)."""
+    create_test_structure(SOURCE_DIR, {'only.txt': 'x'})
+    create_test_structure(TARGET_DIR, {'other.txt': 'y'})
+    mapping = BackupMapping(
+        name="test",
+        source_dir=SOURCE_DIR,
+        target_dir=TARGET_DIR,
+        mode=BackupMode.MIRROR_DUPLICATES,
+    )
+    state = BackupState(mapping)
+    state.validate_source()
+    state.validate_target()
+    success, error = state.verify_integrity()
+    assert not success
+    assert 'missing in target' in error.lower() or 'extra files' in error.lower()
+
+
 def test_verify_integrity_push():
     """Test integrity verification for PUSH mode"""
     structure = {
