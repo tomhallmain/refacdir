@@ -1,16 +1,19 @@
+import json
 import os
-from typing import List, Tuple, Optional
+import shutil
+from typing import Dict, List, Tuple, Optional
 
 from .backup_modes import BackupMode, FileMode, HashMode, FailureType
 from .backup_source_data import BackupSourceData
 from .backup_state import BackupState
-from .directory_ops import DirectoryOps
 from .hash_manager import HashManager
 from .safe_file_ops import SafeFileOps
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for backup mapping
 logger = setup_logger('backup_mapping')
+
+_FAILURE_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backup_failures.json")
 
 try:
     from send2trash import send2trash
@@ -36,7 +39,8 @@ def remove_file(path: str) -> bool:
 
 def exception_as_dict(ex):
     return dict(type=ex.__class__.__name__,
-                errno=ex.errno, message=ex.message,
+                errno=getattr(ex, 'errno', None),
+                message=str(ex),
                 strerror=exception_as_dict(ex.strerror)
                 if isinstance(ex.strerror, Exception) else ex.strerror)
 
@@ -70,7 +74,6 @@ class BackupTransaction:
         """Roll back all completed operations in reverse order"""
         for operation, args in reversed(self.completed):
             try:
-                # Find the rollback function for this operation
                 for op, op_args, rollback_func in self.operations:
                     if op == operation and op_args == args:
                         if rollback_func:
@@ -123,33 +126,100 @@ class BackupMapping:
         self.hash_mode = hash_mode
         self.will_run = will_run
         
-        # Internal state
         self._source_data = BackupSourceData(source_dir)
         self._hash_manager = HashManager(hash_mode)
-        self._source_dirs = []
-        self._target_dirs = []
+        self._source_dirs: set = set()
+        self._target_dirs: set = set()
+        self._target_hash_dict: Dict[str, str] = {}
+        self._expected_target_rel_paths: set = set()
         self.modified_target_files = []
         self.failures = []
         self.transaction = None
         self.state = None
 
+    def _is_internal_backup_path(self, filepath: str) -> bool:
+        norm = os.path.normpath(filepath)
+        parts = norm.split(os.sep)
+        if BackupSourceData.BACKUP_DIR in parts or ".backup_data" in parts:
+            return True
+        if os.path.basename(filepath) == BackupSourceData.FILEPATH:
+            return True
+        return False
+
+    def _is_dir_excluded(self, dirpath: str) -> bool:
+        return any(dirpath.startswith(d) or dirpath == d for d in self.exclude_dirs)
+
+    def _should_include_in_backup_scan(self, filepath: str, name: str, is_target: bool = False) -> bool:
+        if self._is_internal_backup_path(filepath):
+            return False
+        if self._is_file_excluded(filepath):
+            return False
+        if self.file_mode == FileMode.DIRS_ONLY:
+            return False
+        if not self._file_type_match(name):
+            return False
+        return True
+
     def _file_type_match(self, filename: str) -> bool:
         """Check if a file matches the allowed file types"""
         if self.allows_all_file_types:
             return True
-            
         for ext in self.file_types:
             if filename.endswith(ext):
                 return True
-                
         if "." in filename:
             extension = filename[filename.rfind("."):]
             return extension.lower() in self.file_types
-            
         return False
 
+    def setup(self, overwrite: bool = False, warn_duplicates: bool = False) -> None:
+        """Load persisted hash data and rebuild in-memory hash tables from source/target."""
+        self._source_data = BackupSourceData.load(self.source_dir, overwrite=overwrite)
+        self._rebuild_hash_tables()
+        if warn_duplicates:
+            for h, files in self._source_data.hash_dict.items():
+                if len(files) > 1:
+                    logger.info(f"Duplicate content hash {h[:16]}... : {files}")
+
+    def _rebuild_hash_tables(self) -> None:
+        self._source_data.hash_dict.clear()
+        self._target_hash_dict.clear()
+        self._hash_manager.clear_cache()
+        self._source_dirs.clear()
+        self._target_dirs.clear()
+        self._expected_target_rel_paths.clear()
+
+        if os.path.exists(self.source_dir):
+            for root, dirs, files in os.walk(self.source_dir):
+                dirs[:] = [d for d in dirs if not self._is_dir_excluded(os.path.join(root, d))]
+                rel_root = os.path.relpath(root, self.source_dir)
+                if rel_root != ".":
+                    self._source_dirs.add(rel_root)
+                if self.file_mode != FileMode.FILES_AND_DIRS:
+                    continue
+                for name in files:
+                    filepath = os.path.join(root, name)
+                    if not self._should_include_in_backup_scan(filepath, name):
+                        continue
+                    h = self._hash_manager.get_file_hash(filepath)
+                    self._source_data.hash_dict[h].append(filepath)
+                    rel = os.path.relpath(filepath, self.source_dir)
+                    self._expected_target_rel_paths.add(os.path.normpath(rel))
+
+        if os.path.exists(self.target_dir):
+            for root, dirs, files in os.walk(self.target_dir):
+                dirs[:] = [d for d in dirs if not self._is_dir_excluded(os.path.join(root, d))]
+                rel_root = os.path.relpath(root, self.target_dir)
+                if rel_root != ".":
+                    self._target_dirs.add(rel_root)
+                for name in files:
+                    filepath = os.path.join(root, name)
+                    if not self._should_include_in_backup_scan(filepath, name, is_target=True):
+                        continue
+                    h = self._hash_manager.get_file_hash(filepath)
+                    self._target_hash_dict[filepath] = h
+
     def _build_target_path(self, source_filepath: str) -> str:
-        """Build target file path from source file path"""
         relative_path = source_filepath.replace(os.path.join(self.source_dir, ""), "")
         if relative_path.startswith(self.source_dir):
             raise ValueError(f"Failed to build target path: source filepath was {source_filepath}, source dir was {self.source_dir}")
@@ -161,7 +231,7 @@ class BackupMapping:
         if parent and not os.path.exists(parent):
             logger.info(f"Creating directory: {parent}")
             if not test:
-                success, error = DirectoryOps.atomic_create_dir(parent)
+                success, error = SafeFileOps.atomic_create_dir(parent)
                 if not success:
                     raise Exception(f"Failed to create directory: {error}")
 
@@ -199,6 +269,8 @@ class BackupMapping:
                 logger.info(f"Creating file: {target_path}")
                 
             if not test:
+                if self.transaction is None:
+                    raise RuntimeError("Backup transaction not initialized")
                 rollback = rollback_move if move_func == SafeFileOps.move else rollback_copy
                 self.transaction.add_operation(move_func, (source_path, target_path), rollback)
                 self.modified_target_files.append(target_path)
@@ -210,13 +282,11 @@ class BackupMapping:
         """Remove a source file after successful backup"""
         if self._is_file_removal_excluded(source_path):
             return
-            
         if not os.path.exists(target_path):
             msg = f"Could not remove source file {source_path} - target file {target_path} not found"
             logger.error(msg)
             self.failures.append([FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST, msg, target_path, source_path])
             return
-            
         logger.info(f"Removing file already backed up: {source_path}")
         if not test:
             try:
@@ -225,15 +295,106 @@ class BackupMapping:
             except Exception as e:
                 self.failures.append([FailureType.REMOVE_SOURCE_FILE, str(e), target_path, source_path])
 
+    def _has_duplicates_in_target(self, content_hash: str) -> bool:
+        return list(self._target_hash_dict.values()).count(content_hash) > 1
+
+    def _ensure_files(self, source_hash: str, source_files: List[str],
+                      move_func=SafeFileOps.copy, test: bool = True) -> None:
+        source_files = list(source_files)
+        hashes_on_target = list(self._target_hash_dict.values())
+        if source_hash not in hashes_on_target:
+            for source_path in source_files:
+                self._move_file(source_path, move_func=move_func, test=test)
+            return
+        for source_path in source_files:
+            target_path = self._build_target_path(source_path)
+            current = self._target_hash_dict.get(target_path)
+            if not os.path.exists(target_path) or current != source_hash:
+                if self._has_duplicates_in_target(source_hash):
+                    self._move_file(source_path, move_func=move_func, test=test)
+                else:
+                    found = False
+                    for fp, th in self._target_hash_dict.items():
+                        if th == source_hash and fp not in self.modified_target_files and os.path.exists(fp):
+                            self._move_file(source_path, external_source=fp, move_func=move_func, test=test)
+                            if move_func == SafeFileOps.move:
+                                self._remove_source_file(source_path, target_path, test=test)
+                            found = True
+                            break
+                    if not found:
+                        logger.warning("Could not reuse an existing target file; copying from source.")
+                        self._move_file(source_path, move_func=move_func, test=test)
+            elif move_func == SafeFileOps.move:
+                self._remove_source_file(source_path, target_path, test=test)
+
+    def _push(self, move_func=SafeFileOps.copy, test: bool = True) -> None:
+        if self.file_mode == FileMode.DIRS_ONLY:
+            new_dirs = sorted(set(self._source_dirs) - set(self._target_dirs))
+            if new_dirs:
+                logger.info(f"PUSHING DIRECTORY STRUCTURE TO {self.target_dir}")
+            for directory in new_dirs:
+                new_dir = os.path.join(self.target_dir, directory)
+                logger.info(f"Making new directory: {new_dir}")
+                if not test:
+                    success, error = SafeFileOps.atomic_create_dir(new_dir)
+                    if not success:
+                        raise Exception(f"Failed to create directory: {error}")
+            return
+
+        new_dirs = sorted(set(self._source_dirs) - set(self._target_dirs))
+        if new_dirs:
+            logger.info(f"PUSHING DIRECTORY STRUCTURE TO {self.target_dir}")
+        for directory in new_dirs:
+            new_dir = os.path.join(self.target_dir, directory)
+            logger.info(f"Making new directory: {new_dir}")
+            if not test:
+                success, error = SafeFileOps.atomic_create_dir(new_dir)
+                if not success:
+                    raise Exception(f"Failed to create directory: {error}")
+
+        logger.info(f"PUSHING FILES TO {self.target_dir}")
+        for source_hash, paths in self._source_data.hash_dict.items():
+            self._ensure_files(source_hash, paths, move_func=move_func, test=test)
+
+    def _mirror_remove_stale(self, test: bool = True) -> None:
+        if not os.path.exists(self.target_dir):
+            return
+        logger.info(f"Removing stale paths under {self.target_dir}")
+        for root, _, files in os.walk(self.target_dir, topdown=False):
+            for name in files:
+                filepath = os.path.join(root, name)
+                if self._is_internal_backup_path(filepath):
+                    continue
+                if self._is_file_excluded(filepath) or self._is_file_removal_excluded(filepath):
+                    continue
+                rel = os.path.relpath(filepath, self.target_dir)
+                rel_n = os.path.normpath(rel)
+                if rel_n not in self._expected_target_rel_paths:
+                    logger.info(f"Removing stale file: {filepath}")
+                    if not test:
+                        try:
+                            if os.path.isfile(filepath):
+                                if not remove_file(filepath):
+                                    raise OSError(f"Could not remove {filepath}")
+                        except Exception as e:
+                            self.failures.append([FailureType.REMOVE_STALE_FILE, str(e), filepath, "stale file"])
+
+        for d in sorted(set(self._target_dirs) - set(self._source_dirs), key=lambda x: -len(x)):
+            stale = os.path.join(self.target_dir, d)
+            if not os.path.isdir(stale):
+                continue
+            if self._is_file_excluded(stale) or self._is_file_removal_excluded(stale):
+                continue
+            try:
+                if not os.listdir(stale):
+                    logger.info(f"Removing stale empty directory: {stale}")
+                    if not test:
+                        os.rmdir(stale)
+            except OSError as e:
+                self.failures.append([FailureType.REMOVE_STALE_DIRECTORY, str(e), stale, "stale directory"])
+
     def backup(self, test: bool = True) -> None:
-        """
-        Perform backup operation with transaction support and state validation.
-        
-        Args:
-            test: Whether to run in test mode (no actual changes)
-        """
         try:
-            # Initialize state tracking
             self.state = BackupState(self)
             success, error = self.state.validate_source()
             if not success:
@@ -241,34 +402,33 @@ class BackupMapping:
                 
             # Initialize transaction
             self.transaction = BackupTransaction()
-            
             if self.is_push_mode():
                 move_func = SafeFileOps.move if self.mode == BackupMode.PUSH_AND_REMOVE else SafeFileOps.copy
                 self._push(move_func=move_func, test=test)
             elif self.is_mirror_mode():
                 self._source_data.save()
-                self._mirror(test=test)
-                
+                self._push(SafeFileOps.copy, test=test)
             if not test:
                 # Execute transaction
                 success, error = self.transaction.execute()
                 if not success:
                     raise Exception(error)
-                    
-                # Validate final state
+                if self.is_mirror_mode():
+                    self._mirror_remove_stale(test=test)
+                if not os.path.exists(self.target_dir):
+                    SafeFileOps.atomic_create_dir(self.target_dir)
                 success, error = self.state.validate_target()
                 if not success:
                     raise Exception(error)
-                    
                 success, error = self.state.verify_integrity()
                 if not success:
-                    self.transaction.rollback()
+                    if self.is_push_mode():
+                        self.transaction.rollback()
                     raise Exception(error)
-                    
         except Exception as e:
-            self.failures.append([FailureType.BACKUP_OPERATION, str(e), 
-                                "Backup operation failed", str(e)])
-            if not test and self.transaction:
+            self.failures.append([FailureType.BACKUP_OPERATION, str(e),
+                                  "Backup operation failed", str(e)])
+            if not test and self.transaction and self.is_push_mode():
                 self.transaction.rollback()
         finally:
             self.transaction = None
@@ -282,10 +442,41 @@ class BackupMapping:
         """Check if backup is in mirror mode"""
         return self.mode in [BackupMode.MIRROR, BackupMode.MIRROR_DUPLICATES]
 
+    def report_failures(self) -> None:
+        if len(self.failures) == 0:
+            logger.info(f"No failures encountered for mapping: {self.source_dir} -> {self.target_dir}")
+            return
+        logger.warning(f"Failures encountered for mapping: {self.source_dir} -> {self.target_dir}")
+        for f in self.failures:
+            logger.warning(f"{f}")
+            failure_type = f[0]
+            if failure_type == FailureType.MOVE_FILE:
+                logger.warning(f"Failed to move {f[3]} to {f[2]}: {f[1]}")
+            elif failure_type == FailureType.REMOVE_SOURCE_FILE:
+                logger.warning(f"Failed to remove file {f[3]}: {f[1]}")
+            elif failure_type == FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST:
+                logger.warning(f"Failed to remove file {f[3]} (target missing): {f[1]}")
+            elif failure_type == FailureType.REMOVE_STALE_FILE:
+                logger.warning(f"Failed to remove stale file {f[2]}: {f[1]}")
+            elif failure_type == FailureType.REMOVE_STALE_DIRECTORY:
+                logger.warning(f"Failed to remove stale directory {f[2]}: {f[1]}")
+        try:
+            def _serialize(row):
+                if isinstance(row, (list, tuple)):
+                    return [str(row[0]), row[1], row[2], row[3]] if len(row) >= 4 else [str(x) for x in row]
+                return row
+            with open(_FAILURE_LOG, "w", encoding="utf-8") as out:
+                json.dump([_serialize(x) for x in self.failures], out, indent=2)
+            logger.info(f"Saved failure data to {_FAILURE_LOG}")
+        except OSError as e:
+            logger.warning(f"Could not write failure log: {e}")
+
     def clean(self) -> None:
         """Clean up backup state"""
         self.failures.clear()
         self.modified_target_files.clear()
+        self._target_hash_dict.clear()
+        self._expected_target_rel_paths.clear()
         if self.state:
             self.state.clear()
         self._hash_manager.clear_cache()

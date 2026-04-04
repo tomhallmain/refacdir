@@ -4,6 +4,7 @@ configs/*
 !configs/config_example.json
 !configs/config_example.yaml
 temp*
+test/backup/source
 !test/backup tests/temp_backup_music.yaml
 do_refacdir.bat
 observed_directories.json

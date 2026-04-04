@@ -7,8 +7,8 @@ from .test_backup_helper import create_test_structure, clean_test_dirs
 
 # Test directory
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-SOURCE_DIR = os.path.join(TEST_DIR, 'source')
-TARGET_DIR = os.path.join(TEST_DIR, 'target')
+SOURCE_DIR = os.path.join(TEST_DIR, 'state_source')
+TARGET_DIR = os.path.join(TEST_DIR, 'state_target')
 
 @pytest.fixture(autouse=True)
 def setup_teardown():

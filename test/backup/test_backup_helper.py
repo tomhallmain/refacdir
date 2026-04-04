@@ -1,6 +1,7 @@
 import os
+import stat
 import shutil
-from pathlib import Path
+import time
 import hashlib
 
 def create_test_file(path, content="test content"):
@@ -90,8 +91,46 @@ def compare_directories(dir1, dir2, ignore=None):
 
     return len(differences) == 0, differences
 
+def _chmod_tree_writable(path):
+    """Best-effort: make files and dirs writable (helps Windows delete)."""
+    try:
+        os.chmod(path, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+    except OSError:
+        pass
+    if not os.path.isdir(path):
+        return
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            fp = os.path.join(root, name)
+            try:
+                os.chmod(fp, stat.S_IWRITE)
+            except OSError:
+                pass
+        for name in dirs:
+            dp = os.path.join(root, name)
+            try:
+                os.chmod(dp, stat.S_IWRITE | stat.S_IEXEC)
+            except OSError:
+                pass
+
+def _onerror_rmtree(func, path, exc_info):
+    try:
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    except OSError:
+        pass
+
 def clean_test_dirs(*dirs):
-    """Clean up test directories"""
+    """Clean up test directories (Windows-friendly: chmod + retry)."""
     for d in dirs:
-        if os.path.exists(d):
-            shutil.rmtree(d) 
+        if not os.path.exists(d):
+            continue
+        for attempt in range(5):
+            try:
+                _chmod_tree_writable(d)
+                shutil.rmtree(d, onerror=_onerror_rmtree)
+                break
+            except PermissionError:
+                time.sleep(0.05 * (attempt + 1))
+            except OSError:
+                time.sleep(0.05 * (attempt + 1))

@@ -1,7 +1,7 @@
 import os
 from typing import Set, Tuple, Optional
 from .backup_modes import BackupMode, HashMode
-from .hash_manager import HashManager
+
 
 class BackupState:
     """Validates and tracks backup state"""
@@ -10,7 +10,7 @@ class BackupState:
         self.mapping = mapping
         self.source_files: Set[str] = set()
         self.target_files: Set[str] = set()
-        self.hash_manager = HashManager(mapping.hash_mode)
+        self.hash_manager = mapping._hash_manager
         
     def validate_source(self) -> Tuple[bool, Optional[str]]:
         """
@@ -23,14 +23,12 @@ class BackupState:
                 
             for root, _, files in os.walk(self.mapping.source_dir):
                 for name in files:
-                    if name == "backup_mapping_data.pkl":  # Skip backup data file
-                        continue
                     filepath = os.path.join(root, name)
-                    if not self.mapping._is_file_excluded(filepath):
-                        self.source_files.add(filepath)
-                        # Pre-calculate hash if using SHA256
-                        if self.mapping.hash_mode == HashMode.SHA256:
-                            self.hash_manager.get_file_hash(filepath)
+                    if not self.mapping._should_include_in_backup_scan(filepath, name):
+                        continue
+                    self.source_files.add(filepath)
+                    if self.mapping.hash_mode == HashMode.SHA256:
+                        self.hash_manager.get_file_hash(filepath)
             return True, None
         except Exception as e:
             return False, f"Failed to validate source: {str(e)}"
@@ -47,11 +45,11 @@ class BackupState:
             for root, _, files in os.walk(self.mapping.target_dir):
                 for name in files:
                     filepath = os.path.join(root, name)
-                    if not self.mapping._is_file_excluded(filepath):
-                        self.target_files.add(filepath)
-                        # Pre-calculate hash if using SHA256
-                        if self.mapping.hash_mode == HashMode.SHA256:
-                            self.hash_manager.get_file_hash(filepath)
+                    if not self.mapping._should_include_in_backup_scan(filepath, name, is_target=True):
+                        continue
+                    self.target_files.add(filepath)
+                    if self.mapping.hash_mode == HashMode.SHA256:
+                        self.hash_manager.get_file_hash(filepath)
             return True, None
         except Exception as e:
             return False, f"Failed to validate target: {str(e)}"
@@ -62,8 +60,11 @@ class BackupState:
         Ensures files exist in correct locations with matching hashes.
         """
         try:
-            if self.mapping.mode in [BackupMode.PUSH, BackupMode.PUSH_DUPLICATES]:
-                # All source files should exist in target
+            if self.mapping.mode in [
+                BackupMode.PUSH,
+                BackupMode.PUSH_DUPLICATES,
+                BackupMode.PUSH_AND_REMOVE,
+            ]:
                 for source_file in self.source_files:
                     target_file = self.mapping._build_target_path(source_file)
                     if not os.path.exists(target_file):
@@ -71,8 +72,7 @@ class BackupState:
                     if not self.hash_manager.verify_files_match(source_file, target_file):
                         return False, f"Hash mismatch: {target_file}"
                             
-            elif self.mapping.mode == BackupMode.MIRROR:
-                # Source and target should be identical
+            elif self.mapping.mode in [BackupMode.MIRROR, BackupMode.MIRROR_DUPLICATES]:
                 source_relative = {os.path.relpath(f, self.mapping.source_dir) 
                                  for f in self.source_files}
                 target_relative = {os.path.relpath(f, self.mapping.target_dir) 
@@ -88,7 +88,6 @@ class BackupState:
                         msg.append(f"Extra files in target: {extra_in_target}")
                     return False, "\n".join(msg)
                     
-                # Verify all files match
                 for rel_path in source_relative:
                     source_file = os.path.join(self.mapping.source_dir, rel_path)
                     target_file = os.path.join(self.mapping.target_dir, rel_path)
@@ -103,4 +102,4 @@ class BackupState:
         """Clear the backup state"""
         self.source_files.clear()
         self.target_files.clear()
-        self.hash_manager.clear_cache() 
+        self.hash_manager.clear_cache()

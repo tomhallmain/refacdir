@@ -16,6 +16,15 @@ logger = setup_logger('safe_file_ops')
 
 class SafeFileOps:
     """Provides atomic file operations with verification for backup operations"""
+
+    @staticmethod
+    def atomic_create_dir(path: str) -> Tuple[bool, Optional[str]]:
+        """Create a directory (and parents) in one step; suitable for backup target layout."""
+        try:
+            os.makedirs(path, exist_ok=True)
+            return True, None
+        except OSError as e:
+            return False, str(e)
     
     @staticmethod
     def calculate_file_hash(file_path: str, chunk_size: int = 65536) -> str:

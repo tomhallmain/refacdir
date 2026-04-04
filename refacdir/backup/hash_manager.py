@@ -49,10 +49,15 @@ class HashManager:
         
     def verify_files_match(self, source_file: str, target_file: str) -> bool:
         """Verify that two files match according to the current hash mode"""
-        if not (os.path.exists(source_file) and os.path.exists(target_file)):
+        if not os.path.exists(target_file):
             return False
-            
-        source_hash = self.get_file_hash(source_file)
+        # Source may have been removed after PUSH_AND_REMOVE; use cached hash if present.
+        if not os.path.exists(source_file):
+            if source_file not in self.file_hash_cache:
+                return False
+            source_hash = self.file_hash_cache[source_file]
+        else:
+            source_hash = self.get_file_hash(source_file)
         target_hash = self.get_file_hash(target_file)
         return source_hash == target_hash
         

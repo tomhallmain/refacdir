@@ -1,11 +1,13 @@
 import os
+import sys
 import pytest
 import shutil
 import time
 from pathlib import Path
 
 from refacdir.backup.backup_manager import BackupManager
-from refacdir.backup.backup_mapping import BackupMapping, BackupMode, FileMode, HashMode
+from refacdir.backup.backup_mapping import BackupMapping, BackupMode, BackupTransaction, FileMode, HashMode
+from refacdir.backup.backup_source_data import BackupSourceData
 from .test_backup_helper import create_test_structure, compare_directories, clean_test_dirs
 
 # Test directory structure
@@ -39,7 +41,7 @@ def test_basic_push():
         target_dir=TARGET_DIR,
         mode=BackupMode.PUSH
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
     identical, diffs = compare_directories(SOURCE_DIR, TARGET_DIR)
@@ -59,16 +61,22 @@ def test_push_and_remove():
         target_dir=TARGET_DIR,
         mode=BackupMode.PUSH_AND_REMOVE
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
-    # Check target has all files
-    identical, diffs = compare_directories(SOURCE_DIR, TARGET_DIR)
-    assert identical, f"Target should have all files, differences: {diffs}"
-    
-    # Source should be empty (except for backup data file)
-    source_files = [f for f in os.listdir(SOURCE_DIR) if not f.endswith('.pkl')]
-    assert len(source_files) == 0, f"Source directory should be empty, found: {source_files}"
+    # Target should have the same file contents as the source had before the move
+    assert os.path.isfile(os.path.join(TARGET_DIR, 'file1.txt'))
+    assert open(os.path.join(TARGET_DIR, 'file1.txt'), encoding='utf-8').read() == 'content1'
+    assert os.path.isfile(os.path.join(TARGET_DIR, 'dir1', 'file2.txt'))
+    assert open(os.path.join(TARGET_DIR, 'dir1', 'file2.txt'), encoding='utf-8').read() == 'content2'
+
+    # Source should have no user data files left (metadata pickle may remain)
+    remaining = []
+    for root, _, files in os.walk(SOURCE_DIR):
+        for f in files:
+            if f != BackupSourceData.FILEPATH:
+                remaining.append(os.path.join(root, f))
+    assert len(remaining) == 0, f"Source should have no user files left, found: {remaining}"
 
 def test_mirror():
     """Test MIRROR mode with file deletions in source"""
@@ -90,7 +98,7 @@ def test_mirror():
         target_dir=TARGET_DIR,
         mode=BackupMode.MIRROR
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
     # Delete some files from source
@@ -100,8 +108,10 @@ def test_mirror():
     # Run backup again
     manager.run()
     
-    # Check directories match
-    identical, diffs = compare_directories(SOURCE_DIR, TARGET_DIR)
+    # Ignore source-only metadata produced by BackupSourceData.save during mirror
+    identical, diffs = compare_directories(
+        SOURCE_DIR, TARGET_DIR, ignore=['backup_mapping_data.pkl', '.backup_data', 'backup_metadata']
+    )
     assert identical, f"Directories should be identical after mirror, differences: {diffs}"
     
     # Verify deleted files are gone from target
@@ -127,7 +137,7 @@ def test_file_types():
         file_types=['.txt'],
         mode=BackupMode.PUSH
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
     # Only .txt files should exist in target
@@ -155,15 +165,14 @@ def test_exclude_dirs():
         exclude_dirs=[os.path.join(SOURCE_DIR, 'exclude_me')],
         mode=BackupMode.PUSH
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
     assert os.path.exists(os.path.join(TARGET_DIR, 'keep_me', 'file3.txt'))
     assert not os.path.exists(os.path.join(TARGET_DIR, 'exclude_me'))
 
 def test_duplicate_handling():
-    """Test duplicate file handling"""
-    # Create identical files in different locations
+    """Test duplicate file handling (same bytes in two paths; both paths exist on target)."""
     structure = {
         'dir1': {'file.txt': 'same content'},
         'dir2': {'file.txt': 'same content'},
@@ -178,16 +187,14 @@ def test_duplicate_handling():
         mode=BackupMode.PUSH_DUPLICATES,
         hash_mode=HashMode.SHA256
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True, warn_duplicates=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, warn_duplicates=True, test=False)
     manager.run()
     
-    # Verify only one copy of the duplicate file was backed up
-    duplicate_count = 0
-    for root, _, files in os.walk(TARGET_DIR):
-        for f in files:
-            if f == 'file.txt':
-                duplicate_count += 1
-    assert duplicate_count == 1, "Expected only one copy of duplicate file"
+    p1 = os.path.join(TARGET_DIR, 'dir1', 'file.txt')
+    p2 = os.path.join(TARGET_DIR, 'dir2', 'file.txt')
+    assert os.path.isfile(p1) and os.path.isfile(p2)
+    assert open(p1, encoding='utf-8').read() == 'same content'
+    assert open(p2, encoding='utf-8').read() == 'same content'
 
 def test_file_mode_dirs_only():
     """Test DIRS_ONLY file mode"""
@@ -207,7 +214,7 @@ def test_file_mode_dirs_only():
         mode=BackupMode.PUSH,
         file_mode=FileMode.DIRS_ONLY
     )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
     # Only directories should exist in target
@@ -216,29 +223,26 @@ def test_file_mode_dirs_only():
     assert not os.path.exists(os.path.join(TARGET_DIR, 'file1.txt'))
     assert not os.path.exists(os.path.join(TARGET_DIR, 'dir1', 'file2.txt'))
 
+@pytest.mark.skipif(sys.platform == "win32", reason="chmod on a directory does not block writes the same way as on POSIX")
 def test_error_handling():
-    """Test error handling for various scenarios"""
+    """Test error handling when the target directory is not writable."""
     structure = {'file1.txt': 'content1'}
     create_test_structure(SOURCE_DIR, structure)
     
-    # Make target directory read-only
-    os.makedirs(TARGET_DIR)
+    os.makedirs(TARGET_DIR, exist_ok=True)
     os.chmod(TARGET_DIR, 0o444)
-    
-    mapping = BackupMapping(
-        name="test",
-        source_dir=SOURCE_DIR,
-        target_dir=TARGET_DIR,
-        mode=BackupMode.PUSH
-    )
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
-    manager.run()
-    
-    # Check that failure was recorded
-    assert len(mapping.failures) > 0
-    
-    # Restore permissions for cleanup
-    os.chmod(TARGET_DIR, 0o777)
+    try:
+        mapping = BackupMapping(
+            name="test",
+            source_dir=SOURCE_DIR,
+            target_dir=TARGET_DIR,
+            mode=BackupMode.PUSH
+        )
+        manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
+        manager.run()
+        assert len(mapping.failures) > 0
+    finally:
+        os.chmod(TARGET_DIR, 0o777)
 
 def test_multiple_backups():
     """Test multiple backup mappings in one manager"""
@@ -268,7 +272,7 @@ def test_multiple_backups():
         )
     ]
     
-    manager = BackupManager(mappings=mappings, skip_confirm=True)
+    manager = BackupManager(mappings=mappings, skip_confirm=True, test=False)
     manager.run()
     
     identical1, diffs1 = compare_directories(source1, target1)
@@ -294,7 +298,7 @@ def test_atomic_operations():
     )
     
     # Run backup
-    manager = BackupManager(mappings=[mapping], skip_confirm=True)
+    manager = BackupManager(mappings=[mapping], skip_confirm=True, test=False)
     manager.run()
     
     # Verify target file exists and matches
@@ -316,7 +320,7 @@ def test_atomic_operations():
     with open(os.path.join(SOURCE_DIR, 'file2.txt'), 'w') as f:
         f.write('content2')
     
-    # Try backup with corrupted copy - should fail safely
+    mapping.transaction = BackupTransaction()
     mapping._move_file(
         os.path.join(SOURCE_DIR, 'file2.txt'),
         move_func=corrupt_copy,

@@ -5,7 +5,12 @@ import time
 import json
 import threading
 from datetime import datetime, timedelta
-from refacdir.backup.backup_source_data import BackupSourceData, BackupMetadata, BackupLockError
+from refacdir.backup.backup_source_data import (
+    BackupSourceData,
+    BackupMetadata,
+    BackupLockError,
+    ProgressCallback,
+)
 from .test_backup_helper import create_test_structure, clean_test_dirs
 import zlib
 
@@ -839,8 +844,8 @@ def test_metadata_double_corruption():
         assert len(metadata) == 1
         assert list(metadata.values())[0]["description"] == "New backup" 
 
-class TestProgressCallback(ProgressCallback):
-    """Test implementation of ProgressCallback"""
+class RecordingProgressCallback(ProgressCallback):
+    """Captures progress updates for assertions (not a pytest test class)."""
     def __init__(self):
         self.updates = []
         
@@ -849,7 +854,7 @@ class TestProgressCallback(ProgressCallback):
 
 def test_backup_progress():
     """Test progress reporting during backup"""
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data = BackupSourceData(SOURCE_DIR, progress_callback=callback)
     os.makedirs(SOURCE_DIR, exist_ok=True)
     
@@ -885,7 +890,7 @@ def test_restore_progress():
     data.save()
     
     # Create new instance with progress callback
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data = BackupSourceData(SOURCE_DIR, progress_callback=callback)
     
     # Restore from backup
@@ -911,7 +916,7 @@ def test_partial_restore_progress():
     data.save("Initial backup")
     
     # Create new instance with progress callback
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data = BackupSourceData(SOURCE_DIR, progress_callback=callback)
     
     # Perform partial restore
@@ -1007,7 +1012,7 @@ def test_mixed_compression_restore():
 
 def test_compression_with_progress():
     """Test progress reporting during compressed backup"""
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data = BackupSourceData(SOURCE_DIR, progress_callback=callback)
     data.use_compression = True
     os.makedirs(SOURCE_DIR, exist_ok=True)
@@ -1059,7 +1064,7 @@ def test_interrupted_backup_resume():
         data._save_metadata(temp_backup_path, metadata)
     
     # Try to create backup again - should resume
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data.progress = BackupProgress(callback)
     success, error = data._backup_current_file("Resumed backup")
     assert success, error
@@ -1093,7 +1098,7 @@ def test_interrupted_backup_invalid():
         f.write(b"invalid backup")
     
     # Try to create backup - should start fresh
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data.progress = BackupProgress(callback)
     success, error = data._backup_current_file("Fresh backup")
     assert success, error
@@ -1136,7 +1141,7 @@ def test_interrupted_compressed_backup():
         data._save_metadata(temp_backup_path, metadata)
     
     # Try to create backup again - should resume
-    callback = TestProgressCallback()
+    callback = RecordingProgressCallback()
     data.progress = BackupProgress(callback)
     success, error = data._backup_current_file("Resumed compressed backup")
     assert success, error
