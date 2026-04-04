@@ -164,7 +164,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def _create_sidebar(self, parent_layout):
         """Create the sidebar with action buttons and configs"""
         sidebar = QWidget()
-        sidebar.setFixedWidth(280)  # Wider sidebar for better readability
+        sidebar.setFixedWidth(340)  # Fixed width for labels and config list
         sidebar.setObjectName("sidebar")  # For styling
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(20, 20, 20, 20)

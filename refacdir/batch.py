@@ -29,6 +29,10 @@ class BatchArgs:
         self.skip_confirm = False
         self.only_observers = False
         self.app_actions = None
+        # Defaults when backup YAML omits these keys (CLI/UI can override via BatchArgs)
+        self.backup_overwrite = False
+        self.backup_warn_duplicates = False
+        self.backup_mapping_will_run_default = True
         if len(self.configs) == 0 or recache_configs:
             BatchArgs.setup_configs()
 
@@ -114,6 +118,9 @@ class BatchJob:
         self.failures = []
         self.test = args.test
         self.skip_confirm = args.skip_confirm
+        self.backup_overwrite = args.backup_overwrite
+        self.backup_warn_duplicates = args.backup_warn_duplicates
+        self.backup_mapping_will_run_default = args.backup_mapping_will_run_default
         self.cancelled = False
         
         # Progress tracking
@@ -414,9 +421,9 @@ class BatchJob:
 
     def construct_backup(self, yaml_dict={}):
         name = yaml_dict["name"]
-        test = Utils.get_from_dict(yaml_dict, "test", False)
-        overwrite = Utils.get_from_dict(yaml_dict, "overwrite", False)
-        warn_duplicates = Utils.get_from_dict(yaml_dict, "warn_duplicates", False)
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        overwrite = Utils.get_from_dict(yaml_dict, "overwrite", self.backup_overwrite)
+        warn_duplicates = Utils.get_from_dict(yaml_dict, "warn_duplicates", self.backup_warn_duplicates)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         mappings = []
 
@@ -424,7 +431,7 @@ class BatchJob:
             name = mapping["name"]
             source_dir = Location.construct(mapping["source_dir"]).root
             target_dir = Location.construct(mapping["target_dir"]).root
-            will_run = Utils.get_from_dict(mapping, "will_run", True)
+            will_run = Utils.get_from_dict(mapping, "will_run", self.backup_mapping_will_run_default)
             file_types = FiletypesDefinition.get_definitions(mapping["file_types"])
             if "mode" in mapping:
                 mode = BackupMode[mapping["mode"]]
