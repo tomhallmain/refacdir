@@ -308,6 +308,18 @@ class BatchJob:
             try:
                 constructor_func = getattr(self, constructor_func_name)
                 action = constructor_func(_action)
+                if isinstance(action, BackupManager):
+                    current_action_progress = (self.current_action_index - 1) / self.total_actions
+                    next_action_progress = self.current_action_index / self.total_actions
+                    span_start = current_action_progress + (next_action_progress - current_action_progress) * (
+                        action_index / total_actions
+                    )
+                    span_end = current_action_progress + (next_action_progress - current_action_progress) * (
+                        (action_index + 1) / total_actions
+                    )
+                    action.progress_start = span_start
+                    action.progress_end = span_end
+                    action.app_actions = self.app_actions
             except Exception as e:
                 self.failure_counts_map[action_type] += 1
                 if "name" in _action:
@@ -386,11 +398,17 @@ class BatchJob:
         use_hash_cache = Utils.get_from_dict(yaml_dict, "use_hash_cache", True)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         logger.info(f"Constructing duplicate remover: {name} with {len(source_dirs)} source directories")
-        return DuplicateRemover(name, source_dirs, select_for_folder_depth=select_for_folder_depth,
-                                recursive=recursive, exclude_dirs=exclude_dirs,
-                                preferred_delete_dirs=preferred_delete_dirs,
-                                skip_confirm=skip_confirm, app_actions=self.app_actions,
-                                use_hash_cache=use_hash_cache)
+        return DuplicateRemover(
+            name,
+            source_dirs,
+            select_for_folder_depth=select_for_folder_depth,
+            recursive=recursive,
+            exclude_dirs=exclude_dirs,
+            preferred_delete_dirs=preferred_delete_dirs,
+            skip_confirm=skip_confirm,
+            use_hash_cache=use_hash_cache,
+            app_actions=self.app_actions,
+        )
 
     def construct_batch_renamer(self, yaml_dict={}):
         name = yaml_dict["name"]
@@ -403,8 +421,16 @@ class BatchJob:
         make_dirs = Utils.get_from_dict(yaml_dict, "make_dirs", True)
         find_unused_filenames = Utils.get_from_dict(yaml_dict, "find_unused_filenames", False)
         logger.info(f"Constructing batch renamer: {name} with {len(mappings)} mappings and {len(locations)} locations")
-        renamer = BatchRenamer(name, mappings, locations, test=test, skip_confirm=skip_confirm,
-                               recursive=recursive, make_dirs=make_dirs, find_unused_filenames=find_unused_filenames)
+        renamer = BatchRenamer(
+            name,
+            mappings,
+            locations,
+            test=test,
+            skip_confirm=skip_confirm,
+            recursive=recursive,
+            make_dirs=make_dirs,
+            find_unused_filenames=find_unused_filenames,
+        )
         return renamer, renamer_function
 
     def construct_directory_flattener(self, yaml_dict={}):
@@ -452,7 +478,15 @@ class BatchJob:
                                           exclude_dirs=exclude_dirs, exclude_removal_dirs=exclude_removal_dirs, will_run=will_run))
 
         logger.info(f"Constructing backup manager: {name} with {len(mappings)} backup mappings")
-        return BackupManager(name, mappings=mappings, test=test, overwrite=overwrite, warn_duplicates=warn_duplicates, skip_confirm=skip_confirm)
+        return BackupManager(
+            name,
+            mappings=mappings,
+            test=test,
+            overwrite=overwrite,
+            warn_duplicates=warn_duplicates,
+            skip_confirm=skip_confirm,
+            app_actions=self.app_actions,
+        )
 
     def construct_directory_observer(self, yaml_dict={}):
         name = yaml_dict["name"]
@@ -474,9 +508,16 @@ class BatchJob:
         categories = Utils.get_from_dict(yaml_dict, "categories", [])
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
         logger.info(f"Constructing image categorizer: {name} with {len(categories)} categories and {len(file_types)} file types")
-        return ImageCategorizer(name, test=test, source_dir=source_dir, exclude_dirs=exclude_dirs,
-                                file_types=file_types, categories=categories, skip_confirm=skip_confirm,
-                                recursive=recursive)
+        return ImageCategorizer(
+            name,
+            test=test,
+            source_dir=source_dir,
+            exclude_dirs=exclude_dirs,
+            file_types=file_types,
+            categories=categories,
+            skip_confirm=skip_confirm,
+            recursive=recursive,
+        )
 
 
 

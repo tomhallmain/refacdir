@@ -1,7 +1,7 @@
 import json
 import os
 import shutil
-from typing import Dict, List, Tuple, Optional
+from typing import Callable, Dict, List, Tuple, Optional
 
 from .backup_modes import BackupMode, FileMode, HashMode, FailureType
 from .backup_source_data import BackupSourceData
@@ -12,6 +12,10 @@ from refacdir.utils.logger import setup_logger
 
 # Set up logger for backup mapping
 logger = setup_logger('backup_mapping')
+
+# Progress / logging: avoid flooding logs on huge trees; still show liveness.
+_HASH_PROGRESS_LOG_EVERY = 5000
+_HASH_PROGRESS_UI_EVERY = 400
 
 _FAILURE_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backup_failures.json")
 
@@ -172,22 +176,101 @@ class BackupMapping:
             return extension.lower() in self.file_types
         return False
 
-    def setup(self, overwrite: bool = False, warn_duplicates: bool = False) -> None:
+    def setup(
+        self,
+        overwrite: bool = False,
+        warn_duplicates: bool = False,
+        progress: Optional[Callable[[float, str], None]] = None,
+    ) -> None:
         """Load persisted hash data and rebuild in-memory hash tables from source/target."""
+        logger.info(
+            "Backup mapping %r: loading persisted data from %s (overwrite=%s)",
+            self.name,
+            self.source_dir,
+            overwrite,
+        )
         self._source_data = BackupSourceData.load(self.source_dir, overwrite=overwrite)
-        self._rebuild_hash_tables()
+        self._rebuild_hash_tables(progress=progress)
         if warn_duplicates:
             for h, files in self._source_data.hash_dict.items():
                 if len(files) > 1:
                     logger.info(f"Duplicate content hash {h[:16]}... : {files}")
+        if progress:
+            progress(1.0, "scan complete")
 
-    def _rebuild_hash_tables(self) -> None:
+    def _count_scan_files(self) -> Tuple[int, int]:
+        """Count files that will be hashed; mirrors _rebuild_hash_tables walks (read-only)."""
+        src_n = 0
+        tgt_n = 0
+        if os.path.exists(self.source_dir):
+            for root, dirs, files in os.walk(self.source_dir):
+                dirs[:] = [d for d in dirs if not self._is_dir_excluded(os.path.join(root, d))]
+                if self.file_mode != FileMode.FILES_AND_DIRS:
+                    continue
+                for name in files:
+                    filepath = os.path.join(root, name)
+                    if not self._should_include_in_backup_scan(filepath, name):
+                        continue
+                    src_n += 1
+        if os.path.exists(self.target_dir):
+            for root, dirs, files in os.walk(self.target_dir):
+                dirs[:] = [d for d in dirs if not self._is_dir_excluded(os.path.join(root, d))]
+                for name in files:
+                    filepath = os.path.join(root, name)
+                    if not self._should_include_in_backup_scan(filepath, name, is_target=True):
+                        continue
+                    tgt_n += 1
+        return src_n, tgt_n
+
+    def _rebuild_hash_tables(
+        self,
+        progress: Optional[Callable[[float, str], None]] = None,
+    ) -> None:
         self._source_data.hash_dict.clear()
         self._target_hash_dict.clear()
         self._hash_manager.clear_cache()
         self._source_dirs.clear()
         self._target_dirs.clear()
         self._expected_target_rel_paths.clear()
+
+        total = 0
+        if progress:
+            progress(0.0, "counting files to scan…")
+            src_n, tgt_n = self._count_scan_files()
+            total = src_n + tgt_n
+            logger.info(
+                "Backup mapping %r: hashing up to %s files (source %s, target %s)",
+                self.name,
+                total,
+                src_n,
+                tgt_n,
+            )
+            progress(0.02, f"counted {total} files; hashing…")
+
+        done = 0
+
+        def _tick():
+            nonlocal done
+            done += 1
+            if not progress or total <= 0:
+                if done % _HASH_PROGRESS_LOG_EVERY == 0:
+                    logger.info(
+                        "Backup mapping %r: hashed %s files (scan in progress)",
+                        self.name,
+                        done,
+                    )
+                return
+            frac = min(1.0, done / total)
+            if done % _HASH_PROGRESS_UI_EVERY == 0 or done == total:
+                progress(0.02 + 0.98 * frac, f"hashed {done}/{total} files")
+            if done % _HASH_PROGRESS_LOG_EVERY == 0 or done == total:
+                logger.info(
+                    "Backup mapping %r: hashed %s/%s files (~%d%%)",
+                    self.name,
+                    done,
+                    total,
+                    int(100 * frac),
+                )
 
         if os.path.exists(self.source_dir):
             for root, dirs, files in os.walk(self.source_dir):
@@ -205,6 +288,7 @@ class BackupMapping:
                     self._source_data.hash_dict[h].append(filepath)
                     rel = os.path.relpath(filepath, self.source_dir)
                     self._expected_target_rel_paths.add(os.path.normpath(rel))
+                    _tick()
 
         if os.path.exists(self.target_dir):
             for root, dirs, files in os.walk(self.target_dir):
@@ -218,6 +302,16 @@ class BackupMapping:
                         continue
                     h = self._hash_manager.get_file_hash(filepath)
                     self._target_hash_dict[filepath] = h
+                    _tick()
+
+        if progress and total == 0:
+            progress(1.0, "nothing to hash")
+        elif not progress and done > 0:
+            logger.info(
+                "Backup mapping %r: finished hashing %s files",
+                self.name,
+                done,
+            )
 
     def _build_target_path(self, source_filepath: str) -> str:
         relative_path = source_filepath.replace(os.path.join(self.source_dir, ""), "")
@@ -334,7 +428,12 @@ class BackupMapping:
             elif eff == SafeFileOps.move:
                 self._remove_source_file(source_path, target_path, test=test)
 
-    def _push(self, move_func=SafeFileOps.copy, test: bool = True) -> None:
+    def _push(
+        self,
+        move_func=SafeFileOps.copy,
+        test: bool = True,
+        progress: Optional[Callable[[float, str], None]] = None,
+    ) -> None:
         if self.file_mode == FileMode.DIRS_ONLY:
             new_dirs = sorted(set(self._source_dirs) - set(self._target_dirs))
             if new_dirs:
@@ -346,6 +445,8 @@ class BackupMapping:
                     success, error = SafeFileOps.atomic_create_dir(new_dir)
                     if not success:
                         raise Exception(f"Failed to create directory: {error}")
+            if progress:
+                progress(1.0, "directory structure only")
             return
 
         new_dirs = sorted(set(self._source_dirs) - set(self._target_dirs))
@@ -360,8 +461,24 @@ class BackupMapping:
                     raise Exception(f"Failed to create directory: {error}")
 
         logger.info(f"PUSHING FILES TO {self.target_dir}")
-        for source_hash, paths in self._source_data.hash_dict.items():
+        items = list(self._source_data.hash_dict.items())
+        n_groups = len(items)
+        if n_groups == 0:
+            if progress:
+                progress(1.0, "nothing to sync")
+            return
+        step = max(1, n_groups // 100)
+        for j, (source_hash, paths) in enumerate(items):
             self._ensure_files(source_hash, paths, move_func=move_func, test=test)
+            if j % step == 0 or j == n_groups - 1:
+                if progress:
+                    progress((j + 1) / n_groups, f"sync {j + 1}/{n_groups} content groups")
+                logger.info(
+                    "Backup mapping %r: sync progress %s/%s content groups",
+                    self.name,
+                    j + 1,
+                    n_groups,
+                )
 
     def _mirror_remove_stale(self, test: bool = True) -> None:
         if not os.path.exists(self.target_dir):
@@ -400,21 +517,26 @@ class BackupMapping:
             except OSError as e:
                 self.failures.append([FailureType.REMOVE_STALE_DIRECTORY, str(e), stale, "stale directory"])
 
-    def backup(self, test: bool = True) -> None:
+    def backup(
+        self,
+        test: bool = True,
+        progress: Optional[Callable[[float, str], None]] = None,
+    ) -> None:
         try:
             self.state = BackupState(self)
             success, error = self.state.validate_source()
             if not success:
                 raise Exception(error)
-                
+
             # Initialize transaction
             self.transaction = BackupTransaction()
             if self.is_push_mode():
                 move_func = SafeFileOps.move if self.mode == BackupMode.PUSH_AND_REMOVE else SafeFileOps.copy
-                self._push(move_func=move_func, test=test)
+                self._push(move_func=move_func, test=test, progress=progress)
             elif self.is_mirror_mode():
+                logger.info("Backup mapping %r: saving source metadata before mirror sync", self.name)
                 self._source_data.save()
-                self._push(SafeFileOps.copy, test=test)
+                self._push(SafeFileOps.copy, test=test, progress=progress)
             if not test:
                 # Execute transaction
                 success, error = self.transaction.execute()

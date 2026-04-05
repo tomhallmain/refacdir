@@ -5,7 +5,7 @@ from refacdir.utils.logger import setup_logger
 # Set up logger for translations
 logger = setup_logger('translations')
 
-from utils.utils import Utils
+from refacdir.utils.utils import Utils
 
 _locale = os.environ['LANG'] if "LANG" in os.environ else None
 if not _locale or _locale == '':
