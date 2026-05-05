@@ -657,6 +657,24 @@ class ImageCategorizerActionDialog(BaseActionDialog):
         ]
 
 
+class NamedSubdirCollectorActionDialog(BaseActionDialog):
+    def hint_text(self) -> str:
+        return (
+            "Collects files from nested folders named in subdir_names into root/<name>/. "
+            "Use root for the tree to scan; clear_sources removes emptied nested dirs."
+        )
+
+    def property_key_options(self) -> list[str]:
+        return [
+            "name",
+            "root",
+            "subdir_names",
+            "clear_sources",
+            "test",
+            "skip_confirm",
+        ]
+
+
 class BackupActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
         return "Backup mappings include backup_mappings plus optional flags."
@@ -679,6 +697,7 @@ def create_action_dialog(parent, action_type: ActionType, action_data: dict | No
         ActionType.DIRECTORY_OBSERVER: DirectoryObserverActionDialog,
         ActionType.DIRECTORY_FLATTENER: DirectoryFlattenerActionDialog,
         ActionType.IMAGE_CATEGORIZER: ImageCategorizerActionDialog,
+        ActionType.NAMED_SUBDIR_COLLECTOR: NamedSubdirCollectorActionDialog,
     }
     dialog_cls = dialog_map.get(action_type, BaseActionDialog)
     return dialog_cls(parent=parent, action_type=action_type, action_data=action_data)

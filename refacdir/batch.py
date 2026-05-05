@@ -12,6 +12,7 @@ from refacdir.directory_observer import DirectoryObserver, media_file_types
 from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
+from refacdir.named_subdir_collector import NamedSubdirCollector
 from refacdir.utils.translations import I18N
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
@@ -93,6 +94,7 @@ class ActionType(Enum):
     DIRECTORY_OBSERVER = 'DIRECTORY_OBSERVER'
     DIRECTORY_FLATTENER = 'DIRECTORY_FLATTENER'
     IMAGE_CATEGORIZER = 'IMAGE_CATEGORIZER'
+    NAMED_SUBDIR_COLLECTOR = 'NAMED_SUBDIR_COLLECTOR'
 
     def get_varname(self):
         return self.value.lower()
@@ -517,6 +519,27 @@ class BatchJob:
             categories=categories,
             skip_confirm=skip_confirm,
             recursive=recursive,
+        )
+
+    def construct_named_subdir_collector(self, yaml_dict={}):
+        name = yaml_dict["name"]
+        root = Location.construct(yaml_dict["root"]).root
+        subdir_names = yaml_dict["subdir_names"]
+        if not isinstance(subdir_names, list) or len(subdir_names) == 0:
+            raise Exception("named_subdir_collector mapping requires a non-empty subdir_names list")
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        clear_sources = Utils.get_from_dict(yaml_dict, "clear_sources", True)
+        logger.info(
+            f"Constructing named subdir collector: {name} at {root} for labels {subdir_names}"
+        )
+        return NamedSubdirCollector(
+            name,
+            root,
+            subdir_names,
+            test=test,
+            skip_confirm=skip_confirm,
+            clear_sources=clear_sources,
         )
 
 
