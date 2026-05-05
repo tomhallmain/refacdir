@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
+from refacdir.utils.utils import Utils
 from .renamer_rule_suggester_dialog import RenamerRuleSuggesterDialog
 
 
@@ -37,7 +38,14 @@ def _default_action_dict(action_type: ActionType) -> dict:
 class MappingPropertyRow(QWidget):
     """Row widget for generic mapping key/value editing."""
 
-    def __init__(self, allowed_keys: list[str], key: str = "", value=None, parent=None):
+    def __init__(
+        self,
+        allowed_keys: list[str],
+        key: str = "",
+        value=None,
+        parent=None,
+        plain_value: bool = False,
+    ):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -51,9 +59,13 @@ class MappingPropertyRow(QWidget):
         layout.addWidget(self.key_combo, 2)
 
         self.value_edit = QLineEdit()
+        self._plain_value = plain_value
         if value is not None:
-            dumped = yaml.safe_dump(value, sort_keys=False, allow_unicode=False).strip()
-            self.value_edit.setText(dumped)
+            if plain_value:
+                self.value_edit.setText(str(value))
+            else:
+                dumped = yaml.safe_dump(value, sort_keys=False, allow_unicode=False).strip()
+                self.value_edit.setText(dumped)
         layout.addWidget(self.value_edit, 5)
 
         self.remove_btn = QPushButton("Remove")
@@ -66,6 +78,8 @@ class MappingPropertyRow(QWidget):
         text = self.value_edit.text().strip()
         if text == "":
             return ""
+        if self._plain_value:
+            return text
         try:
             return yaml.safe_load(text)
         except Exception:
@@ -194,8 +208,14 @@ class BaseActionDialog(SmartDialog):
             row.deleteLater()
         self._mapping_property_rows = []
 
-    def _on_add_property_row(self, key: str = "", value=None):
-        row = MappingPropertyRow(self.property_key_options(), key=key, value=value, parent=self.props_container)
+    def _on_add_property_row(self, key: str = "", value=None, plain_value: bool = False):
+        row = MappingPropertyRow(
+            self.property_key_options(),
+            key=key,
+            value=value,
+            parent=self.props_container,
+            plain_value=plain_value,
+        )
         row.remove_btn.clicked.connect(lambda: self._remove_property_row(row))
         self.props_container_layout.addWidget(row)
         self._mapping_property_rows.append(row)
@@ -660,13 +680,47 @@ class ImageCategorizerActionDialog(BaseActionDialog):
 class NamedSubdirCollectorActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
         return (
-            "Collects files from nested folders named in subdir_names into root/<name>/. "
-            "Use root for the tree to scan; clear_sources removes emptied nested dirs."
+            "Collects files from nested folders whose basename is in subdir_names into root/<name>/. "
+            "For subdir_names use comma-separated folder names in this dialog (recommended). "
+            "root: directory tree to scan. clear_sources: remove emptied nested dirs after moves."
         )
+
+    def default_mapping(self) -> dict:
+        return {
+            "name": "named_subdir_collector mapping",
+            "root": ".",
+            "subdir_names": ["folder_one", "folder_two"],
+        }
+
+    def _build_mapping_from_editor(self) -> dict:
+        mapping = super()._build_mapping_from_editor()
+        mapping["subdir_names"] = Utils.parse_yamlish_list(mapping.get("subdir_names"))
+        if not mapping["subdir_names"]:
+            raise ValueError(
+                "subdir_names is required and must not be empty "
+                "(comma-separated names, or YAML list in the saved file)."
+            )
+        return mapping
+
+    def _load_mapping_to_editor(self, mapping: dict):
+        self.name_edit.setText(str(mapping.get("name", "")))
+        self._clear_property_rows()
+        for key, value in mapping.items():
+            if key == "name":
+                continue
+            if key == "subdir_names":
+                if isinstance(value, list):
+                    disp = ", ".join(str(x).strip() for x in value if str(x).strip())
+                    self._on_add_property_row(key=key, value=disp, plain_value=True)
+                else:
+                    self._on_add_property_row(
+                        key=key, value=value if value is not None else "", plain_value=True
+                    )
+            else:
+                self._on_add_property_row(key=key, value=value)
 
     def property_key_options(self) -> list[str]:
         return [
-            "name",
             "root",
             "subdir_names",
             "clear_sources",

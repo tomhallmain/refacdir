@@ -1,6 +1,10 @@
 """
 Collect files from every subdirectory under a root whose name matches one of
 configured labels into root/<label>/ (creating those folders as needed).
+
+When ``test`` is True (YAML ``test: true`` or batch dry-run), :meth:`NamedSubdirCollector.run`
+performs a dry run: it logs what would be moved and does not create directories, move files,
+remove empty source trees, or prompt for confirmation.
 """
 import os
 
@@ -93,6 +97,9 @@ class NamedSubdirCollector:
         skip_confirm: bool = False,
         clear_sources: bool = True,
     ):
+        """
+        :param test: If True, dry-run only (no moves, no mkdir beyond reads, no clearing sources).
+        """
         self.name = name
         self.root = os.path.abspath(Utils.fix_path(root))
         self.subdir_names = list(subdir_names)
@@ -136,6 +143,9 @@ class NamedSubdirCollector:
             return
 
         if self.test:
+            logger.info(
+                f"|=============== TEST (dry run) {self.name}: no files moved or dirs cleared ===============|"
+            )
             occupied_by_label: dict[str, set[str]] = {label: set() for label in self.subdir_names}
             for label in self.subdir_names:
                 dest_dir = os.path.join(self.root, label)

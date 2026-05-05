@@ -4,6 +4,8 @@ import os
 import re
 import shutil
 import sys
+
+import yaml
 import threading
 from refacdir.utils.logger import setup_logger
 
@@ -205,6 +207,58 @@ class Utils:
         if s is None or s.strip() == "":
             return []
         return [x.strip() for x in s.split(sep)]
+
+    @staticmethod
+    def parse_yamlish_list(raw):
+        """
+        Parse ``raw`` into ``list[str]`` when the input may be YAML-flavored or inconsistent:
+
+        A Python ``list`` is returned stripped element-wise. A string may be a YAML snippet
+        (parsed when valid), multiline ``- item`` lines, comma-separated tokens, or a
+        single-line fragment such as ``- a - b`` produced when a YAML list was shown in a
+        one-line field.
+
+        Non-string, non-list inputs yield ``[]``.
+        """
+        if raw is None:
+            return []
+        if isinstance(raw, list):
+            return [str(x).strip() for x in raw if str(x).strip()]
+        if not isinstance(raw, str):
+            return []
+        s = raw.strip()
+        if not s:
+            return []
+        try:
+            parsed = yaml.safe_load(s)
+            if isinstance(parsed, list):
+                return [str(x).strip() for x in parsed if str(x).strip()]
+        except Exception:
+            pass
+        lines_out = []
+        for line in s.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("- "):
+                lines_out.append(line[2:].strip())
+            elif line.startswith("-"):
+                rest = line[1:].strip()
+                if rest:
+                    lines_out.append(rest)
+        if lines_out:
+            return [x for x in lines_out if x]
+        inner = s
+        if inner.startswith("- "):
+            inner = inner[2:].strip()
+        elif inner.startswith("-"):
+            inner = inner[1:].lstrip()
+        if " - " in s:
+            parts = re.split(r"\s+-\s+", inner)
+            parts = [p.strip() for p in parts if p.strip()]
+            if parts:
+                return parts
+        return Utils.get_list_from_string(s)
 
     @staticmethod
     def get_from_dict(d, key, default_value=None):

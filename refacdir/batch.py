@@ -530,8 +530,8 @@ class BatchJob:
     def construct_named_subdir_collector(self, yaml_dict={}):
         name = yaml_dict["name"]
         root = Location.construct(yaml_dict["root"]).root
-        subdir_names = yaml_dict["subdir_names"]
-        if not isinstance(subdir_names, list) or len(subdir_names) == 0:
+        subdir_names = Utils.parse_yamlish_list(yaml_dict["subdir_names"])
+        if len(subdir_names) == 0:
             raise Exception("named_subdir_collector mapping requires a non-empty subdir_names list")
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
