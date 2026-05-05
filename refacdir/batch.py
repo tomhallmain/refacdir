@@ -216,6 +216,12 @@ class BatchJob:
                 self.failures.append(f"Config {config} failed to load: No actions found in config file!")
                 return
 
+            # ``run()`` counts actions across configs before calling this method; callers that invoke
+            # ``run_config_file`` alone never run that pass, leaving ``total_actions`` at 0 and causing
+            # division-by-zero in progress math (e.g. BackupManager span setup in ``run_multi_action``).
+            if self.total_actions == 0:
+                self.total_actions = max(1, len(config_wrapper["actions"]))
+
             logger.info(f"Running {len(config_wrapper['actions'])} actions for {config}")
 
             FilenameMappingDefinition.add_named_functions(Utils.get_from_dict(config_wrapper, "filename_mapping_functions", []))

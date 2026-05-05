@@ -157,7 +157,7 @@ class CustomTitleBar(QWidget):
                 return
             
             self._is_dragging = True
-            self._drag_position = event.globalPos() - self._parent_window.frameGeometry().topLeft()
+            self._drag_position = event.globalPosition().toPoint() - self._parent_window.frameGeometry().topLeft()
             event.accept()
             
     def mouseMoveEvent(self, event: QMouseEvent):
@@ -181,7 +181,7 @@ class CustomTitleBar(QWidget):
                         event.pos().y()
                     )
                 
-                new_pos = event.globalPos() - self._drag_position
+                new_pos = event.globalPosition().toPoint() - self._drag_position
                 self._parent_window.move(new_pos)
             event.accept()
             
@@ -348,7 +348,7 @@ class WindowResizeHandler(QObject):
     
     def _handle_mouse_move(self, event: QMouseEvent) -> bool:
         """Handle mouse move for resize cursor and resizing."""
-        global_pos = event.globalPos()
+        global_pos = event.globalPosition().toPoint()
         
         if self._is_resizing:
             self._perform_resize(global_pos)
@@ -380,7 +380,7 @@ class WindowResizeHandler(QObject):
             return False
         
         # Check if clicked widget is a button - don't intercept button clicks
-        widget_at_pos = QApplication.widgetAt(event.globalPos())
+        widget_at_pos = QApplication.widgetAt(event.globalPosition().toPoint())
         if widget_at_pos is not None:
             if isinstance(widget_at_pos, QPushButton):
                 return False
@@ -389,7 +389,7 @@ class WindowResizeHandler(QObject):
             if parent is not None and isinstance(parent, QPushButton):
                 return False
         
-        global_pos = event.globalPos()
+        global_pos = event.globalPosition().toPoint()
         edge = self._get_edge_from_global_pos(global_pos)
         
         if edge != ResizeGrip.EDGE_NONE:
