@@ -6,9 +6,21 @@ from io import StringIO
 import threading
 from datetime import datetime
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QProgressBar, QPushButton
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
-from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu, QApplication
 from PySide6.QtCore import Signal, QObject, Qt
 from refacdir.lib.multi_display import SmartWindow
 from refacdir.utils.logger import setup_logger
@@ -18,6 +30,37 @@ _ = I18N._
 
 # Set up logger for test results
 logger = setup_logger('test_results')
+
+# Default directory filter in the test UI (first segment under ``test/``).
+DEFAULT_TEST_SUITE_DIR = "backup"
+
+
+def _pytest_target_label(path: str) -> str:
+    """Short label for a pytest target (file or directory path)."""
+    return os.path.basename(os.path.normpath(path))
+
+
+def _discover_test_suite_dirs(base_dir: str) -> list[str]:
+    """
+    Subdirectories of ``test/`` that contain at least one ``*.py`` file at their top level.
+    Used to populate the suite filter combo.
+    """
+    test_root = os.path.join(base_dir, "test")
+    if not os.path.isdir(test_root):
+        return []
+    names = []
+    for entry in sorted(os.listdir(test_root)):
+        full = os.path.join(test_root, entry)
+        if not os.path.isdir(full):
+            continue
+        try:
+            subs = os.listdir(full)
+        except OSError:
+            continue
+        if any(fn.endswith(".py") for fn in subs):
+            names.append(entry)
+    return names
+
 
 class TestSignals(QObject):
     """Signals for thread-safe UI updates"""
@@ -35,7 +78,7 @@ class TestResultsWindow(SmartWindow):
         super().__init__(
             persistent_parent=parent,
             position_parent=parent,
-            title=_("Backup System Verification"),
+            title=_("Verification tests"),
             geometry="800x600",
             offset_x=50,
             offset_y=50
@@ -68,15 +111,30 @@ class TestResultsWindow(SmartWindow):
         layout.setSpacing(10)
         
         # Header
-        header = QLabel(_("Backup System Test Results"))
+        header = QLabel(_("Verification test results"))
         header.setFont(QFont("Helvetica", 12, QFont.Bold))
         layout.addWidget(header)
+
+        filter_row = QWidget()
+        filter_layout = QHBoxLayout(filter_row)
+        filter_layout.setContentsMargins(0, 0, 0, 0)
+        filter_layout.addWidget(QLabel(_("Suite directory")))
+        self.suite_filter_combo = QComboBox()
+        _base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        for name in _discover_test_suite_dirs(_base):
+            self.suite_filter_combo.addItem(name, name)
+        self.suite_filter_combo.addItem(_("All suites"), "__all__")
+        idx = self.suite_filter_combo.findData(DEFAULT_TEST_SUITE_DIR)
+        self.suite_filter_combo.setCurrentIndex(idx if idx >= 0 else 0)
+        filter_layout.addWidget(self.suite_filter_combo)
+        filter_layout.addStretch()
+        layout.addWidget(filter_row)
         
         # Progress section
         progress_frame = QWidget()
         progress_layout = QVBoxLayout(progress_frame)
         
-        self.status_label = QLabel(_("Initializing tests..."))
+        self.status_label = QLabel(_("Click Run suite to start."))
         progress_layout.addWidget(self.status_label)
         
         # Progress bar with label
@@ -131,6 +189,10 @@ class TestResultsWindow(SmartWindow):
         # Control buttons
         control_frame = QWidget()
         control_layout = QHBoxLayout(control_frame)
+
+        self.run_suite_button = QPushButton(_("Run suite"))
+        self.run_suite_button.clicked.connect(self.run_tests)
+        control_layout.addWidget(self.run_suite_button)
         
         self.close_button = QPushButton(_("Close"))
         self.close_button.clicked.connect(self.close)
@@ -144,11 +206,19 @@ class TestResultsWindow(SmartWindow):
         layout.addWidget(control_frame)
         
     def run_tests(self):
-        """Run the backup system tests"""
+        """Run pytest on ``test/<suite>/`` or on the entire ``test/`` tree when \"All suites\" is selected."""
+        if not self.run_suite_button.isEnabled():
+            return
+        self.test_stats["start_time"] = datetime.now()
+        self.run_suite_button.setEnabled(False)
+        self.suite_filter_combo.setEnabled(False)
+        self.save_button.setEnabled(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.status_label.setText(_("Running tests..."))
-        
+
+        suite_filter = self.suite_filter_combo.currentData()
+
         def run_tests_thread():
             try:
                 logger.info("Starting test suite execution")
@@ -169,50 +239,84 @@ class TestResultsWindow(SmartWindow):
                 # Remove any other paths that might interfere
                 sys.path = [p for p in sys.path if not p.lower().endswith('weidr')]
                 
-                # Use proper directory name for tests
-                test_dir = os.path.join(base_dir, "test", "backup")
-                if not os.path.exists(test_dir):
-                    raise Exception(_("Test directory not found: {0}").format(test_dir))
-                
-                # Ensure test files directory exists
-                test_files_dir = os.path.join(test_dir, "test_files")
-                if not os.path.exists(test_files_dir):
-                    os.makedirs(test_files_dir)
-                
-                test_files = [
-                    os.path.join(test_dir, "test_hash_manager.py"),
-                    os.path.join(test_dir, "test_backup_state.py"),
-                    os.path.join(test_dir, "test_backup_source_data.py"),
-                    os.path.join(test_dir, "test_backup_transaction.py")
-                ]
+                if suite_filter == "__all__":
+                    test_root = os.path.normpath(os.path.join(base_dir, "test"))
+                    logger.info("Suite filter: all (pytest on %s)", test_root)
+                    if not os.path.isdir(test_root):
+                        error_msg = _("Test tree not found: {0}").format(test_root) + "\n"
+                        print(error_msg, file=original_stdout)
+                        self.signals.update_text.emit(error_msg, "error")
+                        self.signals.test_complete.emit()
+                        return
+                    test_files = [test_root]
+                else:
+                    suite_path = os.path.normpath(
+                        os.path.join(base_dir, "test", suite_filter)
+                    )
+                    logger.info("Suite filter: directory %s", suite_path)
+                    if not os.path.isdir(suite_path):
+                        error_msg = _("Test suite directory not found: {0}").format(
+                            suite_path
+                        ) + "\n"
+                        print(error_msg, file=original_stdout)
+                        self.signals.update_text.emit(error_msg, "error")
+                        self.signals.test_complete.emit()
+                        return
+                    test_files = [suite_path]
+
+                backup_test_dir = os.path.normpath(os.path.join(base_dir, "test", "backup"))
+                runs_backup_tests = suite_filter == "__all__" or any(
+                    os.path.normpath(p).startswith(backup_test_dir + os.sep)
+                    or os.path.normpath(p) == backup_test_dir
+                    for p in test_files
+                )
+                test_files_dir = None
+                if runs_backup_tests:
+                    if not os.path.isdir(backup_test_dir):
+                        raise Exception(
+                            _("Backup test directory not found (required for fixtures): {0}").format(
+                                backup_test_dir
+                            )
+                        )
+                    test_files_dir = os.path.join(backup_test_dir, "test_files")
+                    os.makedirs(test_files_dir, exist_ok=True)
                 
                 # Debug info
                 logger.info(f"Base directory: {base_dir}")
-                logger.info(f"Test directory: {test_dir}")
-                logger.info(f"Test files directory: {test_files_dir}")
+                logger.info(f"Pytest target(s): {len(test_files)}")
+                if test_files_dir:
+                    logger.info(f"Backup fixtures directory: {test_files_dir}")
                 logger.info(f"Python path: {sys.path[0]}")
                 
                 self.signals.update_text.emit(_("Base directory: ") + f"{base_dir}\n", "important")
-                self.signals.update_text.emit(_("Test directory: ") + f"{test_dir}\n", "important")
-                self.signals.update_text.emit(_("Test files directory: ") + f"{test_files_dir}\n", "important")
+                self.signals.update_text.emit(
+                    _("Pytest targets: ") + f"{len(test_files)}\n", "important"
+                )
+                if test_files_dir:
+                    self.signals.update_text.emit(
+                        _("Backup fixtures directory: ") + f"{test_files_dir}\n", "important"
+                    )
                 self.signals.update_text.emit(_("Python path: ") + f"{sys.path[0]}\n", "important")
                 
-                # Verify test files exist
+                # Verify targets exist (always pytest directories: ``test/`` or ``test/<suite>/``)
                 for test_file in test_files[:]:
-                    if not os.path.exists(test_file):
-                        error_msg = _("Test file not found: {0}").format(test_file) + "\n"
+                    if not (os.path.isfile(test_file) or os.path.isdir(test_file)):
+                        error_msg = _("Test target not found: {0}").format(test_file) + "\n"
                         logger.error(error_msg)
                         print(error_msg, file=original_stdout)
                         self.signals.update_text.emit(error_msg, "error")
                         test_files.remove(test_file)
                     else:
-                        logger.info(f"Found test file: {test_file}")
-                        self.signals.update_text.emit(_("Found test file: ") + f"{test_file}\n", "important")
+                        logger.info(f"Found test target: {test_file}")
+                        self.signals.update_text.emit(
+                            _("Found test target: ") + f"{test_file}\n", "important"
+                        )
                 
                 if not test_files:
-                    error_msg = _("No test files found!") + "\n"
+                    error_msg = _("No test targets remain to run.") + "\n"
                     print(error_msg, file=original_stdout)
                     self.signals.update_text.emit(error_msg, "error")
+                    self.signals.test_complete.emit()
                     return
                 
                 total_tests = 0
@@ -236,7 +340,10 @@ class TestResultsWindow(SmartWindow):
                         
                         if counter.count > 0:
                             total_tests += counter.count
-                            message = _("Found {0} tests in {1}").format(counter.count, os.path.basename(test_file))
+                            coll_label = _pytest_target_label(test_file)
+                            message = _("Found {0} tests in {1}").format(
+                                counter.count, coll_label
+                            )
                             print(message, file=original_stdout)
                             self.signals.update_text.emit(message + "\n", "important")
                     except Exception as e:
@@ -258,11 +365,15 @@ class TestResultsWindow(SmartWindow):
                 for test_file in test_files:
                     try:
                         # Update status with current file
-                        current_file = os.path.basename(test_file)
-                        self.signals.update_status.emit(_("Running tests from {0}...").format(current_file))
-                        
-                        # Add header for test file
-                        self.signals.update_text.emit("\n" + _("Running tests from {0}:").format(current_file) + "\n", "header")
+                        target_label = _pytest_target_label(test_file)
+                        self.signals.update_status.emit(
+                            _("Running tests from {0}...").format(target_label)
+                        )
+
+                        self.signals.update_text.emit(
+                            "\n" + _("Running tests from {0}:").format(target_label) + "\n",
+                            "header",
+                        )
                         
                         class ResultCollector:
                             def __init__(self, signals):
@@ -329,9 +440,14 @@ class TestResultsWindow(SmartWindow):
                 self.signals.test_complete.emit()
                 
             finally:
-                # Always ensure stdout is restored
+                # Always restore stdout and working directory after any exit path
                 if 'original_stdout' in locals():
                     sys.stdout = original_stdout
+                if 'original_cwd' in locals():
+                    try:
+                        os.chdir(original_cwd)
+                    except OSError:
+                        pass
         
         # Run tests in separate thread
         threading.Thread(target=run_tests_thread, daemon=True).start()
@@ -450,4 +566,6 @@ class TestResultsWindow(SmartWindow):
         
         # Enable save button
         self.save_button.setEnabled(True)
+        self.run_suite_button.setEnabled(True)
+        self.suite_filter_combo.setEnabled(True)
         self.progress_bar.setVisible(False)

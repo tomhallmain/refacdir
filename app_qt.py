@@ -197,7 +197,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.toggle_theme_btn.clicked.connect(self.toggle_theme)
         actions_layout.addWidget(self.toggle_theme_btn)
         
-        self.test_runner_btn = QPushButton(_("Run Backup Tests"))
+        self.test_runner_btn = QPushButton(_("Run tests"))
         self.test_runner_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogListView))
         self.test_runner_btn.clicked.connect(self.run_tests)
         actions_layout.addWidget(self.test_runner_btn)
@@ -491,10 +491,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.run()
         
     def run_tests(self):
-        """Run backup system tests"""
+        """Open the in-app pytest runner (tests start when the user runs them there)."""
         test_window = TestResultsWindow(self)
         test_window.show()
-        test_window.run_tests()
 
     def open_config_editor(self):
         """Open (or focus) the config editor window."""
