@@ -2,11 +2,18 @@
 Collect files from every subdirectory under a root whose name matches one of
 configured labels into root/<label>/ (creating those folders as needed).
 
+``subdir_depth`` limits how far below ``root`` a label directory may sit: the relative path
+from ``root`` to that directory must have exactly ``subdir_depth + 1`` path components.
+The default ``subdir_depth=1`` matches ``root/<top-level-child>/<label>/``. Each increment
+adds one allowed intermediate segment before ``<label>``. ``subdir_depth=-1`` means no
+depth limit (every matching folder name under ``root`` except the bucket ``root/<label>/``).
+
 When ``test`` is True (YAML ``test: true`` or batch dry-run), :meth:`NamedSubdirCollector.run`
 performs a dry run: it logs what would be moved and does not create directories, move files,
 remove empty source trees, or prompt for confirmation.
 """
 import os
+from pathlib import Path
 
 from refacdir.file_renamer import FileRenamer
 from refacdir.utils.logger import setup_logger
@@ -33,20 +40,35 @@ def _unique_basename(dest_dir: str, basename: str) -> str:
     return helper.get_unique_filename(dest_dir, basename)
 
 
-def _find_named_directories(root: str, name: str) -> list[str]:
+def _find_named_directories(
+    root: str, name: str, *, subdir_depth: int = 1
+) -> list[str]:
     """
     Return absolute paths of directories named `name` under `root`, excluding
     root/name (the collection bucket at the tree root).
+
+    If ``subdir_depth`` is not ``-1``, only directories whose relative path from
+    ``root`` has exactly ``subdir_depth + 1`` components are included (so ``1`` →
+    ``<top-level-child>/<name>``).
     """
     root = os.path.abspath(root)
     bucket = os.path.normpath(os.path.join(root, name))
+    root_resolved = Path(root).resolve()
     found: list[str] = []
     for dirpath, _dirnames, _filenames in os.walk(root):
         if os.path.basename(dirpath) != name:
             continue
-        if os.path.normpath(dirpath) == bucket:
+        dir_abs = os.path.abspath(dirpath)
+        if os.path.normpath(dir_abs) == bucket:
             continue
-        found.append(os.path.abspath(dirpath))
+        if subdir_depth != -1:
+            try:
+                rel_parts = Path(dir_abs).resolve().relative_to(root_resolved).parts
+            except ValueError:
+                continue
+            if len(rel_parts) != subdir_depth + 1:
+                continue
+        found.append(dir_abs)
     return found
 
 
@@ -96,16 +118,25 @@ class NamedSubdirCollector:
         test: bool = False,
         skip_confirm: bool = False,
         clear_sources: bool = True,
+        subdir_depth: int = 1,
     ):
         """
         :param test: If True, dry-run only (no moves, no mkdir beyond reads, no clearing sources).
+        :param subdir_depth: Number of path segments under ``root`` down to and including the
+            label folder, minus one (default ``1`` → ``root/<child>/<label>/``). Use ``-1`` for
+            any depth.
         """
+        if not isinstance(subdir_depth, int) or subdir_depth < -1:
+            raise Exception(
+                f"subdir_depth must be an integer >= -1 (use -1 for unlimited depth), got {subdir_depth!r}"
+            )
         self.name = name
         self.root = os.path.abspath(Utils.fix_path(root))
         self.subdir_names = list(subdir_names)
         self.test = test
         self.skip_confirm = skip_confirm
         self.clear_sources = clear_sources
+        self.subdir_depth = subdir_depth
 
     def _collect_work(self) -> tuple[list[tuple[str, str]], set[str]]:
         """
@@ -117,7 +148,11 @@ class NamedSubdirCollector:
         work_items: list[tuple[str, str]] = []
 
         for label in self.subdir_names:
-            for source_dir in _find_named_directories(self.root, label):
+            for source_dir in _find_named_directories(
+                self.root,
+                label,
+                subdir_depth=self.subdir_depth,
+            ):
                 sources_to_clear.add(source_dir)
                 for src_file in _iter_files_under(source_dir):
                     src_abs = os.path.abspath(src_file)

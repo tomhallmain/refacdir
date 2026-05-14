@@ -536,6 +536,7 @@ class BatchJob:
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         clear_sources = Utils.get_from_dict(yaml_dict, "clear_sources", True)
+        subdir_depth = int(Utils.get_from_dict(yaml_dict, "subdir_depth", 1))
         logger.info(
             f"Constructing named subdir collector: {name} at {root} for labels {subdir_names}"
         )
@@ -546,6 +547,7 @@ class BatchJob:
             test=test,
             skip_confirm=skip_confirm,
             clear_sources=clear_sources,
+            subdir_depth=subdir_depth,
         )
 
 

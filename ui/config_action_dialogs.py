@@ -682,7 +682,9 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
         return (
             "Collects files from nested folders whose basename is in subdir_names into root/<name>/. "
             "For subdir_names use comma-separated folder names in this dialog (recommended). "
-            "root: directory tree to scan. clear_sources: remove emptied nested dirs after moves."
+            "root: directory tree to scan. clear_sources: remove emptied nested dirs after moves. "
+            "subdir_depth (default 1): only root/<top-level-child>/<label>/; larger values allow more "
+            "intermediate folders; -1 means any depth."
         )
 
     def default_mapping(self) -> dict:
@@ -690,6 +692,7 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
             "name": "named_subdir_collector mapping",
             "root": ".",
             "subdir_names": ["folder_one", "folder_two"],
+            "subdir_depth": 1,
         }
 
     def _build_mapping_from_editor(self) -> dict:
@@ -723,6 +726,7 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
         return [
             "root",
             "subdir_names",
+            "subdir_depth",
             "clear_sources",
             "test",
             "skip_confirm",

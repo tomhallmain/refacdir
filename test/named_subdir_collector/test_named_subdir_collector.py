@@ -78,6 +78,78 @@ def test_clear_sources_false_leaves_empty_nested_dirs(tmp_path):
     assert (root / "sub" / "A").is_dir()
 
 
+def test_subdir_depth_default_skips_deeper_named_dir(tmp_path):
+    root = tmp_path / "root"
+    (root / "B" / "C").mkdir(parents=True)
+    (root / "B" / "C" / "shallow.txt").write_text("s", encoding="utf-8")
+    (root / "B" / "_" / "C").mkdir(parents=True)
+    (root / "B" / "_" / "C" / "deep.txt").write_text("d", encoding="utf-8")
+
+    NamedSubdirCollector(
+        "unit",
+        str(root),
+        ["C"],
+        test=False,
+        skip_confirm=True,
+        clear_sources=True,
+    ).run()
+
+    assert (root / "C" / "shallow.txt").read_text(encoding="utf-8") == "s"
+    assert (root / "B" / "_" / "C" / "deep.txt").read_text(encoding="utf-8") == "d"
+
+
+def test_subdir_depth_minus_one_collects_any_depth(tmp_path):
+    root = tmp_path / "root"
+    (root / "B" / "C").mkdir(parents=True)
+    (root / "B" / "C" / "shallow.txt").write_text("s", encoding="utf-8")
+    (root / "B" / "_" / "C").mkdir(parents=True)
+    (root / "B" / "_" / "C" / "deep.txt").write_text("d", encoding="utf-8")
+
+    NamedSubdirCollector(
+        "unit",
+        str(root),
+        ["C"],
+        test=False,
+        skip_confirm=True,
+        clear_sources=True,
+        subdir_depth=-1,
+    ).run()
+
+    assert (root / "C" / "shallow.txt").read_text(encoding="utf-8") == "s"
+    assert (root / "C" / "deep.txt").read_text(encoding="utf-8") == "d"
+
+
+def test_subdir_depth_two_requires_three_relative_components(tmp_path):
+    root = tmp_path / "root"
+    (root / "B" / "C").mkdir(parents=True)
+    (root / "B" / "C" / "two_parts.txt").write_text("no", encoding="utf-8")
+    (root / "B" / "_" / "C").mkdir(parents=True)
+    (root / "B" / "_" / "C" / "three_parts.txt").write_text("yes", encoding="utf-8")
+
+    NamedSubdirCollector(
+        "unit",
+        str(root),
+        ["C"],
+        test=False,
+        skip_confirm=True,
+        clear_sources=True,
+        subdir_depth=2,
+    ).run()
+
+    assert (root / "B" / "C" / "two_parts.txt").read_text(encoding="utf-8") == "no"
+    assert (root / "C" / "three_parts.txt").read_text(encoding="utf-8") == "yes"
+
+
+def test_invalid_subdir_depth_raises():
+    with pytest.raises(Exception, match="subdir_depth"):
+        NamedSubdirCollector(
+            "bad",
+            ".",
+            ["A"],
+            subdir_depth=-2,
+        )
+
+
 def test_construct_named_subdir_collector_from_batch_job(tmp_path):
     pytest.importorskip("keyring")
     from refacdir.batch import BatchArgs, BatchJob
@@ -99,3 +171,4 @@ def test_construct_named_subdir_collector_from_batch_job(tmp_path):
     assert collector.name == "via_batch"
     assert collector.test is True
     assert collector.clear_sources is False
+    assert collector.subdir_depth == 1
