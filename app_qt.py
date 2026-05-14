@@ -325,7 +325,20 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.only_observers_check = QCheckBox(_("Only Observers"))
         self.only_observers_check.stateChanged.connect(lambda: self.store_ui_settings())
         options_grid.addWidget(self.only_observers_check, 1, 1)
-        
+
+        self.persist_definition_caches_check = QCheckBox(
+            _("Persist YAML definition caches between batch runs")
+        )
+        self.persist_definition_caches_check.setToolTip(
+            _(
+                "Unchecked (default): at each run, clear filename_mapping_functions and "
+                "filetype_definitions registries before loading configs in this run. "
+                "Checked: keep definitions from earlier runs in this session (legacy)."
+            )
+        )
+        self.persist_definition_caches_check.stateChanged.connect(lambda: self.store_ui_settings())
+        options_grid.addWidget(self.persist_definition_caches_check, 2, 0, 1, 2)
+
         options_layout.addLayout(options_grid)
         parent_layout.addWidget(options_frame)
         
@@ -453,6 +466,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         args.test = self.test_check.isChecked()
         args.skip_confirm = self.skip_confirm_check.isChecked()
         args.only_observers = self.only_observers_check.isChecked()
+        args.persist_definition_caches_across_batch_runs = (
+            self.persist_definition_caches_check.isChecked()
+        )
         args.app_actions = self.app_actions
         
         # Only run filtered configs
@@ -606,6 +622,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.test_check.setChecked(operation_settings.get('test_mode', False))
             self.skip_confirm_check.setChecked(operation_settings.get('skip_confirm', False))
             self.only_observers_check.setChecked(operation_settings.get('only_observers', False))
+            self.persist_definition_caches_check.setChecked(
+                operation_settings.get('persist_definition_caches_across_batch_runs', False)
+            )
             
             # Restore selected configurations
             cached_configs = app_info_cache.get_selected_configs()
@@ -642,7 +661,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 'recur': self.recur_check.isChecked(),
                 'test_mode': self.test_check.isChecked(),
                 'skip_confirm': self.skip_confirm_check.isChecked(),
-                'only_observers': self.only_observers_check.isChecked()
+                'only_observers': self.only_observers_check.isChecked(),
+                'persist_definition_caches_across_batch_runs': self.persist_definition_caches_check.isChecked(),
             }
             app_info_cache.set_operation_settings(operation_settings)
             

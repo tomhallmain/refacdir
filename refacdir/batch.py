@@ -30,6 +30,11 @@ class BatchArgs:
         self.skip_confirm = False
         self.only_observers = False
         self.app_actions = None
+        # When False (default), FilenameMappingDefinition / FiletypesDefinition registries are
+        # cleared at the start of each BatchJob.run() so each run reflects only YAML loaded in
+        # that run (definitions still merge across config files within the same run). When True,
+        # prior runs in the same process keep accumulated definitions (legacy behavior).
+        self.persist_definition_caches_across_batch_runs = False
         # Defaults when backup YAML omits these keys (CLI/UI can override via BatchArgs)
         self.backup_overwrite = False
         self.backup_warn_duplicates = False
@@ -147,6 +152,12 @@ class BatchJob:
     def run(self):
         try:
             logger.info("Starting batch job execution")
+            if not self.args.persist_definition_caches_across_batch_runs:
+                FilenameMappingDefinition.reset_registration_state()
+                FiletypesDefinition.reset_registration_state()
+                logger.info(
+                    "Cleared filename_mapping_functions / filetype_definitions registries for this batch run"
+                )
             # Count total actions across all configs
             self.total_actions = 0
             for config, will_run in self.configurations.items():

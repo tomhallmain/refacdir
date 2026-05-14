@@ -139,6 +139,12 @@ class FilenameMappingDefinition:
                 FilenameMappingDefinition.add_named_function(function_call=function_call)
 
     @staticmethod
+    def reset_registration_state():
+        """Clear named functions and compiled-pattern memoization (e.g. before a fresh batch run)."""
+        FilenameMappingDefinition.NAMED_FUNCTIONS.clear()
+        FilenameMappingDefinition.GENERATED_PATTERNS.clear()
+
+    @staticmethod
     def compiled(pattern, funcs=[]):
         definition = FilenameMappingDefinition(pattern, funcs)
         return definition.compile()
@@ -193,6 +199,11 @@ class FiletypesDefinition:
                     extensions_list=defn["extensions"],
                 )
                 FiletypesDefinition.add_named_definition(definition=definition)
+
+    @staticmethod
+    def reset_registration_state():
+        """Clear named filetype definitions (e.g. before a fresh batch run)."""
+        FiletypesDefinition.NAMED_DEFINITIONS.clear()
 
     @staticmethod
     def compile(name_string):

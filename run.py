@@ -27,6 +27,10 @@ python run.py [args]
 
     -o, --only-observers
         Load configs but only run any Directory Observer actions defined in them
+
+    --persist-definition-caches
+        Keep filename_mapping_functions / filetype_definitions registries across batch runs
+        in the same process (default is to clear them at each run for a clean YAML-only view)
 """
 
 
@@ -47,6 +51,7 @@ if __name__ == "__main__":
                 "skip-confirm",
                 "only-observers",
                 "configs=",
+                "persist-definition-caches",
                 ])
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -75,6 +80,8 @@ if __name__ == "__main__":
                 raise Exception(f"Invalid config list provided: {e}")
         elif o in ("-o", "--only-observers"):
             batch_args.only_observers = True
+        elif o == "--persist-definition-caches":
+            batch_args.persist_definition_caches_across_batch_runs = True
 
 
     main(batch_args)
