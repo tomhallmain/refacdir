@@ -152,9 +152,15 @@ class FilenameMappingDefinition:
             rename_tag = mapping["rename_tag"]
             if isinstance(search_pattern, str):
                 mappings[FilenameMappingDefinition.compiled(search_pattern, funcs)] = rename_tag
+            elif callable(search_pattern):
+                # e.g. programmatic matchers; FileRenamer.move_files supports callable glob keys
+                mappings[search_pattern] = rename_tag
             elif isinstance(search_pattern, list):
                 for pattern in mapping["search_patterns"]:
-                    mappings[FilenameMappingDefinition.compiled(pattern, funcs)] = rename_tag
+                    if callable(pattern):
+                        mappings[pattern] = rename_tag
+                    else:
+                        mappings[FilenameMappingDefinition.compiled(pattern, funcs)] = rename_tag
             else:
                 raise Exception(f"Invalid search pattern type {type(search_pattern)}")
         return mappings
