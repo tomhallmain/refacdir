@@ -10,12 +10,16 @@ It supports:
 - Window resizing via edges and corners
 """
 
+import os
+
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, 
+    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton,
     QSizePolicy, QApplication, QFrame
 )
 from PySide6.QtCore import Qt, QPoint, Signal, QSize, QRect, QEvent, QObject
-from PySide6.QtGui import QMouseEvent, QCursor
+from PySide6.QtGui import QMouseEvent, QCursor, QIcon
+
+_ICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "refacdir_icon.svg")
 
 
 class TitleBarButton(QPushButton):
@@ -71,10 +75,13 @@ class CustomTitleBar(QWidget):
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignVCenter)  # Vertically center all items
         
-        # Icon placeholder (optional)
+        # Icon (optional)
         if show_icon:
             self.icon_label = QLabel()
             self.icon_label.setFixedSize(16, 16)
+            if os.path.exists(_ICON_PATH):
+                pixmap = QIcon(_ICON_PATH).pixmap(QSize(16, 16))
+                self.icon_label.setPixmap(pixmap)
             layout.addWidget(self.icon_label, 0, Qt.AlignVCenter)
             layout.addSpacing(8)
         

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Folder body: dark maroon/wine -->
+  <path d="M2 23 C2 17 6 13 11 13 L23 13 C26.5 13 28.5 15.5 30.5 19.5 L32 22 L55 22 C59.5 22 62 25 62 29 L62 53 C62 58.5 58 61 53 61 L11 61 C6 61 2 57.5 2 53 Z" fill="#8c1c36"/>
+
+  <!-- Folder tab: lighter rose-maroon -->
+  <path d="M11 13 L23 13 C26.5 13 28.5 15.5 30.5 19.5 L32 22 L2 22 L2 23 C2 19 4 15 8 13.5 Z" fill="#b22844"/>
+
+  <!-- Subtle top-edge sheen on body -->
+  <rect x="2" y="22" width="60" height="2.5" fill="#c83050" opacity="0.22"/>
+
+  <!-- Three organized file lines: varying widths suggest sorted content -->
+  <rect x="11" y="31" width="42" height="5.5" rx="2.75" fill="#fce4ea"/>
+  <rect x="11" y="40.5" width="29" height="5.5" rx="2.75" fill="#fce4ea" opacity="0.80"/>
+  <rect x="11" y="50" width="36" height="5.5" rx="2.75" fill="#fce4ea" opacity="0.65"/>
+</svg>

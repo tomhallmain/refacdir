@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QMessageBox, QScrollArea, QSizePolicy, QTextEdit, QFileDialog, QLineEdit, QGridLayout, QStyle
 )
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread
-from PySide6.QtGui import QFont, QPalette, QColor
+from PySide6.QtGui import QFont, QPalette, QColor, QIcon
 
 from run import main
 from extensions.refacdir_server import RefacDirServer
@@ -786,6 +786,9 @@ if __name__ == "__main__":
         
         # Create and run application
         app = QApplication([])
+        _icon_path = os.path.join(os.path.dirname(__file__), "ui", "assets", "refacdir_icon.svg")
+        if os.path.exists(_icon_path):
+            app.setWindowIcon(QIcon(_icon_path))
         window = MainWindow()
         window.show()
         exit(app.exec())
