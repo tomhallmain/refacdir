@@ -540,9 +540,17 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def _refresh_configs(self):
         """Reload batch config states and refresh config list UI."""
         try:
+            current = dict(self.configs)  # preserve current in-session selections
             BatchArgs.setup_configs(recache=True)
-            self.configs = deepcopy(BatchArgs.configs)
-            self.filtered_configs = deepcopy(BatchArgs.configs)
+            merged = dict(BatchArgs.configs)
+            # Keep the user's in-session selection for configs that already existed;
+            # newly discovered configs keep the default from setup_configs.
+            for path in merged:
+                if path in current:
+                    merged[path] = current[path]
+            BatchArgs.configs = merged
+            self.configs = merged
+            self.filtered_configs = deepcopy(merged)
             self.add_config_widgets()
             logger.info("Config list refreshed.")
         except Exception as exc:
@@ -666,13 +674,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             }
             app_info_cache.set_operation_settings(operation_settings)
             
-            # Save selected configurations (only enabled ones)
-            selected_configs = {
-                config_path: enabled 
-                for config_path, enabled in self.configs.items() 
-                if enabled
-            }
-            app_info_cache.set_selected_configs(selected_configs)
+            # Save all config states so explicit off-selections survive restarts
+            app_info_cache.set_selected_configs(dict(self.configs))
             
             # Save search filter text (optional)
             # app_info_cache.set_search_filter(self.filter_text)

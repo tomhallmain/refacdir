@@ -1,5 +1,4 @@
 from enum import Enum
-from glob import glob
 import os
 import yaml
 
@@ -65,31 +64,48 @@ class BatchArgs:
         if not recache and len(BatchArgs.configs) > 0:
             return
 
-        master_config_file = os.path.join(Config.CONFIGS_DIR_LOC, "master_config.yaml")
+        configs_dir = Config.CONFIGS_DIR_LOC
+
+        # Discover all runnable YAMLs from disk — this is always the source of truth.
+        def _is_runnable_yaml(name):
+            return (name.endswith(".yaml")
+                    and name != "config_example.yaml"
+                    and not name.startswith("master_config"))
+
+        new_configs = {
+            "configs/" + entry.name: True
+            for entry in sorted(os.scandir(configs_dir), key=lambda e: e.name)
+            if entry.is_file() and _is_runnable_yaml(entry.name)
+        }
+
+        # master_config is now a defaults layer only — it can override will_run for
+        # known configs but cannot prevent discovery of files not listed in it.
+        master_config_file = os.path.join(configs_dir, "master_config.yaml")
         if not os.path.exists(master_config_file):
-            master_config_file = os.path.join(Config.CONFIGS_DIR_LOC, "master_config_example.yaml")
-            if not os.path.exists(master_config_file):
-                logger.warning("No master config file found, parsing config list.")
-                configs = sorted(glob("configs/*.yaml", recursive=False))
-                for config in configs:
-                    BatchArgs.configs[config] = None
-                return
+            alt = os.path.join(configs_dir, "master_config_example.yaml")
+            if os.path.exists(alt):
+                master_config_file = alt
+                logger.info("master_config.yaml not found, using master_config_example.yaml for defaults.")
             else:
-                logger.info("master_config.yaml not found, using master_config_example.yaml instead.")
+                master_config_file = None
 
-        try:
-            master_config_yaml = yaml.load(open(master_config_file), Loader=yaml.FullLoader)
-            logger.info(f"Successfully loaded master config from {master_config_file}")
-        except yaml.YAMLError as e:
-            logger.error(f"Error loading {master_config_file}: {e}")
-            configs = sorted(glob("configs/*.yaml", recursive=False))
-            for config in configs:
-                BatchArgs.configs[config] = None
-            return
+        if master_config_file:
+            try:
+                master_config_yaml = yaml.load(open(master_config_file), Loader=yaml.FullLoader)
+                logger.info(f"Applying defaults from master config: {master_config_file}")
+                for entry in master_config_yaml.get("configs", []):
+                    path = "configs/" + entry["config_file"]
+                    if path in new_configs:
+                        new_configs[path] = entry.get("will_run", True)
+                    else:
+                        logger.warning(
+                            f"master_config references '{entry['config_file']}' which was not found on disk — skipping"
+                        )
+            except yaml.YAMLError as e:
+                logger.error(f"Error loading master config {master_config_file}: {e}")
 
-        for config in master_config_yaml["configs"]:
-            logger.info(f"Loading config: {config['config_file']} (will_run: {config['will_run']})")
-            BatchArgs.configs["configs/" + config["config_file"]] = config["will_run"]
+        BatchArgs.configs = new_configs
+        logger.info(f"Config discovery complete: {len(new_configs)} configs found")
 
 class ActionType(Enum):
     # NOTE action type values must not be changed without also updating the func names of BatchJob

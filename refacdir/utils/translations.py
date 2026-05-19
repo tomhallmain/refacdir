@@ -75,7 +75,7 @@ class I18N:
         else:
             return int(seconds / 31536000), I18N._("years")
 
-    '''
+    r'''
     NOTE when gathering the translation strings, set _() == to gettext.gettext() instead of the above, and run:
 
         ```python C:\Python310\Tools\i18n\pygettext.py -d base -o locale\base.pot .```
