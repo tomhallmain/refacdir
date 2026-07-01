@@ -235,6 +235,24 @@ class AppInfoCache:
         """Get the cached search filter text, returns empty string if not set."""
         return self.get("search_filter", default_val="")
 
+    def get_batch_job_history(self):
+        """Return the last batch job records (newest first), max 20."""
+        return self.get("batch_job_history", default_val=[])
+
+    def set_batch_job_history(self, history):
+        """Replace the full batch job history list and persist."""
+        self.set("batch_job_history", history)
+        self.store()
+
+    def prepend_batch_job_record(self, record):
+        """Prepend a batch job record, keeping at most 20 entries."""
+        from refacdir.batch_job_history import MAX_BATCH_JOB_HISTORY
+
+        history = self.get_batch_job_history()
+        history.insert(0, record)
+        self.set("batch_job_history", history[:MAX_BATCH_JOB_HISTORY])
+        self.store()
+
     @staticmethod
     def normalize_directory_key(directory):
         return os.path.normpath(os.path.abspath(directory))

@@ -29,6 +29,7 @@ from ui import (
     ThemeColors,
     ToastNotification,
     TestResultsWindow,
+    BatchHistoryWindow,
     FramelessWindowMixin,
     CustomTitleBar,
     WindowResizeHandler,
@@ -80,6 +81,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.recurring_action_config = RecurringActionConfig()
         self._toast = ToastNotification()
         self._config_editor_window = None
+        self._batch_history_window = None
         self.is_dark_theme = True
 
         app_actions = {
@@ -213,6 +215,11 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.config_editor_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
         self.config_editor_btn.clicked.connect(self.open_config_editor)
         actions_layout.addWidget(self.config_editor_btn)
+
+        self.history_btn = QPushButton(_("Job History"))
+        self.history_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        self.history_btn.clicked.connect(self.open_batch_history)
+        actions_layout.addWidget(self.history_btn)
         
         sidebar_layout.addWidget(actions_frame)
         
@@ -544,6 +551,14 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self._config_editor_window.show()
         self._config_editor_window.raise_()
         self._config_editor_window.activateWindow()
+
+    def open_batch_history(self):
+        """Open (or focus) the batch job history window."""
+        if self._batch_history_window is None:
+            self._batch_history_window = BatchHistoryWindow(parent=self)
+        self._batch_history_window.show()
+        self._batch_history_window.raise_()
+        self._batch_history_window.activateWindow()
 
     def _on_config_saved(self, config_path: str):
         """Handle config editor save callback."""

@@ -139,3 +139,16 @@ def isolated_app_singletons(tmp_path, monkeypatch):
     yield
 
     BatchArgs.configs = prev_configs
+
+
+@pytest.fixture(autouse=True)
+def reset_batch_job_history(isolated_app_singletons):
+    """Clear batch job history and the in-memory session on the isolated cache."""
+    import refacdir.batch_job_history as batch_job_history
+    import refacdir.utils.app_info_cache as cache_module
+
+    batch_job_history._active_session = None
+    cache_module.app_info_cache.set("batch_job_history", [])
+    yield
+    batch_job_history._active_session = None
+    cache_module.app_info_cache.set("batch_job_history", [])

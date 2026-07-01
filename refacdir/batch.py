@@ -168,6 +168,10 @@ class BatchJob:
 
 
     def run(self):
+        from refacdir.batch_job_history import begin_batch_job, finish_batch_job
+
+        configs_run = [c for c, will_run in self.configurations.items() if will_run]
+        begin_batch_job(configs_run, test=self.test)
         try:
             logger.info("Starting batch job execution")
             if not self.args.persist_definition_caches_across_batch_runs:
@@ -225,6 +229,8 @@ class BatchJob:
             if self.app_actions:
                 self.app_actions.progress_text(_("Operations cancelled by user"))
                 self.app_actions.progress_bar_reset()
+        finally:
+            finish_batch_job(self.counts_map, self.failures, self.cancelled)
 
     def run_config_file(self, config):
         logger.info(f"Running config file: {config}")

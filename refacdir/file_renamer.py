@@ -78,6 +78,10 @@ class FileRenamer:
         try:
             if not self.test:
                 os.rename(filename, new_filename_full_path)
+                from refacdir.batch_job_history import record_file_operation
+
+                op_type = "move" if target_dir is not None else "rename"
+                record_file_operation(op_type, filename, new_filename_full_path)
             count += 1
             if self.log_changes:
                 if self.test:
