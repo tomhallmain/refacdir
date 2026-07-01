@@ -185,27 +185,17 @@ class AppInfoCache:
         return self.get("ui_theme_dark", default_val=default)
     
     def set_operation_settings(self, settings: dict):
-        """
-        Store operation settings (checkboxes state).
-        
-        Args:
-            settings: Dict with keys: 'recur', 'test_mode', 'skip_confirm', 'only_observers'
-        """
+        """Store operation settings (checkboxes state)."""
         self.set("operation_settings", settings)
     
     def get_operation_settings(self):
-        """
-        Get the cached operation settings.
-        
-        Returns:
-            dict with keys: 'recur', 'test_mode', 'skip_confirm', 'only_observers'
-            Returns dict with all False if not set.
-        """
+        """Get the cached operation settings."""
         default_settings = {
             'recur': False,
             'test_mode': False,
             'skip_confirm': False,
-            'only_observers': False
+            'only_observers': False,
+            'inactivity_shutdown_timeout_minutes': 30,
         }
         cached = self.get("operation_settings", default_val=default_settings)
         # Merge with defaults to ensure all keys exist

@@ -356,7 +356,8 @@ class RenamerActionDialog(BaseActionDialog):
         name = mapping.get("name", "(unnamed)")
         rules = len(mapping.get("mappings", []))
         locations = len(mapping.get("locations", []))
-        return f"{name} ({rules} rule(s), {locations} location(s))"
+        status = "" if mapping.get("will_run", True) else " [disabled]"
+        return f"{name}{status} ({rules} rule(s), {locations} location(s))"
 
     def _build_mapping_detail_widgets(self):
         self.detail_form = QFormLayout()
@@ -372,15 +373,17 @@ class RenamerActionDialog(BaseActionDialog):
         options_group = QGroupBox("Options")
         options_layout = QGridLayout(options_group)
         self.recursive_check = QCheckBox("recursive")
+        self.will_run_check = QCheckBox("will_run")
         self.test_check = QCheckBox("test")
         self.skip_confirm_check = QCheckBox("skip_confirm")
         self.make_dirs_check = QCheckBox("make_dirs")
         self.find_unused_check = QCheckBox("find_unused_filenames")
         options_layout.addWidget(self.recursive_check, 0, 0)
-        options_layout.addWidget(self.test_check, 0, 1)
-        options_layout.addWidget(self.skip_confirm_check, 1, 0)
-        options_layout.addWidget(self.make_dirs_check, 1, 1)
-        options_layout.addWidget(self.find_unused_check, 2, 0)
+        options_layout.addWidget(self.will_run_check, 0, 1)
+        options_layout.addWidget(self.test_check, 1, 0)
+        options_layout.addWidget(self.skip_confirm_check, 1, 1)
+        options_layout.addWidget(self.make_dirs_check, 2, 0)
+        options_layout.addWidget(self.find_unused_check, 2, 1)
         self.detail_layout.addWidget(options_group)
 
         locations_group = QGroupBox("Locations (one root path per line)")
@@ -440,6 +443,7 @@ class RenamerActionDialog(BaseActionDialog):
         self.function_combo.setCurrentText(str(mapping.get("function", "rename_by_ctime")))
 
         self.recursive_check.setChecked(bool(mapping.get("recursive", True)))
+        self.will_run_check.setChecked(bool(mapping.get("will_run", True)))
         self.test_check.setChecked(bool(mapping.get("test", False)))
         self.skip_confirm_check.setChecked(bool(mapping.get("skip_confirm", False)))
         self.make_dirs_check.setChecked(bool(mapping.get("make_dirs", True)))
@@ -490,9 +494,12 @@ class RenamerActionDialog(BaseActionDialog):
         # Preserve global behavior for test/skip_confirm when unset.
         # If key existed in loaded mapping, keep explicit value.
         # Otherwise, only write when checked True (explicit override).
+        will_run_checked = self.will_run_check.isChecked()
         test_checked = self.test_check.isChecked()
         skip_checked = self.skip_confirm_check.isChecked()
 
+        if "will_run" in self._loaded_mapping_keys or not will_run_checked:
+            mapping["will_run"] = will_run_checked
         if "test" in self._loaded_mapping_keys or test_checked:
             mapping["test"] = test_checked
         if "skip_confirm" in self._loaded_mapping_keys or skip_checked:

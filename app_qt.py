@@ -6,7 +6,7 @@ import traceback
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QCheckBox, QProgressBar, QFrame,
+    QPushButton, QLabel, QCheckBox, QProgressBar, QFrame, QSpinBox,
     QMessageBox, QScrollArea, QSizePolicy, QTextEdit, QFileDialog, QLineEdit, QGridLayout, QStyle
 )
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread
@@ -35,6 +35,7 @@ from ui import (
     ConfigEditorWindow,
     run_duplicate_review_dialog,
 )
+from ui.inactivity_shutdown import DEFAULT_INACTIVITY_TIMEOUT_MINUTES, InactivityShutdown
 
 _ = I18N._
 
@@ -103,6 +104,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.setup_ui()
         self.setup_connections()
         self.load_configs()
+        self._inactivity_shutdown = InactivityShutdown(self)
         
         # Restore UI settings from app_info_cache
         self.restore_ui_settings()
@@ -339,6 +341,14 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.persist_definition_caches_check.stateChanged.connect(lambda: self.store_ui_settings())
         options_grid.addWidget(self.persist_definition_caches_check, 2, 0, 1, 2)
 
+        self.inactivity_timeout_spin = QSpinBox()
+        self.inactivity_timeout_spin.setRange(1, 24 * 60)
+        self.inactivity_timeout_spin.setSuffix(_(" min"))
+        self.inactivity_timeout_spin.setToolTip(_("Close the UI after this many minutes without keyboard or mouse activity."))
+        self.inactivity_timeout_spin.valueChanged.connect(self._on_inactivity_timeout_changed)
+        options_grid.addWidget(QLabel(_("Idle shutdown")), 3, 0)
+        options_grid.addWidget(self.inactivity_timeout_spin, 3, 1)
+
         options_layout.addLayout(options_grid)
         parent_layout.addWidget(options_frame)
         
@@ -478,6 +488,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.status_label.setText(_("Running operations..."))
+        self._inactivity_shutdown.pause()
         
         # Run operations in background
         def run_async():
@@ -487,12 +498,22 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 self.alert("Error", str(e), "error")
                 self.status_label.setText(_("Operation failed"))
             finally:
-                self.status_label.setText(_("Ready"))
-                self.progress_bar.setValue(0)
-                self.progress_bar.setVisible(False)
+                QTimer.singleShot(0, self._finish_batch_run)
                 
         Utils.start_thread(run_async)
+
+    def _finish_batch_run(self):
+        """Reset UI state after a background batch run (main thread)."""
+        self.status_label.setText(_("Ready"))
+        self.progress_bar.setValue(0)
+        self.progress_bar.setVisible(False)
+        self._inactivity_shutdown.resume()
         
+    def _on_inactivity_timeout_changed(self, minutes: int):
+        """Apply idle shutdown timeout from the operation settings control."""
+        self._inactivity_shutdown.set_timeout_minutes(minutes)
+        self.store_ui_settings()
+
     def set_recurring_action(self, state: int):
         """Handle recurring action checkbox state changes"""
         self.recurring_action_config.set(state == Qt.Checked)
@@ -633,6 +654,14 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.persist_definition_caches_check.setChecked(
                 operation_settings.get('persist_definition_caches_across_batch_runs', False)
             )
+            timeout_minutes = operation_settings.get(
+                'inactivity_shutdown_timeout_minutes',
+                DEFAULT_INACTIVITY_TIMEOUT_MINUTES,
+            )
+            self.inactivity_timeout_spin.blockSignals(True)
+            self.inactivity_timeout_spin.setValue(timeout_minutes)
+            self.inactivity_timeout_spin.blockSignals(False)
+            self._inactivity_shutdown.set_timeout_minutes(timeout_minutes)
             
             # Restore selected configurations
             cached_configs = app_info_cache.get_selected_configs()
@@ -671,6 +700,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 'skip_confirm': self.skip_confirm_check.isChecked(),
                 'only_observers': self.only_observers_check.isChecked(),
                 'persist_definition_caches_across_batch_runs': self.persist_definition_caches_check.isChecked(),
+                'inactivity_shutdown_timeout_minutes': self.inactivity_timeout_spin.value(),
             }
             app_info_cache.set_operation_settings(operation_settings)
             

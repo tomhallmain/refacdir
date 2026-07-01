@@ -10,7 +10,7 @@ import pytest
 
 from test.test_utils import patch_batch_job_base_dir, posix_path
 
-from refacdir.batch import BatchArgs, BatchJob
+from refacdir.batch import ActionType, BatchArgs, BatchJob
 from refacdir.filename_ops import FilenameMappingDefinition
 
 
@@ -75,3 +75,45 @@ def test_construct_batch_renamer_from_dict_matches_programmatic_mappings():
     assert func == "rename_by_mtime"
     expected = FilenameMappingDefinition.construct_mappings(yaml_dict["mappings"])
     assert br.mappings == expected
+
+
+def test_batch_yaml_renamer_will_run_false_skips_mapping(
+    tmp_path, monkeypatch, restore_batch_configs, restore_filename_mapping_registry
+):
+    """Renamer mappings with will_run=false are kept in config but not executed."""
+    patch_batch_job_base_dir(monkeypatch, str(tmp_path), BatchJob)
+
+    loc = tmp_path / "rename_root"
+    loc.mkdir()
+    (loc / "sample.txt").write_text("hello", encoding="utf-8")
+
+    cfg_path = tmp_path / "unit_renamer_skip_config.yaml"
+    yaml_body = f"""
+will_run: true
+actions:
+  - type: RENAMER
+    mappings:
+      - name: Disabled renamer group
+        function: rename_by_mtime
+        will_run: false
+        skip_confirm: true
+        recursive: false
+        mappings:
+          - search_patterns: "*.txt"
+            rename_tag: "skipped_"
+        locations:
+          - root: "{posix_path(str(loc))}"
+"""
+    cfg_path.write_text(textwrap.dedent(yaml_body).strip(), encoding="utf-8")
+
+    BatchArgs.override_configs({"unit_renamer_skip_config.yaml": True})
+    args = BatchArgs()
+    args.skip_confirm = True
+    job = BatchJob(args)
+
+    job.run_config_file("unit_renamer_skip_config.yaml")
+
+    assert not job.failures, f"Batch reported failures: {job.failures}"
+    assert job.counts_map[ActionType.RENAMER] == 0
+    assert (loc / "sample.txt").exists()
+    assert not any(p.name.startswith("skipped_") for p in loc.iterdir())

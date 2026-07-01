@@ -38,6 +38,7 @@ class BatchArgs:
         self.backup_overwrite = False
         self.backup_warn_duplicates = False
         self.backup_mapping_will_run_default = True
+        self.renamer_mapping_will_run_default = True
         if len(self.configs) == 0 or recache_configs:
             BatchArgs.setup_configs()
 
@@ -144,6 +145,7 @@ class BatchJob:
         self.backup_overwrite = args.backup_overwrite
         self.backup_warn_duplicates = args.backup_warn_duplicates
         self.backup_mapping_will_run_default = args.backup_mapping_will_run_default
+        self.renamer_mapping_will_run_default = args.renamer_mapping_will_run_default
         self.cancelled = False
         
         # Progress tracking
@@ -389,6 +391,12 @@ class BatchJob:
     def run_renamers(self, config, renamers):
         total_renamers = len(renamers)
         for renamer_index, _renamer in enumerate(renamers):
+            will_run = Utils.get_from_dict(_renamer, "will_run", self.renamer_mapping_will_run_default)
+            if not will_run:
+                name = _renamer.get("name", renamer_index)
+                logger.info(f"{config} - Skipping renamer mapping {name} (will_run=false)")
+                continue
+
             self.counts_map[ActionType.RENAMER] += 1
             try:
                 renamer, renamer_function = self.construct_batch_renamer(_renamer)

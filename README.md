@@ -28,6 +28,8 @@ Once all configurations are defined, run `run.py` to perform the actions. The ac
 
 Start the UI by running `app.py`.
 
+The UI exits automatically after a period without keyboard or mouse activity (default 30 minutes; configurable under Operation Settings).
+
 # Server
 
 Set configuration options in config_example.json for a server port to make use of the server while the UI is running. Calls to the server made with Python's multiprocessing client will update the UI as specified, but leave anything unspecified as already set in the UI. This can be helpful to use in conjunction with other applications that involve images. For an example, see [this class](https://github.com/tomhallmain/Weidr/blob/master/extensions/refacdir_client.py).

@@ -84,6 +84,7 @@ actions:
 
   - name: "Other Stable Diffusion output"
     function: "rename_by_ctime"
+    will_run: false
     mappings:
     - search_patterns: ["AnimateDiff", "AnimDiff"]
       rename_tag: "AD_"
