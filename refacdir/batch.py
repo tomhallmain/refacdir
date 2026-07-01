@@ -61,6 +61,52 @@ class BatchArgs:
             BatchArgs.configs[config_path] = will_run
 
     @staticmethod
+    def _config_basename(config_path: str) -> str:
+        normalized = config_path.replace("\\", "/")
+        if normalized.startswith("configs/"):
+            normalized = normalized[len("configs/"):]
+        return os.path.basename(normalized)
+
+    @classmethod
+    def config_yaml_abs_path(cls, config_path: str) -> str:
+        return os.path.join(Config.configs_dir(), cls._config_basename(config_path))
+
+    @classmethod
+    def read_will_run_from_file(cls, config_path: str, default: bool = True) -> bool:
+        """Read file-level ``will_run`` from a config YAML (default True if absent)."""
+        abs_path = cls.config_yaml_abs_path(config_path)
+        if not os.path.isfile(abs_path):
+            return default
+        try:
+            with open(abs_path, encoding="utf-8") as handle:
+                data = yaml.load(handle, Loader=yaml.FullLoader) or {}
+        except yaml.YAMLError as exc:
+            logger.warning(f"Could not read will_run from {config_path}: {exc}")
+            return default
+        if "will_run" not in data:
+            return default
+        return bool(data["will_run"])
+
+    @classmethod
+    def write_will_run_to_file(cls, config_path: str, will_run: bool) -> None:
+        """Persist file-level ``will_run`` in the config YAML."""
+        abs_path = cls.config_yaml_abs_path(config_path)
+        if not os.path.isfile(abs_path):
+            logger.warning(f"Cannot write will_run; config file not found: {abs_path}")
+            return
+        try:
+            with open(abs_path, encoding="utf-8") as handle:
+                data = yaml.load(handle, Loader=yaml.FullLoader) or {}
+            if data.get("will_run") == will_run:
+                return
+            data["will_run"] = will_run
+            with open(abs_path, "w", encoding="utf-8") as handle:
+                yaml.safe_dump(data, handle, sort_keys=False, allow_unicode=False)
+            logger.info(f"Updated {config_path} will_run -> {will_run}")
+        except Exception as exc:
+            logger.error(f"Failed to write will_run to {config_path}: {exc}")
+
+    @staticmethod
     def _is_runnable_yaml_name(name: str) -> bool:
         return (
             name.endswith(".yaml")
@@ -88,7 +134,10 @@ class BatchArgs:
         configs_dir = Config.configs_dir()
 
         # Discover all runnable YAMLs from disk — this is always the source of truth.
-        new_configs = {path: True for path in BatchArgs.discover_runnable_config_paths()}
+        new_configs = {
+            path: BatchArgs.read_will_run_from_file(path)
+            for path in BatchArgs.discover_runnable_config_paths()
+        }
 
         # master_config is now a defaults layer only — it can override will_run for
         # known configs but cannot prevent discovery of files not listed in it.
@@ -254,6 +303,8 @@ class BatchJob:
                 return
 
             if "will_run" in config_wrapper and config_wrapper["will_run"] == False:
+                # Safety belt: BatchArgs.configs is the primary gate in run(); this catches
+                # stale YAML if sync failed or the file was edited outside the app.
                 logger.info(f"{config} is set to will run = False, skipping...")
                 return
 

@@ -20,7 +20,7 @@ class JobQueue:
         return run_config
 
     def add(self, run_config):
-        if len(self.pending_jobs) > self.max_size:
+        if len(self.pending_jobs) >= self.max_size:
             raise Exception(f"Reached limit of pending runs: {self.max_size} - wait until current run has completed.")
         self.pending_jobs.append(run_config)
         logger.info(f"Added pending job: {run_config}")

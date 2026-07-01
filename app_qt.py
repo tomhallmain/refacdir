@@ -451,10 +451,12 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def toggle_config(self, config: str, state: int):
         """Handle config checkbox state changes"""
         if config in self.filtered_configs:
-            self.filtered_configs[config] = state == Qt.Checked
-            self.configs[config] = self.filtered_configs[config]
-            BatchArgs.update_config_state(config, self.filtered_configs[config])
-            logger.info(f"Config {config} set to {self.filtered_configs[config]}")
+            will_run = state == Qt.Checked
+            self.filtered_configs[config] = will_run
+            self.configs[config] = will_run
+            BatchArgs.update_config_state(config, will_run)
+            BatchArgs.write_will_run_to_file(config, will_run)
+            logger.info(f"Config {config} set to {will_run}")
             # Save settings when config selection changes
             self.store_ui_settings()
             
@@ -476,9 +478,20 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         
     def run(self):
         """Run the selected operations"""
-        if self.progress_bar.isVisible():
+        if self.job_queue.job_running or self.progress_bar.isVisible():
+            try:
+                self.job_queue.add("run")
+                logger.info("Batch run queued (already running)")
+            except Exception as exc:
+                self.alert(_("Queue full"), str(exc), "error")
             return
-            
+
+        self._start_batch_run()
+
+    def _start_batch_run(self):
+        """Start a batch run (or continue draining the job queue)."""
+        self.job_queue.job_running = True
+
         args = BatchArgs(recache_configs=False)
         args.test = self.test_check.isChecked()
         args.skip_confirm = self.skip_confirm_check.isChecked()
@@ -487,16 +500,16 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.persist_definition_caches_check.isChecked()
         )
         args.app_actions = self.app_actions
-        
+
         # Only run filtered configs
         BatchArgs.override_configs(self.filtered_configs)
-        
+
         # Show progress bar
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.status_label.setText(_("Running operations..."))
         self._inactivity_shutdown.pause()
-        
+
         # Run operations in background
         def run_async():
             try:
@@ -506,15 +519,19 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 self.status_label.setText(_("Operation failed"))
             finally:
                 QTimer.singleShot(0, self._finish_batch_run)
-                
+
         Utils.start_thread(run_async)
 
     def _finish_batch_run(self):
         """Reset UI state after a background batch run (main thread)."""
+        self.job_queue.job_running = False
         self.status_label.setText(_("Ready"))
         self.progress_bar.setValue(0)
         self.progress_bar.setVisible(False)
         self._inactivity_shutdown.resume()
+
+        if self.job_queue.take() is not None:
+            QTimer.singleShot(0, self._start_batch_run)
         
     def _on_inactivity_timeout_changed(self, minutes: int):
         """Apply idle shutdown timeout from the operation settings control."""
@@ -686,6 +703,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                         self.configs[config_path] = enabled
                         self.filtered_configs[config_path] = enabled
                         BatchArgs.update_config_state(config_path, enabled)
+                        BatchArgs.write_will_run_to_file(config_path, enabled)
                 # Refresh the UI to reflect restored selections
                 self.add_config_widgets()
             
