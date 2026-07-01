@@ -561,9 +561,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self._batch_history_window.activateWindow()
 
     def _on_config_saved(self, config_path: str):
-        """Handle config editor save callback."""
+        """Notify the user after a config save (refresh already ran via editor reload)."""
         logger.info(f"Config saved from editor: {config_path}")
-        self._refresh_configs()
         self.toast(f"Config saved: {config_path}")
 
     def refresh_configs(self):

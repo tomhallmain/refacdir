@@ -379,9 +379,4 @@ class ConfigEditorWindow(SmartWindow):
         self.path_label.setText(config_rel_path)
         self.reload_config_list()
         self.config_saved.emit(config_rel_path)
-        if self.app_actions and hasattr(self.app_actions, "refresh_configs"):
-            try:
-                self.app_actions.refresh_configs()
-            except Exception as exc:
-                logger.warning(f"refresh_configs callback failed: {exc}")
         QMessageBox.information(self, "Saved", f"Saved config:\n{config_rel_path}")

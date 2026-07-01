@@ -73,3 +73,26 @@ def test_reload_config_list_preserves_selection_via_merge_refresh(qtbot, noop_ap
     assert editor.config_list.count() == 2
     labels = [editor.config_list.item(i).text() for i in range(editor.config_list.count())]
     assert labels == ["configs/alpha.yaml", "configs/beta.yaml"]
+
+
+def test_after_save_refreshes_configs_once(qtbot, noop_app_actions, monkeypatch):
+    """_after_save must trigger a single refresh_configs via reload_config_list (#2)."""
+    from PySide6.QtWidgets import QMessageBox
+
+    refresh_calls: list[int] = []
+
+    def tracking_refresh():
+        refresh_calls.append(1)
+
+    monkeypatch.setattr(QMessageBox, "information", lambda *_args, **_kwargs: None)
+
+    editor = ConfigEditorWindow(
+        app_actions=_actions_with_refresh(noop_app_actions, tracking_refresh),
+    )
+    qtbot.addWidget(editor)
+    refresh_calls.clear()
+
+    editor._after_save("configs/alpha.yaml")
+
+    assert refresh_calls == [1]
+    assert editor.path_label.text() == "configs/alpha.yaml"
