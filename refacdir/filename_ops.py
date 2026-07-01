@@ -1,4 +1,6 @@
 from enum import Enum
+import fnmatch
+import os
 import re
 from refacdir.utils.logger import setup_logger
 
@@ -150,23 +152,95 @@ class FilenameMappingDefinition:
         return definition.compile()
 
     @staticmethod
+    def _normalize_pattern_list(patterns):
+        if patterns is None:
+            return []
+        if isinstance(patterns, str):
+            return [patterns]
+        if isinstance(patterns, list):
+            return patterns
+        raise Exception(f"Invalid pattern list type {type(patterns)} ({patterns})")
+
+    @staticmethod
+    def _compile_pattern(pattern, funcs):
+        if callable(pattern):
+            return pattern
+        return FilenameMappingDefinition.compiled(pattern, funcs)
+
+    @staticmethod
+    def _matches_glob_pattern(filepath, pattern, prefix_match=True):
+        """Match a path using glob rules.
+
+        When ``prefix_match`` is True (include patterns), mirror ``FileRenamer.get_glob_pattern``
+        by also accepting a trailing ``*``. Excludes use exact glob matching only.
+        """
+        norm = filepath.replace("\\", "/")
+        basename = os.path.basename(norm)
+        candidates = (basename, norm)
+        patterns = [pattern]
+        if prefix_match and pattern and not pattern.endswith("*"):
+            patterns.append(pattern + "*")
+        for path in candidates:
+            for pat in patterns:
+                if fnmatch.fnmatchcase(path, pat):
+                    return True
+        return False
+
+    @staticmethod
+    def _wrap_with_exclude_patterns(include_pattern, exclude_patterns, funcs):
+        excludes = FilenameMappingDefinition._normalize_pattern_list(exclude_patterns)
+        if not excludes:
+            return FilenameMappingDefinition._compile_pattern(include_pattern, funcs)
+
+        include_compiled = FilenameMappingDefinition._compile_pattern(include_pattern, funcs)
+        exclude_compiled = [
+            FilenameMappingDefinition._compile_pattern(ex, funcs) for ex in excludes
+        ]
+
+        if callable(include_compiled):
+            def include_match(path):
+                return include_compiled(path)
+        else:
+            include_str = include_compiled
+
+            def include_match(path):
+                return FilenameMappingDefinition._matches_glob_pattern(path, include_str)
+
+        def matcher(path):
+            if not include_match(path):
+                return False
+            for ex in exclude_compiled:
+                if callable(ex):
+                    if ex(path):
+                        return False
+                elif FilenameMappingDefinition._matches_glob_pattern(path, ex, prefix_match=False):
+                    return False
+            return True
+
+        return matcher
+
+    @staticmethod
     def construct_mappings(mappings_list):
         mappings = {}
         for mapping in mappings_list:
             search_pattern = mapping["search_patterns"]
             funcs = mapping["funcs"] if "funcs" in mapping else []
             rename_tag = mapping["rename_tag"]
+            exclude_patterns = mapping.get("exclude_patterns")
+
+            def add_key(pattern):
+                key = FilenameMappingDefinition._wrap_with_exclude_patterns(
+                    pattern, exclude_patterns, funcs
+                )
+                mappings[key] = rename_tag
+
             if isinstance(search_pattern, str):
-                mappings[FilenameMappingDefinition.compiled(search_pattern, funcs)] = rename_tag
+                add_key(search_pattern)
             elif callable(search_pattern):
-                # e.g. programmatic matchers; FileRenamer.move_files supports callable glob keys
-                mappings[search_pattern] = rename_tag
+                add_key(search_pattern)
             elif isinstance(search_pattern, list):
                 for pattern in mapping["search_patterns"]:
-                    if callable(pattern):
-                        mappings[pattern] = rename_tag
-                    else:
-                        mappings[FilenameMappingDefinition.compiled(pattern, funcs)] = rename_tag
+                    add_key(pattern)
             else:
                 raise Exception(f"Invalid search pattern type {type(search_pattern)}")
         return mappings

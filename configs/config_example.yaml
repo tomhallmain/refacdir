@@ -90,6 +90,11 @@ actions:
       rename_tag: "AD_"
     - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
       rename_tag: "hexstring_"
+    - search_patterns: "0{{four_digits}}_"
+      exclude_patterns:
+      - "*_[0-9]*x[0-9]*.jpg"
+      - "*_[0-9]*x[0-9]*.jpeg"
+      rename_tag: "SDWebui_"
     - search_patterns: "{{six_lowercase_alphanumeric}}.png"
       rename_tag: "CBox_"
     locations:

@@ -418,6 +418,10 @@ class RenamerActionDialog(BaseActionDialog):
         self.rule_search_edit = QLineEdit()
         self.rule_search_edit.setPlaceholderText("pattern or comma-separated patterns")
         rule_editor_form.addRow("search_patterns", self.rule_search_edit)
+        self.rule_exclude_edit = QTextEdit()
+        self.rule_exclude_edit.setPlaceholderText("optional; one glob per line")
+        self.rule_exclude_edit.setMinimumHeight(70)
+        rule_editor_form.addRow("exclude_patterns", self.rule_exclude_edit)
         self.rule_tag_edit = QLineEdit()
         self.rule_tag_edit.setPlaceholderText("rename_tag")
         rule_editor_form.addRow("rename_tag", self.rule_tag_edit)
@@ -516,7 +520,11 @@ class RenamerActionDialog(BaseActionDialog):
             else:
                 pattern_preview = str(patterns)[:35]
             tag = str(rule.get("rename_tag", ""))
-            self.rules_list.addItem(f"{idx + 1}. {tag} <- {pattern_preview}")
+            excludes = rule.get("exclude_patterns", [])
+            if isinstance(excludes, str):
+                excludes = [excludes]
+            exclude_hint = f", {len(excludes)} exclude(s)" if excludes else ""
+            self.rules_list.addItem(f"{idx + 1}. {tag} <- {pattern_preview}{exclude_hint}")
         if self._rules:
             row = 0 if self._selected_rule_index is None else min(self._selected_rule_index, len(self._rules) - 1)
             self.rules_list.setCurrentRow(row)
@@ -524,6 +532,7 @@ class RenamerActionDialog(BaseActionDialog):
             self._selected_rule_index = None
             self.rule_search_edit.clear()
             self.rule_tag_edit.clear()
+            self.rule_exclude_edit.clear()
 
     def _on_rule_selected(self, row: int):
         if row < 0 or row >= len(self._rules):
@@ -537,12 +546,20 @@ class RenamerActionDialog(BaseActionDialog):
         else:
             self.rule_search_edit.setText(str(patterns))
         self.rule_tag_edit.setText(str(rule.get("rename_tag", "")))
+        excludes = rule.get("exclude_patterns", "")
+        if isinstance(excludes, list):
+            self.rule_exclude_edit.setPlainText("\n".join(str(p) for p in excludes))
+        elif excludes:
+            self.rule_exclude_edit.setPlainText(str(excludes))
+        else:
+            self.rule_exclude_edit.clear()
 
     def _on_new_rule_draft(self):
         self._selected_rule_index = None
         self.rules_list.clearSelection()
         self.rule_search_edit.clear()
         self.rule_tag_edit.clear()
+        self.rule_exclude_edit.clear()
 
     def _build_rule_from_editor(self) -> dict:
         patterns_text = self.rule_search_edit.text().strip()
@@ -557,10 +574,19 @@ class RenamerActionDialog(BaseActionDialog):
         else:
             patterns = patterns_text
 
-        return {
+        exclude_lines = [
+            line.strip()
+            for line in self.rule_exclude_edit.toPlainText().splitlines()
+            if line.strip()
+        ]
+
+        rule = {
             "search_patterns": patterns,
             "rename_tag": rename_tag,
         }
+        if exclude_lines:
+            rule["exclude_patterns"] = exclude_lines
+        return rule
 
     def _on_upsert_rule(self):
         try:
