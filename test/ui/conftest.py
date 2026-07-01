@@ -66,3 +66,20 @@ def write_runnable_config(name: str, *, will_run: bool = True) -> str:
     with open(os.path.join(Config.configs_dir(), name), "w", encoding="utf-8") as handle:
         handle.write(content)
     return rel_path
+
+
+def write_config_content(name: str, content: str) -> str:
+    """Write raw YAML content under the isolated configs directory."""
+    import os
+
+    with open(os.path.join(Config.configs_dir(), name), "w", encoding="utf-8") as handle:
+        handle.write(content)
+    return f"configs/{name}"
+
+
+def read_config_file(name: str) -> str:
+    """Read raw YAML from the isolated configs directory."""
+    import os
+
+    with open(os.path.join(Config.configs_dir(), name), encoding="utf-8") as handle:
+        return handle.read()

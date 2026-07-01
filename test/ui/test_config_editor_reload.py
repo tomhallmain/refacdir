@@ -96,3 +96,33 @@ def test_after_save_refreshes_configs_once(qtbot, noop_app_actions, monkeypatch)
 
     assert refresh_calls == [1]
     assert editor.path_label.text() == "configs/alpha.yaml"
+
+
+def test_config_abs_path_ignores_process_cwd(qtbot, noop_app_actions, monkeypatch):
+    """_config_abs_path must not depend on os.getcwd() (improvement #3)."""
+    import os
+
+    from refacdir.config import Config
+
+    write_runnable_config("alpha.yaml")
+    expected = os.path.join(Config.configs_dir(), "alpha.yaml")
+
+    other_cwd = os.path.join(Config.configs_dir(), "..", "other_cwd")
+    os.makedirs(other_cwd, exist_ok=True)
+    monkeypatch.chdir(other_cwd)
+
+    editor = ConfigEditorWindow(app_actions=noop_app_actions)
+    qtbot.addWidget(editor)
+
+    assert editor._config_abs_path("configs/alpha.yaml") == os.path.normpath(expected)
+    assert os.path.isfile(editor._config_abs_path("configs/alpha.yaml"))
+
+
+def test_config_rel_path_uses_configs_prefix(qtbot, noop_app_actions):
+    """Save-as relative keys must match batch discovery format (configs/<name>)."""
+    import os
+
+    from refacdir.config import Config
+
+    abs_path = os.path.join(Config.configs_dir(), "beta.yaml")
+    assert ConfigEditorWindow._config_rel_path(abs_path) == "configs/beta.yaml"

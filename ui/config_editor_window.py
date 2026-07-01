@@ -161,18 +161,23 @@ class ConfigEditorWindow(SmartWindow):
             "actions": [],
         }
 
-    def _config_abs_path(self, config_rel_path: str) -> str:
-        return os.path.join(os.getcwd(), config_rel_path)
+    @staticmethod
+    def _config_basename(config_path: str) -> str:
+        return os.path.basename(config_path.replace("\\", "/"))
+
+    @classmethod
+    def _config_abs_path(cls, config_rel_path: str) -> str:
+        """Resolve ``configs/foo.yaml`` to an absolute path under ``Config.configs_dir()``."""
+        return os.path.join(Config.configs_dir(), cls._config_basename(config_rel_path))
+
+    @classmethod
+    def _config_rel_path(cls, abs_path: str) -> str:
+        """Build the batch config key (``configs/<name>``) for an absolute file path."""
+        return "configs/" + cls._config_basename(abs_path)
 
     def _config_paths_from_disk(self) -> list[str]:
         """Discover config paths from disk without mutating ``BatchArgs.configs``."""
-        configs_dir = Config.configs_dir()
-        if not os.path.isdir(configs_dir):
-            return []
-        return sorted(
-            "configs/" + entry.name
-            for entry in sorted(os.scandir(configs_dir), key=lambda e: e.name)
-        )
+        return BatchArgs.discover_runnable_config_paths()
 
     def reload_config_list(self):
         """
@@ -354,7 +359,7 @@ class ConfigEditorWindow(SmartWindow):
             QMessageBox.critical(self, "Validation Error", str(exc))
             return
 
-        default_dir = Config.CONFIGS_DIR_LOC
+        default_dir = Config.configs_dir()
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Config As",
@@ -368,7 +373,7 @@ class ConfigEditorWindow(SmartWindow):
         try:
             with open(path, "w", encoding="utf-8") as handle:
                 yaml.safe_dump(self.current_config_data, handle, sort_keys=False, allow_unicode=False)
-            rel_path = os.path.relpath(path, os.getcwd()).replace("\\", "/")
+            rel_path = self._config_rel_path(path)
             self.current_config_path = rel_path
             self._after_save(rel_path)
         except Exception as exc:

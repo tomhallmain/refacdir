@@ -61,6 +61,26 @@ class BatchArgs:
             BatchArgs.configs[config_path] = will_run
 
     @staticmethod
+    def _is_runnable_yaml_name(name: str) -> bool:
+        return (
+            name.endswith(".yaml")
+            and name != "config_example.yaml"
+            and not name.startswith("master_config")
+        )
+
+    @classmethod
+    def discover_runnable_config_paths(cls) -> list[str]:
+        """Return sorted ``configs/<name>`` keys for runnable YAML files on disk."""
+        configs_dir = Config.configs_dir()
+        if not os.path.isdir(configs_dir):
+            return []
+        return sorted(
+            "configs/" + entry.name
+            for entry in sorted(os.scandir(configs_dir), key=lambda e: e.name)
+            if entry.is_file() and cls._is_runnable_yaml_name(entry.name)
+        )
+
+    @staticmethod
     def setup_configs(recache=True):
         if not recache and len(BatchArgs.configs) > 0:
             return
@@ -68,16 +88,7 @@ class BatchArgs:
         configs_dir = Config.configs_dir()
 
         # Discover all runnable YAMLs from disk — this is always the source of truth.
-        def _is_runnable_yaml(name):
-            return (name.endswith(".yaml")
-                    and name != "config_example.yaml"
-                    and not name.startswith("master_config"))
-
-        new_configs = {
-            "configs/" + entry.name: True
-            for entry in sorted(os.scandir(configs_dir), key=lambda e: e.name)
-            if entry.is_file() and _is_runnable_yaml(entry.name)
-        }
+        new_configs = {path: True for path in BatchArgs.discover_runnable_config_paths()}
 
         # master_config is now a defaults layer only — it can override will_run for
         # known configs but cannot prevent discovery of files not listed in it.
