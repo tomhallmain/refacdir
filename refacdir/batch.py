@@ -429,7 +429,11 @@ class BatchJob:
                 self.app_actions.progress_text(_("Config {0}/{1}: Running renamer mapping {2}/{3} in {4}").format(self.current_config_index, self.total_configs, renamer_index + 1, total_renamers, config))
 
             try:
-                renamer.execute(renamer_function)
+                from refacdir.batch_job_history import recording_context
+
+                mapping_name = _renamer.get("name", str(renamer_index))
+                with recording_context(config=config, mapping_name=mapping_name, action_type="renamer"):
+                    renamer.execute(renamer_function)
             except Exception as e:
                 self.failure_counts_map[ActionType.RENAMER] += 1
                 error = f"{config} renamer {renamer.name} failed:  {e}"

@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import os
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 from refacdir.utils.logger import setup_logger
 
@@ -48,7 +49,7 @@ class _BatchJobSession:
                 "dest": os.path.normpath(dest),
                 "reversible": bool(reversible and op_type in REVERSIBLE_OP_TYPES),
                 "reversed": False,
-                "meta": meta or {},
+                "meta": _merged_meta(meta),
             }
         )
 
@@ -69,6 +70,28 @@ class _BatchJobSession:
 
 
 _active_session: Optional[_BatchJobSession] = None
+_recording_context: Optional[dict[str, Any]] = None
+
+
+@contextmanager
+def recording_context(**meta: Any) -> Iterator[None]:
+    """Attach metadata (config, mapping_name, etc.) to file operations recorded in this block."""
+    global _recording_context
+    prev = _recording_context
+    _recording_context = {k: v for k, v in meta.items() if v is not None}
+    try:
+        yield
+    finally:
+        _recording_context = prev
+
+
+def _merged_meta(meta: Optional[dict]) -> dict[str, Any]:
+    merged: dict[str, Any] = {}
+    if _recording_context:
+        merged.update(_recording_context)
+    if meta:
+        merged.update(meta)
+    return merged
 
 
 def begin_batch_job(configs: list[str], test: bool = False) -> None:
@@ -129,6 +152,43 @@ def find_batch_job(job_id: str) -> Optional[dict[str, Any]]:
     return None
 
 
+def job_mapping_groups(job: dict[str, Any]) -> list[dict[str, Any]]:
+    """Summarize recorded operations grouped by config + renamer mapping name."""
+    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    for op in job.get("operations") or []:
+        meta = op.get("meta") or {}
+        config = meta.get("config") or ""
+        mapping_name = meta.get("mapping_name") or ""
+        key = (config, mapping_name)
+        if key not in groups:
+            groups[key] = {
+                "config": config,
+                "mapping_name": mapping_name,
+                "operation_count": 0,
+                "reversible_count": 0,
+            }
+        groups[key]["operation_count"] += 1
+        if op.get("reversible") and not op.get("reversed"):
+            groups[key]["reversible_count"] += 1
+    return sorted(groups.values(), key=lambda g: (g["config"], g["mapping_name"]))
+
+
+def _operation_matches_filter(
+    op: dict[str, Any],
+    *,
+    config: Optional[str] = None,
+    mapping_name: Optional[str] = None,
+) -> bool:
+    if config is None and mapping_name is None:
+        return True
+    meta = op.get("meta") or {}
+    if config is not None and meta.get("config") != config:
+        return False
+    if mapping_name is not None and meta.get("mapping_name") != mapping_name:
+        return False
+    return True
+
+
 def _operation_can_reverse(op: dict[str, Any]) -> bool:
     if not op.get("reversible") or op.get("reversed"):
         return False
@@ -138,9 +198,18 @@ def _operation_can_reverse(op: dict[str, Any]) -> bool:
     return bool(dest and os.path.isfile(dest))
 
 
-def reverse_job(job_id: str, *, dry_run: bool = False) -> ReverseResult:
+def reverse_job(
+    job_id: str,
+    *,
+    config: Optional[str] = None,
+    mapping_name: Optional[str] = None,
+    dry_run: bool = False,
+) -> ReverseResult:
     """
     Reverse reversible file operations for a job (newest operation first).
+
+    When ``config`` and/or ``mapping_name`` are given, only operations from that
+    renamer mapping are reversed (still newest-first within the filtered set).
 
     Each successful reverse moves ``dest`` back to ``source`` when the file still
     exists at ``dest`` and ``source`` is not occupied.
@@ -156,6 +225,8 @@ def reverse_job(job_id: str, *, dry_run: bool = False) -> ReverseResult:
     result = ReverseResult(job_id=job_id, dry_run=dry_run)
 
     for op in reversed(job.get("operations", [])):
+        if not _operation_matches_filter(op, config=config, mapping_name=mapping_name):
+            continue
         if not _operation_can_reverse(op):
             if op.get("reversible") and not op.get("reversed"):
                 result.skipped += 1

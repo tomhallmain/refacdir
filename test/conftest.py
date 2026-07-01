@@ -148,7 +148,9 @@ def reset_batch_job_history(isolated_app_singletons):
     import refacdir.utils.app_info_cache as cache_module
 
     batch_job_history._active_session = None
+    batch_job_history._recording_context = None
     cache_module.app_info_cache.set("batch_job_history", [])
     yield
     batch_job_history._active_session = None
+    batch_job_history._recording_context = None
     cache_module.app_info_cache.set("batch_job_history", [])
