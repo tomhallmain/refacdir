@@ -164,12 +164,45 @@ class ConfigEditorWindow(SmartWindow):
     def _config_abs_path(self, config_rel_path: str) -> str:
         return os.path.join(os.getcwd(), config_rel_path)
 
+    def _config_paths_from_disk(self) -> list[str]:
+        """Discover config paths from disk without mutating ``BatchArgs.configs``."""
+        configs_dir = Config.configs_dir()
+        if not os.path.isdir(configs_dir):
+            return []
+        return sorted(
+            "configs/" + entry.name
+            for entry in sorted(os.scandir(configs_dir), key=lambda e: e.name)
+        )
+
     def reload_config_list(self):
+        """
+        Refresh the editor's config file list.
+
+        Uses ``app_actions.refresh_configs()`` when available so the main window's
+        merge-preserving config refresh runs instead of resetting ``BatchArgs.configs``.
+        """
+        selected = self.current_config_path
+        config_paths: list[str]
+
+        if self.app_actions and hasattr(self.app_actions, "refresh_configs"):
+            try:
+                self.app_actions.refresh_configs()
+                config_paths = sorted(BatchArgs.configs.keys())
+            except Exception as exc:
+                logger.warning(f"refresh_configs callback failed: {exc}")
+                config_paths = self._config_paths_from_disk()
+        else:
+            config_paths = self._config_paths_from_disk()
+
         self.config_list.clear()
-        BatchArgs.setup_configs(recache=True)
-        for config_path in sorted(BatchArgs.configs.keys()):
-            item = QListWidgetItem(config_path)
-            self.config_list.addItem(item)
+        restore_row = 0
+        for row, config_path in enumerate(config_paths):
+            self.config_list.addItem(QListWidgetItem(config_path))
+            if config_path == selected:
+                restore_row = row
+
+        if selected and self.config_list.count() > 0:
+            self.config_list.setCurrentRow(restore_row)
 
     def open_selected_config(self):
         item = self.config_list.currentItem()

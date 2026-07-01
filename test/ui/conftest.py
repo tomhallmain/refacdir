@@ -1,0 +1,68 @@
+"""
+Pytest fixtures for Qt UI tests (pytest-qt).
+
+Use the ``qtbot`` fixture from pytest-qt when constructing widgets; call
+``qtbot.addWidget(widget)`` so the widget is tracked and destroyed cleanly.
+
+Cache/config isolation comes from root ``test/conftest.py`` (``isolated_app_singletons``).
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from refacdir.batch import BatchArgs
+from refacdir.config import Config
+from ui.app_actions import AppActions
+
+
+@pytest.fixture
+def noop_app_actions():
+    """Minimal ``AppActions`` with no-op callbacks for editor/window tests."""
+
+    def _noop(*_args, **_kwargs):
+        return None
+
+    return AppActions(
+        {
+            "toast": _noop,
+            "alert": _noop,
+            "progress_text": _noop,
+            "progress_bar_update": _noop,
+            "progress_bar_reset": _noop,
+            "refresh_configs": _noop,
+            "review_duplicates": lambda _payload: {"action": "cancel", "files": []},
+        }
+    )
+
+
+def merge_preserving_refresh_configs(current_configs: dict | None = None) -> None:
+    """
+    Mirror ``MainWindow._refresh_configs`` merge logic for UI tests.
+
+    Re-scans disk via ``BatchArgs.setup_configs`` but keeps in-session checkbox
+    selections for configs that already existed.
+    """
+    current = dict(current_configs if current_configs is not None else BatchArgs.configs)
+    BatchArgs.setup_configs(recache=True)
+    merged = dict(BatchArgs.configs)
+    for path in merged:
+        if path in current:
+            merged[path] = current[path]
+    BatchArgs.configs = merged
+
+
+def write_runnable_config(name: str, *, will_run: bool = True) -> str:
+    """Write a minimal runnable YAML config under the isolated configs directory."""
+    rel_path = f"configs/{name}"
+    content = (
+        f"will_run: {'true' if will_run else 'false'}\n"
+        "filename_mapping_functions: []\n"
+        "filetype_definitions: []\n"
+        "actions: []\n"
+    )
+    import os
+
+    with open(os.path.join(Config.configs_dir(), name), "w", encoding="utf-8") as handle:
+        handle.write(content)
+    return rel_path

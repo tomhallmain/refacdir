@@ -10,25 +10,86 @@ Per-test ``isolated_app_singletons`` sets ``REFACDIR_CACHE_DIR`` and
 so imports bound at load time still see isolated instances.
 
 **Conftest load order:** this file is loaded before nested ``test/*/conftest.py`` files.
-``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD`` is set at the top of this module before any
-``refacdir`` imports.
+``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD``, ``REFACDIR_CONFIGS_DIR``, and ``REFACDIR_CACHE_DIR``
+are set at the top of this module **before any** ``refacdir`` imports so collection never
+reads the repo ``configs/`` tree or user cache.
 
 Unset ``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD`` in a test if you need to exercise
 real cache persistence (with ``REFACDIR_CACHE_DIR`` pointing at ``tmp_path``).
+
+UI tests live under ``test/ui/``. Use pytest-qt's ``qtbot`` fixture (see ``test/ui/conftest.py``).
+Install ``pytest-qt``; ``qt_api = pyside6`` is set in ``pytest.ini``. Only ``test/ui/`` tests
+should request ``qtbot``; other suites are unaffected.
+Singleton patches below include UI modules that bind ``app_info_cache`` or ``config`` at
+import time so isolated instances are visible after those imports.
 """
 import importlib
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
 
+_TEST_ROOT = Path(__file__).resolve().parent
+_FIXTURE_CONFIGS = _TEST_ROOT / "fixtures" / "configs"
+_FIXTURE_CACHE = _TEST_ROOT / "fixtures" / "cache"
+
 os.environ.setdefault("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD", "1")
+os.environ.setdefault("REFACDIR_CONFIGS_DIR", str(_FIXTURE_CONFIGS))
+os.environ.setdefault("REFACDIR_CACHE_DIR", str(_FIXTURE_CACHE))
 
 from refacdir.batch import BatchArgs
 from refacdir.filename_ops import FiletypesDefinition, FilenameMappingDefinition
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_PROJECT_ROOT = _TEST_ROOT.parent
+
+# Modules that may hold a module-level ``app_info_cache`` reference after import.
+_APP_INFO_CACHE_PATCH_MODULES = (
+    "refacdir.duplicate_remover",
+    "app_qt",
+)
+
+# Modules that may hold module-level ``config`` / ``_config`` references after import.
+_CONFIG_PATCH_MODULES = (
+    "app_qt",
+    "extensions.refacdir_server",
+    "refacdir.image_categorizer",
+    "ui.app_style",
+)
+
+
+def _import_module(name: str):
+    try:
+        return importlib.import_module(name)
+    except Exception:
+        return None
+
+
+def _patch_app_info_cache_singleton(monkeypatch, cache_instance) -> None:
+    """Patch app_info_cache everywhere tests may hold a reference."""
+    cache_module = importlib.import_module("refacdir.utils.app_info_cache")
+    monkeypatch.setattr(cache_module, "app_info_cache", cache_instance)
+
+    for module_name in _APP_INFO_CACHE_PATCH_MODULES:
+        module = _import_module(module_name)
+        if module is not None and hasattr(module, "app_info_cache"):
+            monkeypatch.setattr(module, "app_info_cache", cache_instance)
+
+
+def _patch_config_singleton(monkeypatch, config_instance) -> None:
+    """Patch config everywhere tests may hold a reference."""
+    config_module = importlib.import_module("refacdir.config")
+    monkeypatch.setattr(config_module, "config", config_instance)
+
+    for module_name in _CONFIG_PATCH_MODULES:
+        module = _import_module(module_name)
+        if module is None:
+            continue
+        if hasattr(module, "config"):
+            monkeypatch.setattr(module, "config", config_instance)
+        if hasattr(module, "_config"):
+            monkeypatch.setattr(module, "_config", config_instance)
 
 _MINIMAL_TEST_CONFIG_JSON = {
     "foreground_color": "white",
@@ -41,43 +102,8 @@ _MINIMAL_TEST_CONFIG_JSON = {
 
 def pytest_configure(config):
     os.environ.setdefault("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD", "1")
-
-
-def _patch_app_info_cache_singleton(monkeypatch, cache_instance) -> None:
-    """Patch app_info_cache everywhere tests may hold a reference."""
-    cache_module = importlib.import_module("refacdir.utils.app_info_cache")
-    monkeypatch.setattr(cache_module, "app_info_cache", cache_instance)
-
-    for module_name in (
-        "refacdir.duplicate_remover",
-        "app_qt",
-    ):
-        try:
-            module = importlib.import_module(module_name)
-        except Exception:
-            continue
-        if hasattr(module, "app_info_cache"):
-            monkeypatch.setattr(module, "app_info_cache", cache_instance)
-
-
-def _patch_config_singleton(monkeypatch, config_instance) -> None:
-    """Patch config everywhere tests may hold a reference."""
-    config_module = importlib.import_module("refacdir.config")
-    monkeypatch.setattr(config_module, "config", config_instance)
-
-    for module_name in (
-        "app_qt",
-        "extensions.refacdir_server",
-        "refacdir.image_categorizer",
-    ):
-        try:
-            module = importlib.import_module(module_name)
-        except Exception:
-            continue
-        if hasattr(module, "config"):
-            monkeypatch.setattr(module, "config", config_instance)
-        if hasattr(module, "_config"):
-            monkeypatch.setattr(module, "_config", config_instance)
+    if sys.platform != "win32":
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 @pytest.fixture

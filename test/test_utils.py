@@ -7,8 +7,15 @@ to a ``tmp_path`` and write config files there — never the repo ``configs/`` t
 
 Use :func:`patch_batch_job_base_dir` with :func:`posix_path` for location strings in YAML.
 
-**App cache / crypto / singletons:** root ``test/conftest.py`` (``isolated_app_singletons``,
-``restore_batch_configs``, ``restore_batch_registries``, ``restore_filename_mapping_registry``).
+**App cache / crypto / singletons:** root ``test/conftest.py`` sets ``REFACDIR_CONFIGS_DIR`` /
+``REFACDIR_CACHE_DIR`` to ``test/fixtures/`` before any ``refacdir`` import, then
+``isolated_app_singletons`` repoints each test at ``tmp_path`` (``restore_batch_configs``,
+``restore_batch_registries``, ``restore_filename_mapping_registry``).
+
+**UI tests:** ``test/ui/`` — pytest-qt ``qtbot`` (plugin installed globally; only UI tests
+use the fixture). Mark modules with ``pytestmark = pytest.mark.ui``.
+Do not import ``app_info_cache`` or ``config`` at module level; use lazy imports so
+``isolated_app_singletons`` patching applies.
 """
 
 

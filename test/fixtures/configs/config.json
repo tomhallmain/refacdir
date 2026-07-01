@@ -1,0 +1,7 @@
+{
+    "foreground_color": "white",
+    "background_color": "#000000",
+    "server_port": 6001,
+    "server_password": "<PASSWORD>",
+    "debug": false
+}
