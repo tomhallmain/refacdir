@@ -12,10 +12,9 @@ Use :func:`patch_batch_job_base_dir` with :func:`posix_path` for location string
 ``isolated_app_singletons`` repoints each test at ``tmp_path`` (``restore_batch_configs``,
 ``restore_batch_registries``, ``restore_filename_mapping_registry``).
 
-**UI tests:** ``test/ui/`` — pytest-qt ``qtbot`` (plugin installed globally; only UI tests
-use the fixture). Mark modules with ``pytestmark = pytest.mark.ui``.
-Do not import ``app_info_cache`` or ``config`` at module level; use lazy imports so
-``isolated_app_singletons`` patching applies.
+**Layout:** runnable tests live in subdirectories (``test/unit/``, ``test/ui/``,
+``test/backup/``, etc.). Shared non-test modules such as this file and ``test/fixtures/``
+stay at the ``test/`` root.
 """
 
 

@@ -17,7 +17,9 @@ reads the repo ``configs/`` tree or user cache.
 Unset ``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD`` in a test if you need to exercise
 real cache persistence (with ``REFACDIR_CACHE_DIR`` pointing at ``tmp_path``).
 
-UI tests live under ``test/ui/``. Use pytest-qt's ``qtbot`` fixture (see ``test/ui/conftest.py``).
+UI tests live under ``test/ui/``; general unit tests under ``test/unit/``.
+Shared helpers (``test/test_utils.py``) and fixtures (``test/fixtures/``) stay at the ``test/`` root.
+Use pytest-qt's ``qtbot`` fixture (see ``test/ui/conftest.py``).
 Install ``pytest-qt``; ``qt_api = pyside6`` is set in ``pytest.ini``. Only ``test/ui/`` tests
 should request ``qtbot``; other suites are unaffected.
 Singleton patches below include UI modules that bind ``app_info_cache`` or ``config`` at
