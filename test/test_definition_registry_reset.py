@@ -3,9 +3,10 @@
 from refacdir.batch import BatchArgs, BatchJob
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 
-# ``BatchArgs()`` calls ``setup_configs()`` when ``len(BatchArgs.configs) == 0``, which reloads
-# the real master_config from disk. Never use ``override_configs({})`` before ``BatchArgs()``:
-# use a non-empty map with ``will_run=False`` so no YAML is opened and no user batch runs.
+# ``BatchArgs()`` calls ``setup_configs()`` when ``len(BatchArgs.configs) == 0``.
+# Root ``test/conftest.py`` isolates ``REFACDIR_CONFIGS_DIR`` so discovery does not
+# scan the repo ``configs/`` tree; use ``override_configs`` when a test needs a
+# specific config map without relying on disk discovery.
 _NOOP_CONFIG_ENTRY = {"configs/.registry_test_placeholder_do_not_create.yaml": False}
 
 

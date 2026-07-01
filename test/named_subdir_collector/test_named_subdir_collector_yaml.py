@@ -2,19 +2,7 @@
 
 import textwrap
 
-import pytest
-
 from test.test_utils import patch_batch_job_base_dir, posix_path
-
-
-@pytest.fixture
-def restore_batch_configs():
-    pytest.importorskip("keyring")
-    from refacdir.batch import BatchArgs
-
-    prev = dict(BatchArgs.configs)
-    yield
-    BatchArgs.configs = prev
 
 
 def test_batch_yaml_named_subdir_collector_dry_run(

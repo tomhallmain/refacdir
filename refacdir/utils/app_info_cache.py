@@ -4,6 +4,7 @@ import shutil
 import threading
 
 from refacdir.lib.position_data import PositionData
+from refacdir.utils.cache_paths import refacdir_cache_dir
 from refacdir.utils.constants import AppInfo
 from refacdir.utils.encryptor import encrypt_data_to_file, decrypt_data_from_file
 from refacdir.utils.logger import setup_logger
@@ -21,6 +22,13 @@ class AppInfoCache:
     def __init__(self):
         self._lock = threading.RLock()
         self._cache = {AppInfoCache.META_INFO_KEY: {}, AppInfoCache.DIRECTORIES_KEY: {}}
+        _override = refacdir_cache_dir()
+        self._cache_loc = (
+            os.path.join(_override, "app_info_cache.enc") if _override else self.CACHE_LOC
+        )
+        self._json_loc = (
+            os.path.join(_override, "app_info_cache.json") if _override else self.JSON_LOC
+        )
         self.load()
         self.validate()
 
@@ -41,7 +49,7 @@ class AppInfoCache:
                     cache_data,
                     AppInfo.SERVICE_NAME,
                     AppInfo.APP_IDENTIFIER,
-                    AppInfoCache.CACHE_LOC
+                    self._cache_loc,
                 )
             except Exception as e:
                 # Check if it's a Windows Credential Manager error (credential not found)
@@ -88,20 +96,20 @@ class AppInfoCache:
                 )
                 return
             try:
-                if os.path.exists(AppInfoCache.JSON_LOC):
-                    logger.info(f"Removing old cache file: {AppInfoCache.JSON_LOC}")
+                if os.path.exists(self._json_loc):
+                    logger.info(f"Removing old cache file: {self._json_loc}")
                     # Get the old data first
-                    with open(AppInfoCache.JSON_LOC, "r", encoding="utf-8") as f:
+                    with open(self._json_loc, "r", encoding="utf-8") as f:
                         self._cache = json.load(f)
                     self.store() # store encrypted cache
-                    os.remove(AppInfoCache.JSON_LOC)
+                    os.remove(self._json_loc)
                     return
 
                 # Try encrypted cache and backups in order
-                cache_paths = [self.CACHE_LOC] + self._get_backup_paths()
+                cache_paths = [self._cache_loc] + self._get_backup_paths()
                 any_exist = any(os.path.exists(path) for path in cache_paths)
                 if not any_exist:
-                    logger.info(f"No cache file found at {self.CACHE_LOC}, creating new cache")
+                    logger.info(f"No cache file found at {self._cache_loc}, creating new cache")
                     return
 
                 for path in cache_paths:
@@ -109,8 +117,8 @@ class AppInfoCache:
                         try:
                             self._cache = self._try_load_cache_from_file(path)
                             # Only rotate backups if we loaded from the main file
-                            if path == self.CACHE_LOC:
-                                message = f"Loaded cache from {self.CACHE_LOC}"
+                            if path == self._cache_loc:
+                                message = f"Loaded cache from {self._cache_loc}"
                                 rotated_count = self._rotate_backups()
                                 if rotated_count > 0:
                                     message += f", rotated {rotated_count} backups"
@@ -234,7 +242,7 @@ class AppInfoCache:
     def export_as_json(self, json_path=None):
         """Export the current cache as a JSON file (not encrypted)."""
         if json_path is None:
-            json_path = AppInfoCache.JSON_LOC
+            json_path = self._json_loc
         with self._lock:
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(self._cache, f, ensure_ascii=False, indent=2)
@@ -277,7 +285,7 @@ class AppInfoCache:
         backup_paths = []
         for i in range(1, self.NUM_BACKUPS + 1):
             index = "" if i == 1 else f"{i}"
-            path = f"{self.CACHE_LOC}.bak{index}"
+            path = f"{self._cache_loc}.bak{index}"
             backup_paths.append(path)
         return backup_paths
 
@@ -297,7 +305,7 @@ class AppInfoCache:
                 rotated_count += 1
         
         # Copy main cache to first backup position
-        shutil.copy2(self.CACHE_LOC, backup_paths[0])
+        shutil.copy2(self._cache_loc, backup_paths[0])
         
         return rotated_count
 

@@ -1,4 +1,9 @@
-"""``DirData.file_types`` is class state; restore it after each test."""
+"""Directory observer test fixtures.
+
+Cache/config isolation: see root ``test/conftest.py``.
+
+``DirData.file_types`` is class-level state shared across observer instances.
+"""
 import pytest
 
 from refacdir.directory_observer import DirData

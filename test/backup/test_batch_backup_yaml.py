@@ -8,31 +8,10 @@ See :mod:`test.test_utils` for shared isolation helpers.
 import os
 import textwrap
 
-import pytest
-
 from test.test_utils import patch_batch_job_base_dir, posix_path
 
 from refacdir.batch import BatchArgs, BatchJob
 from refacdir.filename_ops import FiletypesDefinition, FilenameMappingDefinition
-
-
-@pytest.fixture
-def restore_batch_registries():
-    """Isolate FiletypesDefinition / FilenameMappingDefinition mutations from other tests."""
-    ft = FiletypesDefinition.NAMED_DEFINITIONS.copy()
-    fn = FilenameMappingDefinition.NAMED_FUNCTIONS.copy()
-    yield
-    FiletypesDefinition.NAMED_DEFINITIONS.clear()
-    FiletypesDefinition.NAMED_DEFINITIONS.update(ft)
-    FilenameMappingDefinition.NAMED_FUNCTIONS.clear()
-    FilenameMappingDefinition.NAMED_FUNCTIONS.update(fn)
-
-
-@pytest.fixture
-def restore_batch_configs():
-    prev = dict(BatchArgs.configs)
-    yield
-    BatchArgs.configs = prev
 
 
 def test_batch_yaml_backup_resolves_named_filetypes_and_runs(

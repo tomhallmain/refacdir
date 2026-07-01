@@ -65,7 +65,7 @@ class BatchArgs:
         if not recache and len(BatchArgs.configs) > 0:
             return
 
-        configs_dir = Config.CONFIGS_DIR_LOC
+        configs_dir = Config.configs_dir()
 
         # Discover all runnable YAMLs from disk — this is always the source of truth.
         def _is_runnable_yaml(name):

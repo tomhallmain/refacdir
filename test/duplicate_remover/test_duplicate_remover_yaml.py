@@ -3,18 +3,9 @@ YAML + ``BatchJob`` for DUPLICATE_REMOVER (configs under ``tmp_path``, never ``c
 """
 import textwrap
 
-import pytest
-
 from test.test_utils import patch_batch_job_base_dir, posix_path
 
 from refacdir.batch import BatchArgs, BatchJob
-
-
-@pytest.fixture
-def restore_batch_configs():
-    prev = dict(BatchArgs.configs)
-    yield
-    BatchArgs.configs = prev
 
 
 def test_batch_yaml_duplicate_remover_runs(

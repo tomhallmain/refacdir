@@ -8,7 +8,36 @@ logger = setup_logger('config')
 class Config:
     CONFIGS_DIR_LOC = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "configs")
 
-    def __init__(self):
+    @staticmethod
+    def configs_dir():
+        """Active configs directory (overridable via REFACDIR_CONFIGS_DIR for tests)."""
+        return os.environ.get("REFACDIR_CONFIGS_DIR") or Config.CONFIGS_DIR_LOC
+
+    @staticmethod
+    def resolve_config_path():
+        """Resolve the active server config JSON path, preferring config.json."""
+        configs_dir = Config.configs_dir()
+        if not os.path.isdir(configs_dir):
+            return os.path.join(Config.CONFIGS_DIR_LOC, "config_example.json")
+
+        configs = [
+            f.path for f in os.scandir(configs_dir)
+            if f.is_file() and f.path.endswith(".json")
+        ]
+        config_path = None
+        for candidate in configs:
+            basename = os.path.basename(candidate)
+            if basename == "config.json":
+                config_path = candidate
+                break
+            if basename != "config_example.json":
+                config_path = candidate
+
+        if config_path is None:
+            config_path = os.path.join(configs_dir, "config_example.json")
+        return config_path
+
+    def __init__(self, config_path=None):
         self.dict = {}
         self.foreground_color = None
         self.background_color = None
@@ -18,22 +47,12 @@ class Config:
         self.server_port = 6001
         self.server_password = "<PASSWORD>"
 
+        self.config_path = config_path if config_path is not None else Config.resolve_config_path()
+
         dict_set = False
-        configs =  [ f.path for f in os.scandir(Config.CONFIGS_DIR_LOC) if f.is_file() and f.path.endswith(".json") ]
-        self.config_path = None
-
-        for c in configs:
-            if os.path.basename(c) == "config.json":
-                self.config_path = c
-                break
-            elif os.path.basename(c) != "config_example.json":
-                self.config_path = c
-
-        if self.config_path is None:
-            self.config_path = os.path.join(Config.CONFIGS_DIR_LOC, "config_example.json")
-
         try:
-            self.dict = json.load(open(self.config_path, "r"))
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                self.dict = json.load(f)
             dict_set = True
         except Exception as e:
             logger.error(str(e))
@@ -46,8 +65,11 @@ class Config:
         self.set_values(int, "server_port")
         self.set_values(bool, "debug")
 
-        if dict_set:
-            self.weidr_loc = self.validate_and_set_directory(key="weidr_loc")
+        if dict_set and "weidr_loc" in self.dict:
+            try:
+                self.weidr_loc = self.validate_and_set_directory(key="weidr_loc")
+            except Exception as e:
+                logger.warning(f"weidr_loc not applied from config: {e}")
 
         if self.print_settings:
             self.print_config_settings()
