@@ -64,7 +64,7 @@ class MappingPropertyRow(QWidget):
             if plain_value:
                 self.value_edit.setText(str(value))
             else:
-                dumped = yaml.safe_dump(value, sort_keys=False, allow_unicode=False).strip()
+                dumped = yaml.safe_dump(value, sort_keys=False, allow_unicode=True).strip()
                 self.value_edit.setText(dumped)
         layout.addWidget(self.value_edit, 5)
 

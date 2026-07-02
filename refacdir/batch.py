@@ -101,7 +101,7 @@ class BatchArgs:
                 return
             data["will_run"] = will_run
             with open(abs_path, "w", encoding="utf-8") as handle:
-                yaml.safe_dump(data, handle, sort_keys=False, allow_unicode=False)
+                yaml.safe_dump(data, handle, sort_keys=False, allow_unicode=True)
             logger.info(f"Updated {config_path} will_run -> {will_run}")
         except Exception as exc:
             logger.error(f"Failed to write will_run to {config_path}: {exc}")

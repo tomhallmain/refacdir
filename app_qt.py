@@ -43,6 +43,9 @@ _ = I18N._
 # Set up logger for UI
 logger = setup_logger('ui')
 
+# Debounce window for persisting UI + config checkbox state to app_info_cache.
+_UI_SETTINGS_STORE_DEBOUNCE_MS = 400
+
 class ProgressListener:
     def __init__(self, update_func):
         self.update_func = update_func
@@ -75,6 +78,10 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.batch_args = BatchArgs(recache_configs=False, configs={})
         self.filtered_configs = {}
         self.filter_text = ""
+        self._config_checkboxes: dict[str, QCheckBox] = {}
+        self._ui_settings_store_timer = QTimer(self)
+        self._ui_settings_store_timer.setSingleShot(True)
+        self._ui_settings_store_timer.timeout.connect(self.store_ui_settings)
         self.progress_bar = None
         self.job_queue = JobQueue()
         self.server = self.setup_server()
@@ -325,15 +332,15 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         options_grid.addWidget(self.recur_check, 0, 0)
         
         self.test_check = QCheckBox(_("Test Mode"))
-        self.test_check.stateChanged.connect(lambda: self.store_ui_settings())
+        self.test_check.stateChanged.connect(lambda: self.schedule_store_ui_settings())
         options_grid.addWidget(self.test_check, 0, 1)
         
         self.skip_confirm_check = QCheckBox(_("Skip Confirmations"))
-        self.skip_confirm_check.stateChanged.connect(lambda: self.store_ui_settings())
+        self.skip_confirm_check.stateChanged.connect(lambda: self.schedule_store_ui_settings())
         options_grid.addWidget(self.skip_confirm_check, 1, 0)
         
         self.only_observers_check = QCheckBox(_("Only Observers"))
-        self.only_observers_check.stateChanged.connect(lambda: self.store_ui_settings())
+        self.only_observers_check.stateChanged.connect(lambda: self.schedule_store_ui_settings())
         options_grid.addWidget(self.only_observers_check, 1, 1)
 
         self.persist_definition_caches_check = QCheckBox(
@@ -346,7 +353,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 "Checked: keep definitions from earlier runs in this session (legacy)."
             )
         )
-        self.persist_definition_caches_check.stateChanged.connect(lambda: self.store_ui_settings())
+        self.persist_definition_caches_check.stateChanged.connect(
+            lambda: self.schedule_store_ui_settings()
+        )
         options_grid.addWidget(self.persist_definition_caches_check, 2, 0, 1, 2)
 
         self.inactivity_timeout_spin = QSpinBox()
@@ -392,8 +401,6 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         ThemeManager.apply_theme(QApplication.instance(), is_dark, corner_radius=radius)
         # Apply theme to custom title bar
         self.apply_frameless_theme(is_dark)
-        # Save theme preference
-        app_info_cache.set_ui_theme(is_dark)
 
     def toggle_theme(self):
         """Toggle between light and dark themes"""
@@ -401,8 +408,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.toast.show_message(
             "Theme switched to light." if not self.is_dark_theme else "Theme switched to dark."
         )
-        # Save settings when theme changes
-        self.store_ui_settings()
+        self.schedule_store_ui_settings()
 
     def setup_connections(self):
         """Set up signal/slot connections"""
@@ -412,7 +418,72 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         """Load initial configurations"""
         self.batch_args.setup_configs(recache=False)
         self.filtered_configs = deepcopy(self.batch_args.configs)
-        self.add_config_widgets()
+        self.sync_config_widgets()
+        self._apply_config_filter_visibility()
+
+    @staticmethod
+    def _config_matches_filter(path: str, text: str) -> bool:
+        if not text.strip():
+            return True
+        basename = os.path.basename(os.path.normpath(path))
+        text_lower = text.lower()
+        basename_lower = basename.lower()
+        return (
+            basename_lower == text_lower
+            or basename_lower.startswith(text_lower)
+            or f" {text_lower}" in basename_lower
+            or f"_{text_lower}" in basename_lower
+        )
+
+    def _update_filtered_configs(self, text: str) -> None:
+        if not text.strip():
+            self.filtered_configs = deepcopy(self.batch_args.configs)
+        else:
+            self.filtered_configs = {
+                path: self.batch_args.configs[path]
+                for path in self.batch_args.configs
+                if self._config_matches_filter(path, text)
+            }
+
+    def _apply_config_filter_visibility(self) -> None:
+        for path, checkbox in self._config_checkboxes.items():
+            checkbox.setVisible(self._config_matches_filter(path, self.filter_text))
+
+    def sync_config_widgets(self):
+        """Ensure one stable checkbox per config; add/remove only when configs change."""
+        for path in list(self._config_checkboxes):
+            if path not in self.batch_args.configs:
+                checkbox = self._config_checkboxes.pop(path)
+                self.config_layout.removeWidget(checkbox)
+                checkbox.deleteLater()
+
+        sorted_paths = sorted(self.batch_args.configs)
+        for index, config in enumerate(sorted_paths):
+            will_run = self.batch_args.configs[config]
+            checkbox = self._config_checkboxes.get(config)
+            if checkbox is None:
+                checkbox = QCheckBox(config)
+                checkbox.stateChanged.connect(
+                    lambda state, c=config: self.toggle_config(c, state)
+                )
+                self._config_checkboxes[config] = checkbox
+            else:
+                layout_index = self.config_layout.indexOf(checkbox)
+                if layout_index != index:
+                    self.config_layout.removeWidget(checkbox)
+                    self.config_layout.insertWidget(index, checkbox)
+
+            checkbox.blockSignals(True)
+            checkbox.setChecked(will_run if will_run is not None else False)
+            checkbox.blockSignals(False)
+
+            if self.config_layout.indexOf(checkbox) < 0:
+                self.config_layout.insertWidget(index, checkbox)
+
+    def add_config_widgets(self):
+        """Backward-compatible alias: sync widgets then apply the current filter."""
+        self.sync_config_widgets()
+        self._apply_config_filter_visibility()
         
     def setup_server(self):
         """Initialize the server component"""
@@ -433,21 +504,12 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.run()
         return {}
 
-    def add_config_widgets(self):
-        """Add configuration checkboxes to sidebar"""
-        # Clear existing widgets
-        while self.config_layout.count():
-            item = self.config_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        
-        # Add new checkboxes
-        for config, will_run in self.filtered_configs.items():
-            checkbox = QCheckBox(config)
-            checkbox.setChecked(will_run if will_run is not None else False)
-            checkbox.stateChanged.connect(lambda state, c=config: self.toggle_config(c, state))
-            self.config_layout.addWidget(checkbox)
-            
+    def filter_configs(self, text: str):
+        """Filter configurations based on search text (show/hide existing checkboxes)."""
+        self.filter_text = text
+        self._update_filtered_configs(text)
+        self._apply_config_filter_visibility()
+
     def toggle_config(self, config: str, state: int):
         """Handle config checkbox state changes"""
         if config in self.filtered_configs:
@@ -456,25 +518,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.batch_args.update_config_state(config, will_run)
             BatchArgs.write_will_run_to_file(config, will_run)
             logger.info(f"Config {config} set to {will_run}")
-            # Save settings when config selection changes
-            self.store_ui_settings()
-            
-    def filter_configs(self, text: str):
-        """Filter configurations based on search text"""
-        if not text.strip():
-            self.filtered_configs = deepcopy(self.batch_args.configs)
-        else:
-            self.filtered_configs = {}
-            for path in self.batch_args.configs:
-                basename = os.path.basename(os.path.normpath(path))
-                if (basename.lower() == text.lower() or
-                    basename.lower().startswith(text.lower()) or
-                    f" {text.lower()}" in basename.lower() or
-                    f"_{text.lower()}" in basename.lower()):
-                    self.filtered_configs[path] = self.batch_args.configs[path]
-        
-        self.add_config_widgets()
-        
+            self.schedule_store_ui_settings()
+
     def run(self):
         """Run the selected operations"""
         if self.job_queue.job_running or self.progress_bar.isVisible():
@@ -532,7 +577,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def _on_inactivity_timeout_changed(self, minutes: int):
         """Apply idle shutdown timeout from the operation settings control."""
         self._inactivity_shutdown.set_timeout_minutes(minutes)
-        self.store_ui_settings()
+        self.schedule_store_ui_settings()
 
     def set_recurring_action(self, state: int):
         """Handle recurring action checkbox state changes"""
@@ -540,8 +585,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         if self.recurring_action_config.is_running:
             self.skip_confirm_check.setChecked(True)
             start_thread(self.run_recurring_actions)
-        # Save settings when operation settings change
-        self.store_ui_settings()
+        self.schedule_store_ui_settings()
             
     @periodic("recurring_action_config")
     async def run_recurring_actions(self, **kwargs):
@@ -600,11 +644,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 if path in current:
                     merged[path] = current[path]
             self.batch_args.configs = merged
-            if self.filter_text.strip():
-                self.filter_configs(self.filter_text)
-            else:
-                self.filtered_configs = deepcopy(merged)
-            self.add_config_widgets()
+            self.sync_config_widgets()
+            self._update_filtered_configs(self.filter_text)
+            self._apply_config_filter_visibility()
             logger.info("Config list refreshed.")
         except Exception as exc:
             logger.error(f"Failed refreshing configs: {exc}")
@@ -704,8 +746,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                         self.batch_args.configs[config_path] = enabled
                         self.filtered_configs[config_path] = enabled
                         BatchArgs.write_will_run_to_file(config_path, enabled)
-                # Refresh the UI to reflect restored selections
-                self.add_config_widgets()
+                self.sync_config_widgets()
+                self._apply_config_filter_visibility()
             
             # Restore search filter text (optional - might be annoying)
             # Uncomment if you want to restore search text:
@@ -719,8 +761,18 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         except Exception as e:
             logger.error(f"Error restoring UI settings: {e}")
     
+    def schedule_store_ui_settings(self):
+        """Debounce persisting UI settings and config checkbox state to the cache."""
+        self._ui_settings_store_timer.start(_UI_SETTINGS_STORE_DEBOUNCE_MS)
+
+    def flush_store_ui_settings(self):
+        """Persist UI settings immediately (e.g. on window close)."""
+        if self._ui_settings_store_timer.isActive():
+            self._ui_settings_store_timer.stop()
+        self.store_ui_settings()
+
     def store_ui_settings(self):
-        """Save current UI settings to app_info_cache"""
+        """Snapshot current UI state into app_info_cache and write to disk."""
         try:
             # Save theme preference
             app_info_cache.set_ui_theme(self.is_dark_theme)
@@ -767,8 +819,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     
     def closeEvent(self, event):
         """Handle window close event"""
-        # Save UI settings before closing
-        self.store_ui_settings()
+        self.flush_store_ui_settings()
         
         if self.server is not None:
             try:

@@ -169,3 +169,31 @@ def test_open_selected_config_loads_by_list_key(qtbot, noop_app_actions, wrong_c
 
     assert editor.current_config_path == "configs/picked.yaml"
     assert editor.path_label.text() == "configs/picked.yaml"
+
+
+def test_save_current_config_preserves_unicode_literals(
+    qtbot, noop_app_actions, wrong_cwd, no_message_boxes
+):
+    write_config_content(
+        "unicode.yaml",
+        (
+            'will_run: true\n'
+            'note: "répertoire José"\n'
+            "filename_mapping_functions: []\n"
+            "filetype_definitions: []\n"
+            "actions: []\n"
+        ),
+    )
+
+    editor = ConfigEditorWindow(app_actions=noop_app_actions)
+    qtbot.addWidget(editor)
+    editor.load_config("configs/unicode.yaml")
+    editor.will_run_checkbox.setChecked(False)
+
+    editor.save_current_config()
+
+    raw = read_config_file("unicode.yaml")
+    assert "José" in raw
+    assert "\\u00e9" not in raw
+    assert yaml.safe_load(raw)["will_run"] is False
+    assert yaml.safe_load(raw)["note"] == "répertoire José"

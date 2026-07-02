@@ -258,14 +258,14 @@ class ConfigEditorWindow(SmartWindow):
             yaml.safe_dump(
                 self.current_config_data.get("filename_mapping_functions", []),
                 sort_keys=False,
-                allow_unicode=False,
+                allow_unicode=True,
             )
         )
         self.filetypes_editor.setPlainText(
             yaml.safe_dump(
                 self.current_config_data.get("filetype_definitions", []),
                 sort_keys=False,
-                allow_unicode=False,
+                allow_unicode=True,
             )
         )
         self._refresh_actions_list()
@@ -359,7 +359,7 @@ class ConfigEditorWindow(SmartWindow):
             self._sync_data_from_ui()
             abs_path = self._config_abs_path(self.current_config_path)
             with open(abs_path, "w", encoding="utf-8") as handle:
-                yaml.safe_dump(self.current_config_data, handle, sort_keys=False, allow_unicode=False)
+                yaml.safe_dump(self.current_config_data, handle, sort_keys=False, allow_unicode=True)
             self._after_save(self.current_config_path)
         except Exception as exc:
             logger.error(f"Failed saving config: {exc}")
@@ -385,7 +385,7 @@ class ConfigEditorWindow(SmartWindow):
             path = f"{path}.yaml"
         try:
             with open(path, "w", encoding="utf-8") as handle:
-                yaml.safe_dump(self.current_config_data, handle, sort_keys=False, allow_unicode=False)
+                yaml.safe_dump(self.current_config_data, handle, sort_keys=False, allow_unicode=True)
             rel_path = self._config_rel_path(path)
             self.current_config_path = rel_path
             self._after_save(rel_path)

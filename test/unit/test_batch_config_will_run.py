@@ -67,6 +67,32 @@ def test_write_will_run_to_file_noop_when_unchanged():
     assert os.path.getmtime(abs_path) == before_mtime
 
 
+def test_write_will_run_to_file_preserves_unicode_literals():
+    rel_path = "configs/unicode_paths.yaml"
+    abs_path = os.path.join(Config.configs_dir(), "unicode_paths.yaml")
+    with open(abs_path, "w", encoding="utf-8") as handle:
+        handle.write(
+            textwrap.dedent(
+                """
+                will_run: true
+                note: "répertoire José"
+                filename_mapping_functions: []
+                filetype_definitions: []
+                actions: []
+                """
+            ).strip()
+            + "\n"
+        )
+
+    BatchArgs.write_will_run_to_file(rel_path, False)
+
+    with open(abs_path, encoding="utf-8") as handle:
+        raw = handle.read()
+    assert "José" in raw
+    assert "\\u00e9" not in raw
+    assert yaml.safe_load(raw)["will_run"] is False
+
+
 def test_run_config_file_skips_when_yaml_will_run_false(
     tmp_path, monkeypatch, restore_batch_configs
 ):
