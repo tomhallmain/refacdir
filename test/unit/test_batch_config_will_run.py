@@ -9,7 +9,7 @@ import yaml
 
 from refacdir.batch import BatchArgs, BatchJob
 from refacdir.config import Config
-from test.test_utils import patch_batch_job_base_dir, posix_path
+from test.test_utils import patch_batch_job_base_dir
 
 
 def _write_config(name: str, *, will_run: bool, actions_yaml: str = "actions: []") -> str:
@@ -31,10 +31,10 @@ def test_setup_configs_reads_will_run_from_yaml():
     _write_config("disabled.yaml", will_run=False)
     _write_config("enabled.yaml", will_run=True)
 
-    BatchArgs.setup_configs(recache=True)
+    batch_args = BatchArgs(recache_configs=True)
 
-    assert BatchArgs.configs["configs/disabled.yaml"] is False
-    assert BatchArgs.configs["configs/enabled.yaml"] is True
+    assert batch_args.configs["configs/disabled.yaml"] is False
+    assert batch_args.configs["configs/enabled.yaml"] is True
 
 
 def test_setup_configs_defaults_will_run_true_when_key_missing():
@@ -42,9 +42,9 @@ def test_setup_configs_defaults_will_run_true_when_key_missing():
     with open(os.path.join(Config.configs_dir(), "no_flag.yaml"), "w", encoding="utf-8") as handle:
         handle.write("actions: []\n")
 
-    BatchArgs.setup_configs(recache=True)
+    batch_args = BatchArgs(recache_configs=True)
 
-    assert BatchArgs.configs[rel_path] is True
+    assert batch_args.configs[rel_path] is True
 
 
 def test_write_will_run_to_file_updates_yaml():
@@ -92,8 +92,15 @@ def test_run_config_file_skips_when_yaml_will_run_false(
         encoding="utf-8",
     )
 
-    BatchArgs.override_configs({"skip_flag.yaml": True})
-    job = BatchJob(BatchArgs())
+    args = BatchArgs(configs={"skip_flag.yaml": True})
+    job = BatchJob(args)
     job.run_config_file("skip_flag.yaml")
 
     assert not job.failures
+
+
+def test_batch_job_snapshots_configs_from_args():
+    args = BatchArgs(configs={"configs/a.yaml": True})
+    job = BatchJob(args)
+    args.configs["configs/a.yaml"] = False
+    assert job.configurations["configs/a.yaml"] is True

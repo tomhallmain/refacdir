@@ -36,8 +36,8 @@ def test_batch_yaml_named_subdir_collector_dry_run(
         encoding="utf-8",
     )
 
-    BatchArgs.override_configs({"named_subdir_config.yaml": True})
-    job = BatchJob(BatchArgs())
+    args = BatchArgs(configs={"named_subdir_config.yaml": True})
+    job = BatchJob(args)
     job.run_config_file("named_subdir_config.yaml")
 
     assert not job.failures, job.failures

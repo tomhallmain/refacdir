@@ -72,7 +72,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         # Set up frameless window with custom title bar
         self.setup_frameless_window(title=_("RefacDir"))
         
-        self.configs = {}
+        self.batch_args = BatchArgs(recache_configs=False, configs={})
         self.filtered_configs = {}
         self.filter_text = ""
         self.progress_bar = None
@@ -92,6 +92,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             "progress_bar_reset": self.progress_bar_reset,
             "refresh_configs": self.refresh_configs,
             "review_duplicates": self.review_duplicates,
+            "get_batch_args": lambda: self.batch_args,
         }
         self.app_actions = AppActions(app_actions)
         
@@ -409,9 +410,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         
     def load_configs(self):
         """Load initial configurations"""
-        BatchArgs.setup_configs(recache=False)
-        self.configs = deepcopy(BatchArgs.configs)
-        self.filtered_configs = deepcopy(BatchArgs.configs)
+        self.batch_args.setup_configs(recache=False)
+        self.filtered_configs = deepcopy(self.batch_args.configs)
         self.add_config_widgets()
         
     def setup_server(self):
@@ -453,8 +453,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         if config in self.filtered_configs:
             will_run = state == Qt.Checked
             self.filtered_configs[config] = will_run
-            self.configs[config] = will_run
-            BatchArgs.update_config_state(config, will_run)
+            self.batch_args.update_config_state(config, will_run)
             BatchArgs.write_will_run_to_file(config, will_run)
             logger.info(f"Config {config} set to {will_run}")
             # Save settings when config selection changes
@@ -463,16 +462,16 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def filter_configs(self, text: str):
         """Filter configurations based on search text"""
         if not text.strip():
-            self.filtered_configs = deepcopy(self.configs)
+            self.filtered_configs = deepcopy(self.batch_args.configs)
         else:
             self.filtered_configs = {}
-            for path in self.configs:
+            for path in self.batch_args.configs:
                 basename = os.path.basename(os.path.normpath(path))
                 if (basename.lower() == text.lower() or
                     basename.lower().startswith(text.lower()) or
                     f" {text.lower()}" in basename.lower() or
                     f"_{text.lower()}" in basename.lower()):
-                    self.filtered_configs[path] = self.configs[path]
+                    self.filtered_configs[path] = self.batch_args.configs[path]
         
         self.add_config_widgets()
         
@@ -492,17 +491,14 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         """Start a batch run (or continue draining the job queue)."""
         self.job_queue.job_running = True
 
-        args = BatchArgs(recache_configs=False)
-        args.test = self.test_check.isChecked()
-        args.skip_confirm = self.skip_confirm_check.isChecked()
-        args.only_observers = self.only_observers_check.isChecked()
-        args.persist_definition_caches_across_batch_runs = (
+        run_args = BatchArgs(recache_configs=False, configs=dict(self.filtered_configs))
+        run_args.test = self.test_check.isChecked()
+        run_args.skip_confirm = self.skip_confirm_check.isChecked()
+        run_args.only_observers = self.only_observers_check.isChecked()
+        run_args.persist_definition_caches_across_batch_runs = (
             self.persist_definition_caches_check.isChecked()
         )
-        args.app_actions = self.app_actions
-
-        # Only run filtered configs
-        BatchArgs.override_configs(self.filtered_configs)
+        run_args.app_actions = self.app_actions
 
         # Show progress bar
         self.progress_bar.setVisible(True)
@@ -513,7 +509,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         # Run operations in background
         def run_async():
             try:
-                main(args)
+                main(run_args)
             except Exception as e:
                 self.alert("Error", str(e), "error")
                 self.status_label.setText(_("Operation failed"))
@@ -559,7 +555,10 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def open_config_editor(self):
         """Open (or focus) the config editor window."""
         if self._config_editor_window is None:
-            self._config_editor_window = ConfigEditorWindow(parent=self, app_actions=self.app_actions)
+            self._config_editor_window = ConfigEditorWindow(
+                parent=self,
+                app_actions=self.app_actions,
+            )
             self._config_editor_window.config_saved.connect(self._on_config_saved)
         # If the sidebar filter narrows to one config, load it directly in editor.
         if len(self.filtered_configs) == 1:
@@ -592,17 +591,19 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def _refresh_configs(self):
         """Reload batch config states and refresh config list UI."""
         try:
-            current = dict(self.configs)  # preserve current in-session selections
-            BatchArgs.setup_configs(recache=True)
-            merged = dict(BatchArgs.configs)
+            current = dict(self.batch_args.configs)
+            self.batch_args.setup_configs(recache=True)
+            merged = dict(self.batch_args.configs)
             # Keep the user's in-session selection for configs that already existed;
             # newly discovered configs keep the default from setup_configs.
             for path in merged:
                 if path in current:
                     merged[path] = current[path]
-            BatchArgs.configs = merged
-            self.configs = merged
-            self.filtered_configs = deepcopy(merged)
+            self.batch_args.configs = merged
+            if self.filter_text.strip():
+                self.filter_configs(self.filter_text)
+            else:
+                self.filtered_configs = deepcopy(merged)
             self.add_config_widgets()
             logger.info("Config list refreshed.")
         except Exception as exc:
@@ -699,10 +700,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             if cached_configs:
                 # Update configs dict with cached selections
                 for config_path, enabled in cached_configs.items():
-                    if config_path in self.configs:
-                        self.configs[config_path] = enabled
+                    if config_path in self.batch_args.configs:
+                        self.batch_args.configs[config_path] = enabled
                         self.filtered_configs[config_path] = enabled
-                        BatchArgs.update_config_state(config_path, enabled)
                         BatchArgs.write_will_run_to_file(config_path, enabled)
                 # Refresh the UI to reflect restored selections
                 self.add_config_widgets()
@@ -737,7 +737,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             app_info_cache.set_operation_settings(operation_settings)
             
             # Save all config states so explicit off-selections survive restarts
-            app_info_cache.set_selected_configs(dict(self.configs))
+            app_info_cache.set_selected_configs(dict(self.batch_args.configs))
             
             # Save search filter text (optional)
             # app_info_cache.set_search_filter(self.filter_text)

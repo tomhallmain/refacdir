@@ -17,7 +17,29 @@ from ui.app_actions import AppActions
 
 
 @pytest.fixture
-def noop_app_actions():
+def session_batch_args():
+    """Session ``BatchArgs`` for UI tests that mirror the main window config state."""
+    return BatchArgs(recache_configs=False, configs={})
+
+
+def merge_preserving_refresh_configs(batch_args: BatchArgs, current_configs: dict | None = None) -> None:
+    """
+    Mirror ``MainWindow._refresh_configs`` merge logic for UI tests.
+
+    Re-scans disk via ``batch_args.setup_configs`` but keeps in-session checkbox
+    selections for configs that already existed.
+    """
+    current = dict(current_configs if current_configs is not None else batch_args.configs)
+    batch_args.setup_configs(recache=True)
+    merged = dict(batch_args.configs)
+    for path in merged:
+        if path in current:
+            merged[path] = current[path]
+    batch_args.configs = merged
+
+
+@pytest.fixture
+def noop_app_actions(session_batch_args):
     """Minimal ``AppActions`` with no-op callbacks for editor/window tests."""
 
     def _noop(*_args, **_kwargs):
@@ -32,24 +54,9 @@ def noop_app_actions():
             "progress_bar_reset": _noop,
             "refresh_configs": _noop,
             "review_duplicates": lambda _payload: {"action": "cancel", "files": []},
+            "get_batch_args": lambda: session_batch_args,
         }
     )
-
-
-def merge_preserving_refresh_configs(current_configs: dict | None = None) -> None:
-    """
-    Mirror ``MainWindow._refresh_configs`` merge logic for UI tests.
-
-    Re-scans disk via ``BatchArgs.setup_configs`` but keeps in-session checkbox
-    selections for configs that already existed.
-    """
-    current = dict(current_configs if current_configs is not None else BatchArgs.configs)
-    BatchArgs.setup_configs(recache=True)
-    merged = dict(BatchArgs.configs)
-    for path in merged:
-        if path in current:
-            merged[path] = current[path]
-    BatchArgs.configs = merged
 
 
 def write_runnable_config(name: str, *, will_run: bool = True) -> str:

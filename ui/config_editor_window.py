@@ -176,15 +176,24 @@ class ConfigEditorWindow(SmartWindow):
         return "configs/" + cls._config_basename(abs_path)
 
     def _config_paths_from_disk(self) -> list[str]:
-        """Discover config paths from disk without mutating ``BatchArgs.configs``."""
+        """Discover config paths from disk without mutating a session ``BatchArgs``."""
         return BatchArgs.discover_runnable_config_paths()
+
+    def _session_batch_args(self):
+        """Resolve the live session ``BatchArgs`` from ``app_actions``, if wired."""
+        if self.app_actions is None:
+            return None
+        try:
+            return self.app_actions.get_batch_args()
+        except AttributeError:
+            return None
 
     def reload_config_list(self):
         """
         Refresh the editor's config file list.
 
         Uses ``app_actions.refresh_configs()`` when available so the main window's
-        merge-preserving config refresh runs instead of resetting ``BatchArgs.configs``.
+        merge-preserving config refresh runs instead of resetting session config state.
         """
         selected = self.current_config_path
         config_paths: list[str]
@@ -192,7 +201,11 @@ class ConfigEditorWindow(SmartWindow):
         if self.app_actions and hasattr(self.app_actions, "refresh_configs"):
             try:
                 self.app_actions.refresh_configs()
-                config_paths = sorted(BatchArgs.configs.keys())
+                batch_args = self._session_batch_args()
+                if batch_args is not None:
+                    config_paths = sorted(batch_args.configs.keys())
+                else:
+                    config_paths = self._config_paths_from_disk()
             except Exception as exc:
                 logger.warning(f"refresh_configs callback failed: {exc}")
                 config_paths = self._config_paths_from_disk()

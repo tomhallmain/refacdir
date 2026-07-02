@@ -24,9 +24,9 @@ def _actions_with_refresh(noop_app_actions, refresh_configs):
     )
 
 
-def test_reload_config_list_delegates_to_refresh_configs(qtbot, noop_app_actions, monkeypatch):
+def test_reload_config_list_delegates_to_refresh_configs(qtbot, noop_app_actions, session_batch_args, monkeypatch):
     """reload_config_list must not call BatchArgs.setup_configs directly (improvement #1)."""
-    BatchArgs.configs = {"configs/alpha.yaml": True}
+    session_batch_args.configs = {"configs/alpha.yaml": True}
 
     refresh_calls: list[int] = []
     setup_calls: list[int] = []
@@ -52,24 +52,29 @@ def test_reload_config_list_delegates_to_refresh_configs(qtbot, noop_app_actions
     assert setup_calls == []
 
 
-def test_reload_config_list_preserves_selection_via_merge_refresh(qtbot, noop_app_actions):
+def test_reload_config_list_preserves_selection_via_merge_refresh(
+    qtbot, noop_app_actions, session_batch_args
+):
     """refresh_configs merge path keeps unchecked configs when the editor reloads."""
     write_runnable_config("alpha.yaml")
     write_runnable_config("beta.yaml")
 
-    BatchArgs.configs = {
+    session_batch_args.configs = {
         "configs/alpha.yaml": False,
         "configs/beta.yaml": True,
     }
 
     editor = ConfigEditorWindow(
-        app_actions=_actions_with_refresh(noop_app_actions, merge_preserving_refresh_configs),
+        app_actions=_actions_with_refresh(
+            noop_app_actions,
+            lambda: merge_preserving_refresh_configs(session_batch_args),
+        ),
     )
     qtbot.addWidget(editor)
     editor.reload_config_list()
 
-    assert BatchArgs.configs["configs/alpha.yaml"] is False
-    assert BatchArgs.configs["configs/beta.yaml"] is True
+    assert session_batch_args.configs["configs/alpha.yaml"] is False
+    assert session_batch_args.configs["configs/beta.yaml"] is True
     assert editor.config_list.count() == 2
     labels = [editor.config_list.item(i).text() for i in range(editor.config_list.count())]
     assert labels == ["configs/alpha.yaml", "configs/beta.yaml"]

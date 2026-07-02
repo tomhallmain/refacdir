@@ -39,8 +39,8 @@ def test_batch_yaml_duplicate_remover_runs(
         encoding="utf-8",
     )
 
-    BatchArgs.override_configs({"dup_config.yaml": True})
-    job = BatchJob(BatchArgs())
+    args = BatchArgs(configs={"dup_config.yaml": True})
+    job = BatchJob(args)
     job.run_config_file("dup_config.yaml")
 
     assert not job.failures, job.failures

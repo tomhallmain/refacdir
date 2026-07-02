@@ -33,8 +33,8 @@ def test_batch_yaml_directory_observer_runs(tmp_path, monkeypatch, restore_batch
         encoding="utf-8",
     )
 
-    BatchArgs.override_configs({"obs_config.yaml": True})
-    job = BatchJob(BatchArgs())
+    args = BatchArgs(configs={"obs_config.yaml": True})
+    job = BatchJob(args)
     job.run_config_file("obs_config.yaml")
 
     assert not job.failures, job.failures

@@ -51,8 +51,7 @@ actions:
 """
     cfg_path.write_text(textwrap.dedent(yaml_body).strip(), encoding="utf-8")
 
-    BatchArgs.override_configs({"unit_backup_config.yaml": True})
-    args = BatchArgs()
+    args = BatchArgs(configs={"unit_backup_config.yaml": True})
     args.skip_confirm = True
     job = BatchJob(args)
 
@@ -76,7 +75,7 @@ def test_batch_construct_backup_matches_yaml_named_types(
             }
         ]
     )
-    job = BatchJob(BatchArgs())
+    job = BatchJob(BatchArgs(configs={}))
     mgr = job.construct_backup(
         {
             "name": "direct",

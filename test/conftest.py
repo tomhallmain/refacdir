@@ -110,10 +110,11 @@ def pytest_configure(config):
 
 @pytest.fixture
 def restore_batch_configs():
-    """Restore ``BatchArgs.configs`` after tests that call ``override_configs``."""
-    prev = dict(BatchArgs.configs)
-    yield
-    BatchArgs.configs = prev
+    """Provide a fresh ``BatchArgs`` and restore its configs after the test."""
+    batch_args = BatchArgs(recache_configs=False, configs={})
+    prev = dict(batch_args.configs)
+    yield batch_args
+    batch_args.configs = prev
 
 
 @pytest.fixture
@@ -143,8 +144,6 @@ def isolated_app_singletons(tmp_path, monkeypatch):
     from refacdir.utils.app_info_cache import AppInfoCache
     from refacdir.config import Config
 
-    prev_configs = dict(BatchArgs.configs)
-
     cache_dir = tmp_path / "cache"
     configs_dir = tmp_path / "configs"
     cache_dir.mkdir()
@@ -165,8 +164,6 @@ def isolated_app_singletons(tmp_path, monkeypatch):
     _patch_config_singleton(monkeypatch, config_instance)
 
     yield
-
-    BatchArgs.configs = prev_configs
 
 
 @pytest.fixture(autouse=True)

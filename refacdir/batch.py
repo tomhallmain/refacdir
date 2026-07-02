@@ -21,9 +21,7 @@ logger = setup_logger('batch')
 _ = I18N._
 
 class BatchArgs:
-    configs = {}
-
-    def __init__(self, recache_configs=False):
+    def __init__(self, recache_configs=False, configs=None):
         self.verbose = False
         self.test = False
         self.skip_confirm = False
@@ -39,26 +37,28 @@ class BatchArgs:
         self.backup_warn_duplicates = False
         self.backup_mapping_will_run_default = True
         self.renamer_mapping_will_run_default = True
-        if len(self.configs) == 0 or recache_configs:
-            BatchArgs.setup_configs()
+        if configs is not None:
+            self.configs = dict(configs)
+        else:
+            self.configs = {}
+        if recache_configs or not self.configs:
+            self.setup_configs(recache=True)
 
     def validate(self):
-        if len(BatchArgs.configs) == 0:
+        if len(self.configs) == 0:
             logger.error("No config files found!")
             raise Exception("No config files found!")
         return True
 
-    @staticmethod
-    def override_configs(filtered_configs):
+    def override_configs(self, filtered_configs):
         logger.info(f"Overriding configs with filtered set: {list(filtered_configs.keys())}")
-        BatchArgs.configs = filtered_configs
+        self.configs = dict(filtered_configs)
 
-    @staticmethod
-    def update_config_state(config_path, will_run):
-        """Update a single config's will_run state without reloading from files"""
-        if config_path in BatchArgs.configs:
+    def update_config_state(self, config_path, will_run):
+        """Update a single config's will_run state without reloading from files."""
+        if config_path in self.configs:
             logger.info(f"Updating config state: {config_path} -> {will_run}")
-            BatchArgs.configs[config_path] = will_run
+            self.configs[config_path] = will_run
 
     @staticmethod
     def _config_basename(config_path: str) -> str:
@@ -126,17 +126,20 @@ class BatchArgs:
             if entry.is_file() and cls._is_runnable_yaml_name(entry.name)
         )
 
-    @staticmethod
-    def setup_configs(recache=True):
-        if not recache and len(BatchArgs.configs) > 0:
+    def setup_configs(self, recache=True):
+        if not recache and self.configs:
             return
+        self.configs = self.discover_configs_from_disk()
+        logger.info(f"Config discovery complete: {len(self.configs)} configs found")
 
+    @classmethod
+    def discover_configs_from_disk(cls) -> dict[str, bool]:
+        """Discover runnable config paths and each file's ``will_run`` flag."""
         configs_dir = Config.configs_dir()
 
-        # Discover all runnable YAMLs from disk — this is always the source of truth.
         new_configs = {
-            path: BatchArgs.read_will_run_from_file(path)
-            for path in BatchArgs.discover_runnable_config_paths()
+            path: cls.read_will_run_from_file(path)
+            for path in cls.discover_runnable_config_paths()
         }
 
         # master_config is now a defaults layer only — it can override will_run for
@@ -165,8 +168,7 @@ class BatchArgs:
             except yaml.YAMLError as e:
                 logger.error(f"Error loading master config {master_config_file}: {e}")
 
-        BatchArgs.configs = new_configs
-        logger.info(f"Config discovery complete: {len(new_configs)} configs found")
+        return new_configs
 
 class ActionType(Enum):
     # NOTE action type values must not be changed without also updating the func names of BatchJob
@@ -192,7 +194,7 @@ class BatchJob:
         logger.info("Initializing new batch job")
         self.cwd = os.getcwd()
         self.args = args
-        self.configurations = BatchArgs.configs
+        self.configurations = dict(args.configs)
         self.counts_map = {}
         self.failure_counts_map = {}
         self.app_actions = args.app_actions
@@ -303,7 +305,7 @@ class BatchJob:
                 return
 
             if "will_run" in config_wrapper and config_wrapper["will_run"] == False:
-                # Safety belt: BatchArgs.configs is the primary gate in run(); this catches
+                # Safety belt: args.configs is the primary gate in run(); this catches
                 # stale YAML if sync failed or the file was edited outside the app.
                 logger.info(f"{config} is set to will run = False, skipping...")
                 return

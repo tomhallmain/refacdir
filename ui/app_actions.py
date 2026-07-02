@@ -2,7 +2,14 @@ from typing import Callable, Dict, Any
 
 class AppActions:
     REQUIRED_ACTIONS = {
-        "toast", "alert", "progress_text", "progress_bar_update", "progress_bar_reset", "refresh_configs", "review_duplicates",
+        "toast",
+        "alert",
+        "progress_text",
+        "progress_bar_update",
+        "progress_bar_reset",
+        "refresh_configs",
+        "review_duplicates",
+        "get_batch_args",
     }
     
     def __init__(self, actions: Dict[str, Callable[..., Any]]):

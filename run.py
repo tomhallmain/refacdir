@@ -75,7 +75,12 @@ if __name__ == "__main__":
             if string_list == "":
                 raise Exception("Expected config file paths list not found")
             try:
-                batch_args.configs = Utils.get_list_from_string(string_list)
+                config_list = Utils.get_list_from_string(string_list)
+                batch_args.configs = {
+                    str(path).strip(): True
+                    for path in config_list
+                    if str(path).strip()
+                }
             except Exception as e:
                 raise Exception(f"Invalid config list provided: {e}")
         elif o in ("-o", "--only-observers"):

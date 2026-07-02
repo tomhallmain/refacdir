@@ -47,8 +47,7 @@ actions:
 """
     cfg_path.write_text(textwrap.dedent(yaml_body).strip(), encoding="utf-8")
 
-    BatchArgs.override_configs({"unit_renamer_config.yaml": True})
-    args = BatchArgs()
+    args = BatchArgs(configs={"unit_renamer_config.yaml": True})
     args.skip_confirm = True
     job = BatchJob(args)
 
@@ -62,7 +61,7 @@ actions:
 
 def test_construct_batch_renamer_from_dict_matches_programmatic_mappings():
     """``BatchJob.construct_batch_renamer`` builds the same mapping keys as ``construct_mappings``."""
-    job = BatchJob(BatchArgs())
+    job = BatchJob(BatchArgs(configs={}))
     yaml_dict = {
         "name": "direct",
         "function": "rename_by_mtime",
@@ -106,8 +105,7 @@ actions:
 """
     cfg_path.write_text(textwrap.dedent(yaml_body).strip(), encoding="utf-8")
 
-    BatchArgs.override_configs({"unit_renamer_skip_config.yaml": True})
-    args = BatchArgs()
+    args = BatchArgs(configs={"unit_renamer_skip_config.yaml": True})
     args.skip_confirm = True
     job = BatchJob(args)
 

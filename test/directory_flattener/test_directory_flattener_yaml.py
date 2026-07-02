@@ -34,8 +34,8 @@ def test_batch_yaml_directory_flattener_dry_run(
         encoding="utf-8",
     )
 
-    BatchArgs.override_configs({"flat_config.yaml": True})
-    job = BatchJob(BatchArgs())
+    args = BatchArgs(configs={"flat_config.yaml": True})
+    job = BatchJob(args)
     job.run_config_file("flat_config.yaml")
 
     assert not job.failures, job.failures

@@ -3,10 +3,6 @@
 from refacdir.batch import BatchArgs, BatchJob
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 
-# ``BatchArgs()`` calls ``setup_configs()`` when ``len(BatchArgs.configs) == 0``.
-# Root ``test/conftest.py`` isolates ``REFACDIR_CONFIGS_DIR`` so discovery does not
-# scan the repo ``configs/`` tree; use ``override_configs`` when a test needs a
-# specific config map without relying on disk discovery.
 _NOOP_CONFIG_ENTRY = {"configs/.registry_test_placeholder_do_not_create.yaml": False}
 
 
@@ -32,38 +28,32 @@ def test_reset_registration_state_clears_registries():
 
 
 def test_batch_run_clears_registries_when_not_persisting():
-    prev_configs = dict(BatchArgs.configs)
     try:
-        BatchArgs.override_configs(dict(_NOOP_CONFIG_ENTRY))
+        args = BatchArgs(configs=dict(_NOOP_CONFIG_ENTRY))
         FilenameMappingDefinition.add_named_functions(
             [{"name": "batch_clear_fn", "type": "DIGITS", "args": [1]}]
         )
         FiletypesDefinition.add_named_definitions(
             [{"name": "batch_clear_types", "extensions": [".bc"]}]
         )
-        args = BatchArgs()
         assert args.persist_definition_caches_across_batch_runs is False
         BatchJob(args).run()
         assert "batch_clear_fn" not in FilenameMappingDefinition.NAMED_FUNCTIONS
         assert "batch_clear_types" not in FiletypesDefinition.NAMED_DEFINITIONS
     finally:
-        BatchArgs.configs = prev_configs
         FilenameMappingDefinition.reset_registration_state()
         FiletypesDefinition.reset_registration_state()
 
 
 def test_batch_run_keeps_registries_when_persisting():
-    prev_configs = dict(BatchArgs.configs)
     try:
-        BatchArgs.override_configs(dict(_NOOP_CONFIG_ENTRY))
+        args = BatchArgs(configs=dict(_NOOP_CONFIG_ENTRY))
         FilenameMappingDefinition.add_named_functions(
             [{"name": "batch_persist_fn", "type": "DIGITS", "args": [2]}]
         )
-        args = BatchArgs()
         args.persist_definition_caches_across_batch_runs = True
         BatchJob(args).run()
         assert "batch_persist_fn" in FilenameMappingDefinition.NAMED_FUNCTIONS
     finally:
-        BatchArgs.configs = prev_configs
         FilenameMappingDefinition.reset_registration_state()
         FiletypesDefinition.reset_registration_state()
