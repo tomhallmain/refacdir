@@ -86,7 +86,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.job_queue = JobQueue()
         self.server = self.setup_server()
         self.recurring_action_config = RecurringActionConfig()
-        self._toast = ToastNotification()
+        self._toast = ToastNotification(screen_anchor=self)
         self._config_editor_window = None
         self._batch_history_window = None
         self.is_dark_theme = True

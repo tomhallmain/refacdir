@@ -11,10 +11,25 @@ logger = setup_logger('toast')
 
 class ToastNotification(QWidget):
     """Custom toast notification widget"""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, screen_anchor=None):
         super().__init__(parent, Qt.Window | Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
+        # Window whose current screen toasts should appear on (e.g. the main
+        # window); resolved fresh on each show_message() call so the toast
+        # follows the window if it's later moved to a different monitor.
+        self.screen_anchor = screen_anchor
         self.setup_ui()
+
+    def _resolve_screen(self):
+        """Screen to show on: the anchor window's current screen, else primary."""
+        if self.screen_anchor is not None:
+            try:
+                screen = self.screen_anchor.screen()
+            except Exception:
+                screen = None
+            if screen is not None:
+                return screen
+        return QApplication.primaryScreen()
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -40,12 +55,13 @@ class ToastNotification(QWidget):
         logger.info(f"Showing toast message: {message}")
         self.label.setText(message)
         self.adjustSize()
-        
-        # Center on screen
-        screen = QApplication.primaryScreen().geometry()
+
+        # Center on the anchor window's screen (falls back to primary), accounting
+        # for that screen's own origin so this lands correctly on a secondary monitor.
+        screen = self._resolve_screen().geometry()
         self.move(
-            (screen.width() - self.width()) // 2,
-            screen.height() - self.height() - 50
+            screen.x() + (screen.width() - self.width()) // 2,
+            screen.y() + screen.height() - self.height() - 50
         )
         
         # Show and start timer
