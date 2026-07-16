@@ -423,17 +423,11 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
 
     @staticmethod
     def _config_matches_filter(path: str, text: str) -> bool:
-        if not text.strip():
+        text = text.strip()
+        if not text:
             return True
         basename = os.path.basename(os.path.normpath(path))
-        text_lower = text.lower()
-        basename_lower = basename.lower()
-        return (
-            basename_lower == text_lower
-            or basename_lower.startswith(text_lower)
-            or f" {text_lower}" in basename_lower
-            or f"_{text_lower}" in basename_lower
-        )
+        return text.lower() in basename.lower()
 
     def _update_filtered_configs(self, text: str) -> None:
         if not text.strip():
