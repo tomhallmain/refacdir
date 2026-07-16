@@ -60,6 +60,17 @@ actions:
     locations:
     - root: "{{USER_HOME}}\\Downloads"
 
+  - name: "Downloads (dedupe browser download copies)"
+    function: "rename_by_ctime"
+    mappings:
+    - search_patterns: "invoice.pdf"
+      # Browsers/OS name repeat downloads "invoice (1).pdf", "invoice (2).pdf", etc.
+      # chain_parenthetical_indices matches those too without listing each one.
+      chain_parenthetical_indices: true
+      rename_tag: "Invoice_"
+    locations:
+    - root: "{{USER_HOME}}\\Downloads"
+
   - name: "My Stable Diffusion output"
     function: "rename_by_ctime"
     mappings:

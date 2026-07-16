@@ -70,6 +70,24 @@ class StringFunctionCall:
         return hash(str(self))
 
 
+# OS/browser "duplicate download" naming: "report.pdf" -> "report (1).pdf" -> "report (2).pdf" ...
+_PARENTHETICAL_INDEX_RE = re.compile(r'^(?P<stem>.+) \((?P<index>\d+)\)(?P<ext>\.[^./\\]+)?$')
+
+
+def _strip_parenthetical_index(filepath):
+    """Strip a trailing " (N)" duplicate-download index, e.g. "report (2).pdf" -> "report.pdf"."""
+    norm = filepath.replace("\\", "/")
+    if "/" in norm:
+        dirpart, basename = norm.rsplit("/", 1)
+        dirpart += "/"
+    else:
+        dirpart, basename = "", norm
+    match = _PARENTHETICAL_INDEX_RE.match(basename)
+    if not match:
+        return filepath
+    return dirpart + match.group("stem") + (match.group("ext") or "")
+
+
 class FilenameMappingDefinition:
     NAMED_FUNCTIONS = {}
     GENERATED_PATTERNS = {}
@@ -187,12 +205,38 @@ class FilenameMappingDefinition:
         return False
 
     @staticmethod
-    def _wrap_with_exclude_patterns(include_pattern, exclude_patterns, funcs):
+    def _wrap_with_parenthetical_chaining(include_compiled, chain_parenthetical_indices):
+        """
+        If enabled, also match a file when its OS/browser duplicate-download index
+        is stripped and the result matches — e.g. a pattern matching "report.pdf"
+        then also matches "report (1).pdf", "report (2).pdf", etc.
+        """
+        if not chain_parenthetical_indices:
+            return include_compiled
+
+        if callable(include_compiled):
+            def base_match(path):
+                return include_compiled(path)
+        else:
+            include_str = include_compiled
+
+            def base_match(path):
+                return FilenameMappingDefinition._matches_glob_pattern(path, include_str)
+
+        def matcher(path):
+            if base_match(path):
+                return True
+            stripped = _strip_parenthetical_index(path)
+            return stripped != path and base_match(stripped)
+
+        return matcher
+
+    @staticmethod
+    def _wrap_with_exclude_patterns(include_compiled, exclude_patterns, funcs):
         excludes = FilenameMappingDefinition._normalize_pattern_list(exclude_patterns)
         if not excludes:
-            return FilenameMappingDefinition._compile_pattern(include_pattern, funcs)
+            return include_compiled
 
-        include_compiled = FilenameMappingDefinition._compile_pattern(include_pattern, funcs)
         exclude_compiled = [
             FilenameMappingDefinition._compile_pattern(ex, funcs) for ex in excludes
         ]
@@ -226,6 +270,23 @@ class FilenameMappingDefinition:
         return matcher
 
     @staticmethod
+    def _normalize_search_pattern_entry(entry, default_chain_parenthetical_indices):
+        """
+        A ``search_patterns`` list entry is normally a plain pattern (str or callable),
+        which uses the mapping's ``chain_parenthetical_indices`` default. It may also be
+        a dict — ``{"pattern": ..., "chain_parenthetical_indices": ...}`` — to override
+        that default for just this one pattern within a multi-pattern mapping.
+        """
+        if isinstance(entry, dict):
+            if "pattern" not in entry:
+                raise Exception(f"search_patterns dict entry missing required 'pattern' key: {entry}")
+            return (
+                entry["pattern"],
+                entry.get("chain_parenthetical_indices", default_chain_parenthetical_indices),
+            )
+        return entry, default_chain_parenthetical_indices
+
+    @staticmethod
     def construct_mappings(mappings_list):
         mappings = {}
         for mapping in mappings_list:
@@ -233,20 +294,26 @@ class FilenameMappingDefinition:
             funcs = mapping["funcs"] if "funcs" in mapping else []
             rename_tag = mapping["rename_tag"]
             exclude_patterns = mapping.get("exclude_patterns")
+            default_chain = mapping.get("chain_parenthetical_indices", False)
 
-            def add_key(pattern):
+            def add_key(pattern, chain_parenthetical_indices):
+                compiled = FilenameMappingDefinition._compile_pattern(pattern, funcs)
+                compiled = FilenameMappingDefinition._wrap_with_parenthetical_chaining(
+                    compiled, chain_parenthetical_indices
+                )
                 key = FilenameMappingDefinition._wrap_with_exclude_patterns(
-                    pattern, exclude_patterns, funcs
+                    compiled, exclude_patterns, funcs
                 )
                 mappings[key] = rename_tag
 
-            if isinstance(search_pattern, str):
-                add_key(search_pattern)
-            elif callable(search_pattern):
-                add_key(search_pattern)
+            if isinstance(search_pattern, str) or callable(search_pattern):
+                add_key(search_pattern, default_chain)
             elif isinstance(search_pattern, list):
-                for pattern in mapping["search_patterns"]:
-                    add_key(pattern)
+                for entry in search_pattern:
+                    pattern, chain = FilenameMappingDefinition._normalize_search_pattern_entry(
+                        entry, default_chain
+                    )
+                    add_key(pattern, chain)
             else:
                 raise Exception(f"Invalid search pattern type {type(search_pattern)}")
         return mappings

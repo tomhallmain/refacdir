@@ -422,6 +422,10 @@ class RenamerActionDialog(BaseActionDialog):
         self.rule_exclude_edit.setPlaceholderText("optional; one glob per line")
         self.rule_exclude_edit.setMinimumHeight(70)
         rule_editor_form.addRow("exclude_patterns", self.rule_exclude_edit)
+        self.rule_chain_check = QCheckBox(
+            "also match OS/browser duplicate-download copies, e.g. \"name (1).ext\""
+        )
+        rule_editor_form.addRow("chain_parenthetical_indices", self.rule_chain_check)
         self.rule_tag_edit = QLineEdit()
         self.rule_tag_edit.setPlaceholderText("rename_tag")
         rule_editor_form.addRow("rename_tag", self.rule_tag_edit)
@@ -524,7 +528,8 @@ class RenamerActionDialog(BaseActionDialog):
             if isinstance(excludes, str):
                 excludes = [excludes]
             exclude_hint = f", {len(excludes)} exclude(s)" if excludes else ""
-            self.rules_list.addItem(f"{idx + 1}. {tag} <- {pattern_preview}{exclude_hint}")
+            chain_hint = ", chained" if rule.get("chain_parenthetical_indices") else ""
+            self.rules_list.addItem(f"{idx + 1}. {tag} <- {pattern_preview}{exclude_hint}{chain_hint}")
         if self._rules:
             row = 0 if self._selected_rule_index is None else min(self._selected_rule_index, len(self._rules) - 1)
             self.rules_list.setCurrentRow(row)
@@ -533,6 +538,7 @@ class RenamerActionDialog(BaseActionDialog):
             self.rule_search_edit.clear()
             self.rule_tag_edit.clear()
             self.rule_exclude_edit.clear()
+            self.rule_chain_check.setChecked(False)
 
     def _on_rule_selected(self, row: int):
         if row < 0 or row >= len(self._rules):
@@ -553,6 +559,7 @@ class RenamerActionDialog(BaseActionDialog):
             self.rule_exclude_edit.setPlainText(str(excludes))
         else:
             self.rule_exclude_edit.clear()
+        self.rule_chain_check.setChecked(bool(rule.get("chain_parenthetical_indices", False)))
 
     def _on_new_rule_draft(self):
         self._selected_rule_index = None
@@ -560,6 +567,7 @@ class RenamerActionDialog(BaseActionDialog):
         self.rule_search_edit.clear()
         self.rule_tag_edit.clear()
         self.rule_exclude_edit.clear()
+        self.rule_chain_check.setChecked(False)
 
     def _build_rule_from_editor(self) -> dict:
         patterns_text = self.rule_search_edit.text().strip()
@@ -586,6 +594,8 @@ class RenamerActionDialog(BaseActionDialog):
         }
         if exclude_lines:
             rule["exclude_patterns"] = exclude_lines
+        if self.rule_chain_check.isChecked():
+            rule["chain_parenthetical_indices"] = True
         return rule
 
     def _on_upsert_rule(self):
