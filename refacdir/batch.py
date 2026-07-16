@@ -293,6 +293,10 @@ class BatchJob:
                 self.app_actions.progress_bar_reset()
         finally:
             finish_batch_job(self.counts_map, self.failures, self.cancelled)
+            # Persist any filename-classification results (e.g. is_id) accumulated
+            # this run so future sessions skip recomputing them from scratch.
+            from refacdir.utils.persistent_pattern_cache import persistent_pattern_cache
+            persistent_pattern_cache.flush()
 
     def run_config_file(self, config):
         logger.info(f"Running config file: {config}")

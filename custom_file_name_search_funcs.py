@@ -1,9 +1,10 @@
-import functools
 import math
 import os
 import random
 import re
 from collections import Counter
+
+from refacdir.utils.persistent_pattern_cache import persistent_cache
 
 
 # Add any custom filename search functions here to gather files for the BatchRenamers as set in the config YAML.
@@ -54,14 +55,14 @@ def is_short_integer_filename(filename, max_length=5):
     return filename_part.isdigit() and 1 <= len(filename_part) <= max_length
 
 
-@functools.lru_cache(maxsize=16384)
+@persistent_cache
 def is_id_filename(filename, fixed_length=22):
     file_basename = os.path.basename(filename)
     filename_part = file_basename.split(".")[0] if "." in file_basename else file_basename
     return is_id(filename_part, fixed_length=fixed_length)
 
 
-@functools.lru_cache(maxsize=16384)
+@persistent_cache
 def is_id(s, min_length=6, fixed_length=None):
     """
     Determine if a string appears to be a randomized ID rather than a human-chosen name.
