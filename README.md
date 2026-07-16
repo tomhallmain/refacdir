@@ -22,6 +22,8 @@ Available batch actions include:
 
 Define custom named functions and sets of file types in the config YAML `filename_mapping_functions` and `filetype_definitions` headers to be referenced in the other parts of the config. Similarly, define custom functions in `custom_file_name_search_funcs.py` and add the function name refs to the config YAML to add custom search logic for gathering files to rename or move.
 
+For the built-in `REP`/`DIGITS`/`HEX`/`ALNUM` pattern primitives, you don't need to declare a named `filename_mapping_functions` entry for every value — an inline `{{type:arg1:arg2}}` form works directly in a pattern, e.g. `{{digits:4}}` (four digits), `{{hex:64}}` (64 uppercase hex chars), or `{{alnum:8:true:_}}` (8 lowercase alphanumeric chars plus underscore). This is purely additive: existing named `filename_mapping_functions` declarations keep working unchanged.
+
 Once all configurations are defined, run `run.py` to perform the actions. The actions will be run in the order they are listed in the config file. Each configuration file will create a batch job which will run in sequence sorted by the name of the config file.
 
 # UI

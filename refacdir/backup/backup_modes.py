@@ -11,6 +11,13 @@ class HashMode(Enum):
     FILENAME_AND_PARENT = 1     # Compare by filename and parent directory
     SHA256 = 2                 # Compare by SHA256 hash of contents
 
+# NOTE: A per-file "special names" override — specific filenames that should
+# always be re-backed-up regardless of what FILENAME/FILENAME_AND_PARENT hash
+# comparison says — was considered and not implemented. The existing
+# workaround is to split affected files into their own BackupMapping using
+# HashMode.SHA256, alongside a separate mapping using a faster hash mode for
+# the rest of the collection.
+
 class BackupMode(Enum):
     """Backup operation modes"""
     PUSH_AND_REMOVE = 0    # Copy files to target and remove from source
