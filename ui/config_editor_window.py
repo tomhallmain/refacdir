@@ -338,6 +338,9 @@ class ConfigEditorWindow(SmartWindow):
         self.actions_list.setCurrentRow(new_idx)
 
     def _sync_data_from_ui(self):
+        # Stale if will_run was changed elsewhere (e.g. the main window sidebar
+        # toggle) since this window last loaded/reloaded the file — this save
+        # will overwrite that change with the checkbox state shown here.
         self.current_config_data["will_run"] = self.will_run_checkbox.isChecked()
         try:
             funcs = yaml.safe_load(self.filename_funcs_editor.toPlainText()) or []

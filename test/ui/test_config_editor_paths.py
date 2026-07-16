@@ -8,6 +8,7 @@ import pytest
 import yaml
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
+from refacdir.batch import BatchArgs
 from refacdir.config import Config
 from ui.config_editor_window import ConfigEditorWindow
 
@@ -109,6 +110,34 @@ def test_save_current_config_writes_under_configs_dir(
     saved = yaml.safe_load(read_config_file("edit_me.yaml"))
     assert saved["will_run"] is False
     assert os.path.isfile(os.path.join(Config.configs_dir(), "edit_me.yaml"))
+
+
+def test_save_overwrites_will_run_changed_elsewhere_since_load(
+    qtbot, noop_app_actions, wrong_cwd, no_message_boxes
+):
+    """
+    Known limitation: the editor's will_run checkbox is a snapshot from the last
+    load/reload. If will_run changes elsewhere (e.g. the main window sidebar
+    toggle, via ``BatchArgs.write_will_run_to_file``) after that, saving from the
+    editor overwrites it with the stale checkbox state instead of preserving the
+    newer external change.
+    """
+    write_runnable_config("stale.yaml", will_run=True)
+
+    editor = ConfigEditorWindow(app_actions=noop_app_actions)
+    qtbot.addWidget(editor)
+    editor.load_config("configs/stale.yaml")
+    assert editor.will_run_checkbox.isChecked() is True
+
+    # Simulate the sidebar toggle happening elsewhere while the editor stays open.
+    BatchArgs.write_will_run_to_file("configs/stale.yaml", False)
+    assert yaml.safe_load(read_config_file("stale.yaml"))["will_run"] is False
+
+    editor.save_current_config()
+
+    # The editor's stale checkbox state (True) wins, silently reverting the
+    # external toggle.
+    assert yaml.safe_load(read_config_file("stale.yaml"))["will_run"] is True
 
 
 def test_save_as_writes_file_and_sets_configs_rel_path(

@@ -429,6 +429,10 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         basename = os.path.basename(os.path.normpath(path))
         return text.lower() in basename.lower()
 
+    @staticmethod
+    def _config_display_name(path: str) -> str:
+        return os.path.basename(os.path.normpath(path))
+
     def _update_filtered_configs(self, text: str) -> None:
         if not text.strip():
             self.filtered_configs = deepcopy(self.batch_args.configs)
@@ -456,7 +460,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             will_run = self.batch_args.configs[config]
             checkbox = self._config_checkboxes.get(config)
             if checkbox is None:
-                checkbox = QCheckBox(config)
+                checkbox = QCheckBox(self._config_display_name(config))
+                checkbox.setToolTip(config)
                 checkbox.stateChanged.connect(
                     lambda state, c=config: self.toggle_config(c, state)
                 )
