@@ -15,6 +15,39 @@ _MULTI_SPACE_RE = re.compile(r"\s+")
 _STOPWORDS = {"the", "and", "new", "img", "image", "file", "copy"}
 
 
+# Static catalog of well-known filename shapes — unlike suggest_renamer_rules(),
+# these don't require scanning any directory. A user must still explicitly pick
+# one in the UI; nothing here is ever applied automatically.
+_COMMON_PATTERN_PRESETS = [
+    {
+        "name": "Integer Basename",
+        "search_patterns": "{{is_short_integer_filename}}",
+        "rename_tag": "int_",
+        "function_hint": "rename_by_ctime",
+        "reason": 'Filenames that are just a short number (up to 5 digits), e.g. "1234.jpg".',
+    },
+    {
+        "name": "Camera Photo (IMG_####)",
+        "search_patterns": "IMG_",
+        "rename_tag": "cam_",
+        "function_hint": "rename_by_ctime",
+        "reason": 'Default camera/phone photo naming, e.g. "IMG_1234.jpg".',
+    },
+    {
+        "name": "Hash/UUID Basename",
+        "search_patterns": "{{is_id_filename}}",
+        "rename_tag": "id_",
+        "function_hint": "rename_by_ctime",
+        "reason": "Filenames that look like a random ID or hash rather than a human-chosen name.",
+    },
+]
+
+
+def common_pattern_presets() -> list[dict]:
+    """Static catalog of well-known filename shapes, independent of any directory scan."""
+    return [dict(preset) for preset in _COMMON_PATTERN_PRESETS]
+
+
 def _iter_files(directory: str, recursive: bool = False, max_files: int = 3000) -> list[dict]:
     files = []
     if not os.path.isdir(directory):

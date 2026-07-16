@@ -635,7 +635,7 @@ class RenamerActionDialog(BaseActionDialog):
                 initial_directory=initial_dir,
             )
             self._suggester_dialog.setModal(False)
-            self._suggester_dialog.rule_applied.connect(self._append_suggested_pattern)
+            self._suggester_dialog.rule_applied.connect(self._apply_suggested_rule)
         else:
             self._suggester_dialog.set_directory(initial_dir)
 
@@ -643,19 +643,30 @@ class RenamerActionDialog(BaseActionDialog):
         self._suggester_dialog.raise_()
         self._suggester_dialog.activateWindow()
 
-    def _append_suggested_pattern(self, pattern: str):
-        pattern = pattern.strip()
+    def _apply_suggested_rule(self, payload: dict):
+        """
+        Apply a picked suggestion to the rule currently being edited.
+
+        Only ever runs in response to the user explicitly selecting a suggestion
+        and clicking OK in the suggester dialog — never automatically. Only
+        fills ``rename_tag`` when the field is still blank, so it can't clobber
+        something the user already typed; the (mapping-level) function is never
+        touched here, only shown as a hint in the suggester's details pane.
+        """
+        pattern = str(payload.get("search_patterns", "")).strip()
         if not pattern:
             return
         current = self.rule_search_edit.text().strip()
         if not current:
             self.rule_search_edit.setText(pattern)
-            return
+        else:
+            existing = [part.strip() for part in current.split(",") if part.strip()]
+            if pattern not in existing:
+                self.rule_search_edit.setText(f"{current}, {pattern}")
 
-        existing = [part.strip() for part in current.split(",") if part.strip()]
-        if pattern in existing:
-            return
-        self.rule_search_edit.setText(f"{current}, {pattern}")
+        rename_tag = str(payload.get("rename_tag", "")).strip()
+        if rename_tag and not self.rule_tag_edit.text().strip():
+            self.rule_tag_edit.setText(rename_tag)
 
 
 class DuplicateRemoverActionDialog(BaseActionDialog):

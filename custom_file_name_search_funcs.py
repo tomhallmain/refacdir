@@ -47,6 +47,13 @@ def random_selection(filename, chance=0.5):
     return random.random() <= chance
 
 
+def is_short_integer_filename(filename, max_length=5):
+    """True if the basename (minus extension) is purely digits, 1-max_length chars long."""
+    file_basename = os.path.basename(filename)
+    filename_part = file_basename.split(".")[0] if "." in file_basename else file_basename
+    return filename_part.isdigit() and 1 <= len(filename_part) <= max_length
+
+
 @functools.lru_cache(maxsize=16384)
 def is_id_filename(filename, fixed_length=22):
     file_basename = os.path.basename(filename)

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -16,26 +17,47 @@ from PySide6.QtWidgets import (
 )
 
 from refacdir.lib.multi_display import SmartDialog
-from refacdir.renamer_rule_generation import suggest_renamer_rules
+from refacdir.renamer_rule_generation import common_pattern_presets, suggest_renamer_rules
 
 
 class RenamerRuleSuggesterDialog(SmartDialog):
-    """Suggests renamer rules by scanning filenames in a directory."""
-    rule_applied = Signal(str)
+    """
+    Suggests renamer rules two ways:
+    - Common Patterns: a static catalog of well-known filename shapes (e.g. a
+      short integer basename), available immediately with no directory needed.
+    - Detected From Files: scans a chosen directory for repeated filename shapes.
+
+    Either way, nothing is applied to the mapping being edited until the user
+    picks a suggestion here and clicks OK.
+    """
+
+    rule_applied = Signal(dict)
 
     def __init__(self, parent=None, initial_directory: str = ""):
         super().__init__(
             parent=parent,
             position_parent=parent,
             title="Renamer Auto-Rule Suggestions",
-            geometry="860x620",
+            geometry="860x680",
             center=True,
         )
         self.setModal(True)
         self._result_rule = None
         self._suggestions = []
+        self._presets = common_pattern_presets()
 
         layout = QVBoxLayout(self)
+
+        presets_group = QGroupBox("Common Patterns (no directory needed)")
+        presets_layout = QVBoxLayout(presets_group)
+        self.preset_list = QListWidget()
+        self.preset_list.currentRowChanged.connect(self._on_preset_selection_changed)
+        presets_layout.addWidget(self.preset_list)
+        layout.addWidget(presets_group)
+        self._populate_presets()
+
+        detected_group = QGroupBox("Detected From Files")
+        detected_layout = QVBoxLayout(detected_group)
         form = QFormLayout()
 
         dir_row = QHBoxLayout()
@@ -49,15 +71,16 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         self.recursive_check = QCheckBox("Scan recursively")
         self.recursive_check.setChecked(False)
         form.addRow("Options", self.recursive_check)
-        layout.addLayout(form)
+        detected_layout.addLayout(form)
 
         analyze_btn = QPushButton("Analyze Filenames")
         analyze_btn.clicked.connect(self._analyze)
-        layout.addWidget(analyze_btn)
+        detected_layout.addWidget(analyze_btn)
 
         self.suggestion_list = QListWidget()
         self.suggestion_list.currentRowChanged.connect(self._on_selection_changed)
-        layout.addWidget(self.suggestion_list, 1)
+        detected_layout.addWidget(self.suggestion_list, 1)
+        layout.addWidget(detected_group, 1)
 
         self.details_label = QLabel("Pick a suggestion to preview details.")
         self.details_label.setWordWrap(True)
@@ -67,6 +90,11 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         buttons.accepted.connect(self._accept_selected)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    def _populate_presets(self):
+        self.preset_list.clear()
+        for preset in self._presets:
+            self.preset_list.addItem(f"{preset['name']} — {preset['search_patterns']}")
 
     def _browse_directory(self):
         start_dir = self.directory_edit.text().strip() or os.getcwd()
@@ -103,13 +131,36 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             )
         self.suggestion_list.setCurrentRow(0)
 
+    def _on_preset_selection_changed(self, row: int):
+        if row < 0 or row >= len(self._presets):
+            if self._result_rule is None or self._result_rule.get("_source") == "preset":
+                self._result_rule = None
+            return
+        self._deselect(self.suggestion_list)
+        preset = self._presets[row]
+        self._result_rule = {
+            "search_patterns": preset["search_patterns"],
+            "rename_tag": preset.get("rename_tag", ""),
+            "_source": "preset",
+        }
+        self.details_label.setText(
+            f"Reason: {preset.get('reason', 'n/a')}\n"
+            f"Pattern: {preset['search_patterns']}\n"
+            f"Suggested rename_tag: {preset.get('rename_tag', 'n/a')}\n"
+            f"Suggested function: {preset.get('function_hint', 'n/a')} "
+            "(set this yourself in the Function dropdown; it's not applied automatically)"
+        )
+
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._suggestions):
-            self._result_rule = None
+            if self._result_rule is None or self._result_rule.get("_source") == "detected":
+                self._result_rule = None
             return
+        self._deselect(self.preset_list)
         item = self._suggestions[row]
         self._result_rule = {
             "search_patterns": item["search_patterns"],
+            "_source": "detected",
         }
         self.details_label.setText(
             f"Reason: {item.get('reason', 'n/a')}\n"
@@ -118,6 +169,14 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             f"Pattern: {item['search_patterns']}\n"
             f"Top subdirs: {self._format_subdirs(item.get('subdirs', []))}"
         )
+
+    @staticmethod
+    def _deselect(list_widget: QListWidget):
+        """Clear the other list's selection without re-entering its changed handler."""
+        list_widget.blockSignals(True)
+        list_widget.setCurrentRow(-1)
+        list_widget.clearSelection()
+        list_widget.blockSignals(False)
 
     def _accept_selected(self):
         if self._result_rule is None:
@@ -128,7 +187,8 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             QMessageBox.warning(self, "Invalid Suggestion", "Selected suggestion has no usable pattern.")
             return
         # Apply without closing so user can quickly pick multiple suggestions.
-        self.rule_applied.emit(pattern)
+        payload = {k: v for k, v in self._result_rule.items() if k != "_source"}
+        self.rule_applied.emit(payload)
 
     def set_directory(self, directory: str):
         if directory:
