@@ -206,16 +206,22 @@ class FilenameMappingDefinition:
             def include_match(path):
                 return FilenameMappingDefinition._matches_glob_pattern(path, include_str)
 
-        def matcher(path):
-            if not include_match(path):
-                return False
+        def is_excluded(path):
             for ex in exclude_compiled:
                 if callable(ex):
                     if ex(path):
-                        return False
+                        return True
                 elif FilenameMappingDefinition._matches_glob_pattern(path, ex, prefix_match=False):
-                    return False
-            return True
+                    return True
+            return False
+
+        def matcher(path):
+            # Exclude patterns are cheap glob checks in the common case; run them
+            # first so the (possibly expensive, e.g. is_id) include check is
+            # skipped entirely for files that are already excluded.
+            if is_excluded(path):
+                return False
+            return include_match(path)
 
         return matcher
 

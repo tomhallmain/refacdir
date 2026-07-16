@@ -1,3 +1,4 @@
+import functools
 import math
 import os
 import random
@@ -46,12 +47,14 @@ def random_selection(filename, chance=0.5):
     return random.random() <= chance
 
 
+@functools.lru_cache(maxsize=16384)
 def is_id_filename(filename, fixed_length=22):
     file_basename = os.path.basename(filename)
     filename_part = file_basename.split(".")[0] if "." in file_basename else file_basename
     return is_id(filename_part, fixed_length=fixed_length)
 
 
+@functools.lru_cache(maxsize=16384)
 def is_id(s, min_length=6, fixed_length=None):
     """
     Determine if a string appears to be a randomized ID rather than a human-chosen name.
