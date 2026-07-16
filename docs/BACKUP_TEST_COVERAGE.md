@@ -2,8 +2,6 @@
 
 Tracks automated coverage for `refacdir/backup/` and batch YAML loading. See `test/backup/*.py`.
 
-For **other** `ActionType`s (renamer, duplicate remover, etc.), see [NON_BACKUP_ACTIONS_TEST_COVERAGE.md](./NON_BACKUP_ACTIONS_TEST_COVERAGE.md).
-
 ## Action types (`BackupMode`)
 
 | Mode | Intent | Integration tests (`test_backup.py`) | `BackupState.verify_integrity` (`test_backup_state.py`) |
@@ -26,6 +24,7 @@ For **other** `ActionType`s (renamer, duplicate remover, etc.), see [NON_BACKUP_
 | `exclude_dirs` / `exclude_removal_dirs` / `will_run` / dry-run | Yes | See `test_backup.py` |
 | `report_failures` + JSON | `test_backup_report_failures.py` | Patches `_FAILURE_LOG` under `tmp_path`. |
 | `BackupTransaction` rollback | `test_backup_transaction.py` | — |
+| `HashManager` itself (all three hash modes, caching, dedup, verify) | `test_hash_manager.py` | Unit-level, below the `BackupState.verify_integrity` integration tests above. |
 
 ## YAML / batch integration (isolated from `configs/`)
 
@@ -50,7 +49,4 @@ Separate suite; many cases predate current `BackupSourceData` behavior. Triage i
 - `refacdir/backup/backup_state.py`
 - `refacdir/backup/backup_manager.py`
 - `refacdir/batch.py` — `construct_backup`, `run_config_file`
-
-## Obsolete backlog (was incremental checklist)
-
-The following were implemented or superseded by the tests above: hash-mode cases, `report_failures`, batch YAML isolation, mirror stale file, MIRROR+DIRS_ONLY behavior note.
+- `test/backup/test_backup_helper.py` — shared fixtures/helpers (test file/dir builders, hash comparison, Windows-friendly cleanup), not a test module itself.
