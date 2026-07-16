@@ -1,6 +1,11 @@
 
 will_run: true
 
+# Named entries below are still supported, but for the REP/DIGITS/HEX/ALNUM
+# primitives you don't have to declare one per value any more (four_digits,
+# five_digits, ...) — use the inline "{{type:arg1:arg2}}" form directly in a
+# pattern instead, e.g. "{{digits:4}}" or "{{hex:64}}" or "{{alnum:8:true:_}}".
+# See "My Stable Diffusion output" below for a live example.
 filename_mapping_functions:
 
 - name: "sixty_four_uppercase_hexadecimal"
@@ -12,9 +17,6 @@ filename_mapping_functions:
 - name: "eight_lowercase_alphanumeric_with_underscore"
   type: "ALNUM"
   args: [8, true, "_"]
-- name: "four_digits"
-  type: "DIGITS"
-  args: [4]
 
 
 filetype_definitions:
@@ -76,7 +78,7 @@ actions:
     mappings:
     - search_patterns: ["AnimateDiff", "AnimDiff"]
       rename_tag: "AD_"
-    - search_patterns: "[0-9]{{four_digits}}-"
+    - search_patterns: "[0-9]{{digits:4}}-"  # inline form; equivalent to "[0-9]{{four_digits}}-"
       rename_tag:  "SDWebui_"
     - search_patterns: "{{sixty_four_uppercase_hexadecimal}}"
       rename_tag: "hexstring_"

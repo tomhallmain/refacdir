@@ -49,6 +49,48 @@ class StringFunction(Enum):
         return f"[{chars}{extra_chars}]" * n
 
 
+# Inline, no-declaration-required syntax for the StringFunction primitives, e.g.
+# "{{digits:4}}" or "{{hex:64}}" or "{{alnum:8:true:_}}" — args map positionally
+# onto the underlying function's signature (StringFunction.digits/hex/alnum).
+# This exists so a config never has to pre-declare a named filename_mapping_functions
+# entry (four_digits, five_digits, six_digits, ...) for every value it needs; the
+# value is just written directly in the pattern. Plain names with no ":" (e.g.
+# "four_digits") are unaffected and keep resolving via NAMED_FUNCTIONS as before.
+_INLINE_STRING_FUNCTION_RE = re.compile(r'^([A-Za-z]+):(.+)$')
+
+
+def _coerce_inline_arg(token: str):
+    stripped = token.strip()
+    if stripped.isdigit():
+        return int(stripped)
+    lowered = stripped.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if lowered in ("mixed", "any"):
+        return None
+    return stripped
+
+
+def _try_inline_string_function(group: str):
+    """
+    Parse an inline StringFunction call directly from a ``{{...}}`` template
+    group (e.g. "digits:4"). Returns the generated glob fragment, or ``None``
+    if ``group`` isn't this syntax (falls through to the named-function lookup).
+    """
+    match = _INLINE_STRING_FUNCTION_RE.match(group.strip())
+    if not match:
+        return None
+    type_token, rest = match.groups()
+    try:
+        string_function = StringFunction[type_token.strip().upper()]
+    except KeyError:
+        return None
+    args = [_coerce_inline_arg(part) for part in rest.split(":")]
+    return string_function(*args)
+
+
 class StringFunctionCall:
     def __init__(self, name, _function, *args):
         self.name = name
@@ -120,6 +162,9 @@ class FilenameMappingDefinition:
             return self.pattern
 
     def generate_subpattern(self, func_name="", index=0):
+        inline_result = _try_inline_string_function(func_name)
+        if inline_result is not None:
+            return inline_result
         if func_name in FilenameMappingDefinition.NAMED_FUNCTIONS:
             function_call = FilenameMappingDefinition.NAMED_FUNCTIONS[func_name]
         elif len(self.function_calls) > int(index):
