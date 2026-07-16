@@ -571,6 +571,50 @@ class BackupMapping:
         """Check if backup is in mirror mode"""
         return self.mode in [BackupMode.MIRROR, BackupMode.MIRROR_DUPLICATES]
 
+    def preview_changes(self) -> Dict[str, List[str]]:
+        """
+        Summarize what ``backup()`` would do, using the hash tables ``setup()``
+        already built (call ``setup()`` first) — read-only, no file I/O of its
+        own beyond what ``setup()`` already performed.
+
+        A best-effort approximation for preview purposes (see
+        refacdir/llm/preview.py, Phase 4 of docs/LLM_CONFIG_CHAT_SCOPE.md): unlike
+        the real push logic in ``_ensure_files``, this doesn't attempt the
+        "reuse an existing identical file elsewhere in target" optimization —
+        it may list a source file under ``to_add_or_update`` that ``backup()``
+        would actually satisfy by renaming an existing target file into place
+        instead of copying. Either way the file ends up present and correct at
+        the target path; only the *method* (copy vs. rename-in-place) differs,
+        which doesn't matter for reviewing WHAT would change before running for
+        real. Note even ``backup(test=True)`` doesn't compute this today: the
+        real dry-run path only skips the actual file mutations, it doesn't
+        populate any structure describing what those mutations would have been.
+
+        Returns ``{"to_add_or_update": [target_path, ...], "to_remove_stale": [...]}``.
+        ``to_remove_stale`` is only ever non-empty for ``is_mirror_mode()``
+        mappings (matching ``_mirror_remove_stale``, which only runs in mirror
+        mode) and only lists files/dirs already present under ``target_dir``.
+        """
+        to_add_or_update = []
+        for source_hash, source_paths in self._source_data.hash_dict.items():
+            for source_path in source_paths:
+                target_path = self._build_target_path(source_path)
+                if self._target_hash_dict.get(target_path) != source_hash:
+                    to_add_or_update.append(target_path)
+
+        to_remove_stale = []
+        if self.is_mirror_mode() and os.path.exists(self.target_dir):
+            for target_path in self._target_hash_dict:
+                if self._is_internal_backup_path(target_path):
+                    continue
+                if self._is_file_excluded(target_path) or self._is_file_removal_excluded(target_path):
+                    continue
+                rel = os.path.normpath(os.path.relpath(target_path, self.target_dir))
+                if rel not in self._expected_target_rel_paths:
+                    to_remove_stale.append(target_path)
+
+        return {"to_add_or_update": to_add_or_update, "to_remove_stale": to_remove_stale}
+
     def report_failures(self) -> None:
         if len(self.failures) == 0:
             logger.info(f"No failures encountered for mapping: {self.source_dir} -> {self.target_dir}")

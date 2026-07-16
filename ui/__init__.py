@@ -10,6 +10,7 @@ from .custom_title_bar import CustomTitleBar, FramelessWindowMixin, TitleBarButt
 from .batch_history_window import BatchHistoryWindow
 from .config_editor_window import ConfigEditorWindow
 from .renamer_rule_suggester_dialog import RenamerRuleSuggesterDialog
+from .llm_config_chat_dialog import LLMConfigChatDialog
 from .duplicate_review_dialogs import run_duplicate_review_dialog
 
 __all__ = [
@@ -26,5 +27,6 @@ __all__ = [
     'ConfigEditorWindow',
     'BatchHistoryWindow',
     'RenamerRuleSuggesterDialog',
+    'LLMConfigChatDialog',
     'run_duplicate_review_dialog',
 ] 

@@ -24,7 +24,9 @@ from PySide6.QtWidgets import (
 
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
+from refacdir.llm.config_schema import supported_action_types
 from refacdir.utils.utils import Utils
+from .llm_config_chat_dialog import LLMConfigChatDialog
 from .renamer_rule_suggester_dialog import RenamerRuleSuggesterDialog
 
 
@@ -102,6 +104,7 @@ class BaseActionDialog(SmartDialog):
         self._result = None
         self._selected_mapping_index = None
         self._mapping_property_rows: list[MappingPropertyRow] = []
+        self._ai_draft_dialog = None
 
         data = copy.deepcopy(action_data) if action_data else _default_action_dict(action_type)
         data["type"] = action_type.value
@@ -154,6 +157,15 @@ class BaseActionDialog(SmartDialog):
         self.remove_mapping_btn = QPushButton("Remove")
         self.remove_mapping_btn.clicked.connect(self._on_remove_mapping)
         map_btns.addWidget(self.remove_mapping_btn)
+        self.ai_draft_btn = QPushButton("Draft with AI...")
+        self.ai_draft_btn.clicked.connect(self._open_ai_draft_dialog)
+        if self._action_type not in supported_action_types():
+            self.ai_draft_btn.setEnabled(False)
+            self.ai_draft_btn.setToolTip(
+                f"{self._action_type.value} actions aren't supported by the AI "
+                "drafting feature yet."
+            )
+        map_btns.addWidget(self.ai_draft_btn)
         left_layout.addLayout(map_btns)
         body_layout.addWidget(left_group, 2)
 
@@ -227,11 +239,20 @@ class BaseActionDialog(SmartDialog):
         row.deleteLater()
 
     def _refresh_mapping_list(self):
+        # Capture the desired index before the clear()/addItem() rebuild below:
+        # both can drive the list's currentRow through transient states (e.g.
+        # -1 on clear, 0 on the first re-added item), each of which fires
+        # currentRowChanged -> _on_mapping_selected and would otherwise
+        # clobber self._selected_mapping_index before we get to use it.
+        desired_index = self._selected_mapping_index
+        self.mapping_list.blockSignals(True)
         self.mapping_list.clear()
         for mapping in self._mappings:
             self.mapping_list.addItem(self.mapping_summary(mapping))
+        self.mapping_list.blockSignals(False)
         if self._mappings:
-            row = 0 if self._selected_mapping_index is None else min(self._selected_mapping_index, len(self._mappings) - 1)
+            row = 0 if desired_index is None else min(desired_index, len(self._mappings) - 1)
+            self._selected_mapping_index = row
             self.mapping_list.setCurrentRow(row)
         else:
             self._selected_mapping_index = None
@@ -290,6 +311,38 @@ class BaseActionDialog(SmartDialog):
         del self._mappings[row]
         self._selected_mapping_index = None
         self._refresh_mapping_list()
+
+    def _open_ai_draft_dialog(self):
+        """
+        Open the (non-modal, apply-without-closing) AI drafting dialog for
+        this action's type — see docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 5. Kept
+        alive as an instance attribute (same pattern as
+        RenamerActionDialog._suggester_dialog) so a background draft can
+        still find it and emit into it even if the user has moved focus
+        elsewhere in this dialog.
+        """
+        if self._ai_draft_dialog is None:
+            self._ai_draft_dialog = LLMConfigChatDialog(parent=self, action_type=self._action_type)
+            self._ai_draft_dialog.action_drafted.connect(self._apply_ai_drafted_action)
+        self._ai_draft_dialog.show()
+        self._ai_draft_dialog.raise_()
+        self._ai_draft_dialog.activateWindow()
+
+    def _apply_ai_drafted_action(self, action_dict: dict):
+        """
+        Add an AI-drafted action dict as a new mapping — only ever runs in
+        response to the user explicitly clicking Apply in
+        ``LLMConfigChatDialog``, never automatically. The dict already
+        matches this action type's mapping shape (name/function/mappings/
+        locations for RENAMER, name/backup_mappings for BACKUP, etc. — it was
+        validated by the same ``BatchJob.construct_*`` method a real batch
+        run uses, see refacdir/llm/validation.py), so it's inserted as-is,
+        the same as a manually-built mapping would be.
+        """
+        self._mappings.append(action_dict)
+        self._selected_mapping_index = len(self._mappings) - 1
+        self._refresh_mapping_list()
+        self.mapping_list.setCurrentRow(self._selected_mapping_index)
 
     def _validate_unique_mapping_names(self):
         names = []
@@ -784,20 +837,6 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
             "clear_sources",
             "test",
             "skip_confirm",
-        ]
-
-
-class BackupActionDialog(BaseActionDialog):
-    def hint_text(self) -> str:
-        return "Backup mappings include backup_mappings plus optional flags."
-
-    def property_key_options(self) -> list[str]:
-        return [
-            "warn_duplicates",
-            "overwrite",
-            "test",
-            "skip_confirm",
-            "backup_mappings",
         ]
 
 

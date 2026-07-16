@@ -1,4 +1,9 @@
 __pycache__/
+
+*.log
+*.swp
+*.pyc
+
 refacdir/backup/backup_failures.json
 configs/*
 !configs/config_example.json

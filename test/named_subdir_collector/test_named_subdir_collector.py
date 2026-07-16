@@ -60,6 +60,28 @@ def test_dry_run_does_not_move_files(tmp_path):
     assert not (root / "A" / "keep.txt").exists()
 
 
+def test_preview_lists_work_items_without_moving_files(tmp_path):
+    root = tmp_path / "root"
+    nested = root / "X" / "A"
+    nested.mkdir(parents=True)
+    f = nested / "keep.txt"
+    f.write_text("data", encoding="utf-8")
+
+    collector = NamedSubdirCollector("preview", str(root), ["A"], clear_sources=True)
+    preview = collector.preview()
+
+    assert preview["work_items"] == [("A", str(f))]
+    assert preview["sources_to_clear"] == [str(nested)]
+    assert f.exists()
+    assert not (root / "A" / "keep.txt").exists()
+
+
+def test_preview_on_nonexistent_root_yields_no_work_items():
+    collector = NamedSubdirCollector("preview", "/definitely/does/not/exist/refacdir-test", ["A"])
+    preview = collector.preview()
+    assert preview == {"work_items": [], "sources_to_clear": []}
+
+
 def test_clear_sources_false_leaves_empty_nested_dirs(tmp_path):
     root = tmp_path / "root"
     (root / "sub" / "A").mkdir(parents=True)

@@ -510,6 +510,29 @@ class BatchJob:
         return self.failure_counts_map[ActionType.RENAMER] == 0
 
     def construct_duplicate_remover(self, yaml_dict={}):
+        """
+        Build a DuplicateRemover from a DUPLICATE_REMOVER action's YAML dict.
+
+        Required keys:
+          - ``name`` (str)
+          - ``source_dirs`` (list): one or more locations — see
+            ``Location.construct``. Duplicates are found across ALL of these
+            directories together, not independently per directory.
+
+        Optional keys:
+          - ``recursive`` (bool, default True)
+          - ``select_for_folder_depth`` (int, default None): when set, only
+            considers files at this exact subdirectory depth from
+            source_dirs.
+          - ``exclude_dirs`` (list of locations, default [])
+          - ``preferred_delete_dirs`` (list of locations, default []): when a
+            duplicate group spans one of these directories and others, the
+            copy in a preferred-delete dir is removed first, keeping the
+            other(s).
+          - ``use_hash_cache`` (bool, default True): cache content hashes
+            across runs to avoid re-hashing unchanged files.
+          - ``skip_confirm`` (bool): defaults to the batch-level setting.
+        """
         name = yaml_dict["name"]
         source_dirs = [Location.construct(location).root for location in yaml_dict["source_dirs"]]
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
@@ -532,6 +555,35 @@ class BatchJob:
         )
 
     def construct_batch_renamer(self, yaml_dict={}):
+        """
+        Build one RENAMER group from its YAML dict — one item of a RENAMER
+        action's ``mappings`` list. NOTE: that outer list is a list of
+        GROUPS, distinct from the ``mappings`` list *inside* each group
+        (a list of pattern rules — see
+        ``FilenameMappingDefinition.construct_mappings``). The same word
+        means two different things at the two nesting levels.
+
+        Required keys:
+          - ``name`` (str): group label, used in logs/history.
+          - ``function`` (str): one of "rename_by_ctime", "rename_by_mtime",
+            "move_files".
+          - ``mappings`` (list): pattern rules — see
+            ``FilenameMappingDefinition.construct_mappings`` for their shape.
+          - ``locations`` (list): one or more location entries — see
+            ``Location.construct``.
+
+        Optional keys (default to the batch-level setting when omitted):
+          - ``test`` (bool): dry run — no files actually touched/renamed.
+          - ``skip_confirm`` (bool): skip the interactive confirm prompt.
+          - ``recursive`` (bool, default True): scan subdirectories.
+          - ``make_dirs`` (bool, default True): create target subdirectories
+            for move_files if they don't exist.
+          - ``find_unused_filenames`` (bool, default False): on a name
+            collision, append a numeric suffix instead of failing.
+          - ``will_run`` (bool, default True): NOTE this is read by the
+            caller (``BatchJob.run_renamers``), not by this method — when
+            false, the whole group is skipped before construction.
+        """
         name = yaml_dict["name"]
         mappings = FilenameMappingDefinition.construct_mappings(yaml_dict["mappings"])
         locations = [Location.construct(location) for location in yaml_dict["locations"]]
@@ -555,6 +607,25 @@ class BatchJob:
         return renamer, renamer_function
 
     def construct_directory_flattener(self, yaml_dict={}):
+        """
+        Build a DirectoryFlattener from a DIRECTORY_FLATTENER action's YAML
+        dict. Moves every matching file out of nested subdirectories directly
+        into ``location``'s root, flattening the tree.
+
+        Required keys:
+          - ``name`` (str)
+          - ``location`` (required): a SINGLE location (not a list) — see
+            ``Location.construct``. This is the directory being flattened.
+
+        Optional keys:
+          - ``search_patterns`` (default: matches every file): same pattern
+            syntax as one rule's ``search_patterns`` in
+            ``FilenameMappingDefinition.construct_mappings``, but given
+            directly as a list here rather than nested under a rule dict with
+            a rename_tag — flattening doesn't rename, so there's no
+            rename_tag to supply.
+          - ``test`` / ``skip_confirm``: default to the batch-level setting.
+        """
         name = yaml_dict["name"]
         location = Utils.get_from_dict(yaml_dict, "location", None)
         if not location:
@@ -567,6 +638,44 @@ class BatchJob:
         return DirectoryFlattener(name, location, search_patterns, test=test, skip_confirm=skip_confirm)
 
     def construct_backup(self, yaml_dict={}):
+        """
+        Build a BackupManager from a BACKUP action's YAML dict.
+
+        Required keys:
+          - ``name`` (str): manager label, used in logs/history.
+          - ``backup_mappings`` (list): one or more mapping dicts, each:
+              - ``name`` (str, required)
+              - ``source_dir`` (required): a location — see
+                ``Location.construct``.
+              - ``target_dir`` (required): a location — see
+                ``Location.construct``.
+              - ``file_types`` (required): see
+                ``FiletypesDefinition.get_definitions``.
+              - ``mode`` (optional, default "PUSH"): one of the BackupMode
+                names — PUSH_AND_REMOVE, PUSH, PUSH_DUPLICATES, MIRROR,
+                MIRROR_DUPLICATES. MIRROR deletes files on target that no
+                longer exist on source — get source_dir/target_dir the right
+                way round.
+              - ``file_mode`` (optional, default "FILES_AND_DIRS"):
+                FILES_AND_DIRS or DIRS_ONLY.
+              - ``hash_mode`` (optional, default "SHA256"): SHA256 (content
+                hash, slower but detects any content change), FILENAME
+                (fastest, but a file with the same name and DIFFERENT
+                content is treated as unchanged and skipped — a known,
+                deliberate tradeoff, not a bug — see
+                docs/BACKUP_TEST_COVERAGE.md), or FILENAME_AND_PARENT (like
+                FILENAME but also keys on the parent directory name).
+              - ``exclude_dirs`` / ``exclude_removal_dirs`` (optional,
+                default []): lists of locations to skip;
+                exclude_removal_dirs only applies to PUSH_AND_REMOVE's
+                source-side delete step.
+              - ``will_run`` (optional, default True): skip this one mapping
+                without removing it from the config.
+
+        Optional top-level keys (default to the batch-level setting when
+        omitted): ``test``, ``skip_confirm``, ``overwrite``,
+        ``warn_duplicates``.
+        """
         name = yaml_dict["name"]
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         overwrite = Utils.get_from_dict(yaml_dict, "overwrite", self.backup_overwrite)
@@ -610,6 +719,28 @@ class BatchJob:
         )
 
     def construct_directory_observer(self, yaml_dict={}):
+        """
+        Build a DirectoryObserver from a DIRECTORY_OBSERVER action's YAML
+        dict. Reports file-type counts per directory; does not move, rename,
+        or delete anything.
+
+        Required keys:
+          - ``name`` (str)
+
+        Optional keys (all default to an empty list if omitted, so at least
+        one of sortable_dirs/extra_dirs/parent_dirs should be set for this
+        action to do anything useful):
+          - ``sortable_dirs`` (list of locations): directories whose contents
+            get counted/reported.
+          - ``extra_dirs`` (list of locations): additional directories
+            included in the same report.
+          - ``parent_dirs`` (list of locations): directories whose immediate
+            subdirectories are each treated as a separate sortable directory.
+          - ``exclude_dirs`` (list of locations, default [])
+          - ``file_types`` (default: a broad built-in media-file-extension
+            list) — see ``FiletypesDefinition.get_definitions`` for the
+            field's syntax.
+        """
         name = yaml_dict["name"]
         sortable_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "sortable_dirs", [])]
         extra_dirs = [Location.construct(location).root for location in Utils.get_from_dict(yaml_dict, "extra_dirs", [])]
@@ -620,6 +751,14 @@ class BatchJob:
         return DirectoryObserver(name, sortable_dirs=sortable_dirs, extra_dirs=extra_dirs, parent_dirs=parent_dirs, exclude_dirs=exclude_dirs, file_types=file_types)
 
     def construct_image_categorizer(self, yaml_dict={}):
+        """
+        NOTE: IMAGE_CATEGORIZER is not yet covered by the LLM config-chat
+        schema description (see docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 1) — it
+        has no dedicated test coverage, independent of that feature. This
+        docstring intentionally doesn't attempt a full schema description;
+        ``refacdir/llm/config_schema.py`` raises rather than returning
+        something incomplete for this action type.
+        """
         name = yaml_dict["name"]
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
@@ -641,6 +780,30 @@ class BatchJob:
         )
 
     def construct_named_subdir_collector(self, yaml_dict={}):
+        """
+        Build a NamedSubdirCollector from a NAMED_SUBDIR_COLLECTOR action's
+        YAML dict. Collects files from every subdirectory under ``root``
+        whose name matches one of ``subdir_names`` into a single top-level
+        directory of that same name directly under ``root`` — e.g. every
+        "root/**/A/*" file moves to "root/A/*", for each name in
+        subdir_names.
+
+        Required keys:
+          - ``name`` (str)
+          - ``root`` (required): a single location — see
+            ``Location.construct``.
+          - ``subdir_names`` (required, non-empty): a list of subdirectory
+            names to collect (may also be given as a YAML-flavored string —
+            comma- or newline "- item"-separated — see
+            ``Utils.parse_yamlish_list``).
+
+        Optional keys:
+          - ``test`` / ``skip_confirm``: default to the batch-level setting.
+          - ``clear_sources`` (bool, default True): remove the now-empty
+            source subdirectories after collecting.
+          - ``subdir_depth`` (int, default 1): how many directory levels
+            below ``root`` to search for matching subdirectory names.
+        """
         name = yaml_dict["name"]
         root = Location.construct(yaml_dict["root"]).root
         subdir_names = Utils.parse_yamlish_list(yaml_dict["subdir_names"])

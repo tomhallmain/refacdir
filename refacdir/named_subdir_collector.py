@@ -165,6 +165,23 @@ class NamedSubdirCollector:
 
         return work_items, sources_to_clear
 
+    def preview(self) -> dict:
+        """
+        Read-only preview of what ``run()`` would collect/move — the same
+        ``_collect_work`` scan ``run()`` itself uses, without moving anything
+        or clearing any source directory, regardless of ``self.test``. Used
+        by refacdir/llm/preview.py's match/affected-file preview (Phase 4,
+        docs/LLM_CONFIG_CHAT_SCOPE.md).
+
+        Returns ``{"work_items": [(label, src_file), ...], "sources_to_clear": [...]}``.
+        A nonexistent ``root`` (a valid state for a not-yet-existing draft —
+        see docs/LLM_CONFIG_CHAT_SCOPE.md's Phase 2 entry) simply yields no
+        work items rather than raising, matching ``_collect_work``'s own
+        os.walk-based behavior.
+        """
+        work_items, sources_to_clear = self._collect_work()
+        return {"work_items": work_items, "sources_to_clear": sorted(sources_to_clear)}
+
     def run(self):
         if not Utils.isdir_with_retry(self.root):
             raise Exception(f"Invalid root directory: {self.root}")

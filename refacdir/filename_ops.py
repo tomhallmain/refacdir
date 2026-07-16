@@ -333,6 +333,63 @@ class FilenameMappingDefinition:
 
     @staticmethod
     def construct_mappings(mappings_list):
+        """
+        Build the {compiled_pattern: rename_tag} dict used by RENAMER and
+        DIRECTORY_FLATTENER actions, from a list of mapping-rule dicts.
+
+        Each rule dict:
+          - ``search_patterns`` (required): a glob-style pattern, a single
+            custom matcher function reference (see below), or a list of
+            either/dict-entries. Glob rules follow FileRenamer's semantics —
+            a pattern like "foo" matches any filename starting with "foo" (a
+            trailing "*" is implied).
+          - ``rename_tag`` (required): the string prefix/target the renamer
+            function uses (e.g. combined with a timestamp for
+            rename_by_ctime, or used as the move-to directory for
+            move_files).
+          - ``exclude_patterns`` (optional): same pattern syntax as
+            search_patterns; files matching any exclude pattern are never
+            selected — checked BEFORE the (possibly expensive) include
+            pattern, so an excluded file never triggers a costly custom
+            matcher.
+          - ``chain_parenthetical_indices`` (optional, default False): when
+            true, a pattern matching "report.pdf" also matches OS/browser
+            duplicate-download copies of it — "report (1).pdf",
+            "report (2).pdf", etc. — with no separate pattern needed. When
+            ``search_patterns`` is a list, this can be overridden per-entry
+            with a dict entry ``{"pattern": "...", "chain_parenthetical_indices": true}``
+            instead of a plain string/callable.
+          - ``funcs`` (optional, advanced/rare): positional function-call
+            args for an UNNAMED "{{}}" placeholder in the pattern, resolved
+            by position rather than by name.
+
+        Pattern templating — a pattern string may contain "{{...}}"
+        placeholders:
+          - A NAMED reference to an entry declared in the config's top-level
+            ``filename_mapping_functions`` list (each entry:
+            ``{"name": ..., "type": one of REP/DIGITS/HEX/ALNUM, "args": [...]}``),
+            e.g. "{{four_digits}}".
+          - An INLINE call needing no prior declaration —
+            "{{type:arg1:arg2:...}}" where type is rep/digits/hex/alnum
+            (case-insensitive) and args map positionally onto that
+            primitive's signature:
+              - "{{digits:4}}" -> four digits, e.g. matches "1234"
+              - "{{hex:64}}" -> 64 uppercase hex chars (add ":true" for lowercase)
+              - "{{alnum:8:true:_}}" -> 8 lowercase alphanumeric chars plus "_"
+            Args are parsed as int when numeric, bool for "true"/"false",
+            None for "mixed"/"any" (alnum's mixed-case option), else a
+            literal string.
+          - A reference to a custom Python function by name, resolved from
+            ``custom_file_name_search_funcs.py`` when not found as a named
+            function above — e.g. "{{is_id_filename}}",
+            "{{is_short_integer_filename}}", "{{any_file}}",
+            "{{random_selection}}". These are matcher FUNCTIONS, not string
+            templates: use one as the entire search_patterns value (or one
+            list entry), not embedded inside a larger pattern string.
+
+        Raises if a pattern's type is anything other than str, callable, or a
+        list of str/callable/dict-entries.
+        """
         mappings = {}
         for mapping in mappings_list:
             search_pattern = mapping["search_patterns"]
@@ -410,6 +467,21 @@ class FiletypesDefinition:
 
     @staticmethod
     def get_definitions(definitions_obj):
+        """
+        Resolve a ``file_types`` field (used by BACKUP mappings and
+        DIRECTORY_OBSERVER) to a list of extensions.
+
+        Accepts:
+          - A literal list of extensions, each starting with ".":
+            ``[".png", ".jpg"]``
+          - A named reference to an entry declared in the config's top-level
+            ``filetype_definitions`` list (each entry:
+            ``{"name": ..., "extensions": [...]}``), given either as
+            ``"{{name}}"`` or the bare name string.
+
+        Raises if a named reference doesn't match any declared definition, or
+        if ``definitions_obj`` is neither a list nor a string.
+        """
         if isinstance(definitions_obj, list):
             return FiletypesDefinition(str(definitions_obj), extensions_list=definitions_obj)._filetypes
         elif isinstance(definitions_obj, str):

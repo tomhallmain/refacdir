@@ -17,6 +17,19 @@ class Location:
 
     @staticmethod
     def construct(location_obj):
+        """
+        Build a Location from either a bare path string or a dict.
+
+        YAML shapes accepted for a "location" entry (used by every action
+        type's ``locations``/``source_dir``/``target_dir``/``root`` fields):
+          - A plain string: the root directory path.
+          - A dict: ``{"root": "<path>", "exclude_dirs": ["<relative subdir>", ...]}``
+            — ``exclude_dirs`` is optional, paths relative to ``root``.
+
+        Paths may contain the literal placeholder ``{{USER_HOME}}``, expanded
+        to the current user's home directory. Path separators are normalized
+        for the current OS regardless of which slash style was typed.
+        """
         if isinstance(location_obj, dict):
             return Location(**location_obj)
         else:
@@ -101,6 +114,26 @@ class BatchRenamer:
     def rename_by_mtime(self):
         self.execute(_func="batch_rename_by_mtime")
 
+    def scan(self) -> dict:
+        """
+        Scan every location's mappings without touching any files. Returns
+        ``{location: {compiled_pattern: [matched_filenames]}}``, one entry
+        per location, matching ``FileRenamer.scan_mappings``'s per-location
+        shape.
+
+        Safe to call regardless of ``self.test`` — used both by
+        ``execute()``'s single-scan optimization (a real run's scan and its
+        actual operation share this one pass, rather than scanning twice)
+        and by ``refacdir/llm/preview.py``'s match/affected-file preview for
+        LLM-drafted RENAMER and DIRECTORY_FLATTENER actions (see
+        docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 4).
+        """
+        scanned_by_location = {}
+        for location in self.locations:
+            file_renamer = self._get_renamer(location)
+            scanned_by_location[location] = file_renamer.scan_mappings(self.mappings, recursive=self.recursive)
+        return scanned_by_location
+
     def execute(self, _func, _desc="rename files at"):
         if _func not in BatchRenamer.DESCRIPTIONS:
             temp = "batch_" + _func
@@ -118,10 +151,7 @@ class BatchRenamer:
         # down, so the operation never re-scans files this pass already found.
         scanned_by_location = None
         if not self.test:
-            scanned_by_location = {}
-            for location in self.locations:
-                file_renamer = self._get_renamer(location)
-                scanned_by_location[location] = file_renamer.scan_mappings(self.mappings, recursive=self.recursive)
+            scanned_by_location = self.scan()
             any_found = any(
                 filenames
                 for scanned in scanned_by_location.values()
