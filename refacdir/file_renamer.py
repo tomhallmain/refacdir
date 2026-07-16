@@ -126,26 +126,48 @@ class FileRenamer:
                 if not FileRenamer.FILE_EXISTS_MESSAGE in str(e) or attempts > 9999:
                     raise e
 
-    def rename_by_func(self, glob_exp, rename_base, recursive=False, rename_func=lambda x: x):
+    def find_matches(self, pattern, recursive=False):
+        """
+        Single pass: find eligible files under self.root matching one mapping search
+        pattern (glob string or callable matcher). Chdirs into self.root first since
+        eligibility checks and any subsequent rename/move rely on cwd == root.
+
+        This is the sole scanning entry point for a pattern — callers that need to
+        both check for matches and act on them (``BatchRenamer.execute``) should call
+        this once and reuse the result, rather than scanning twice.
+        """
+        cwd = os.getcwd()
+        if cwd != self.root:
+            os.chdir(self.root)
+
+        test_func = None
+        if callable(pattern):
+            logger.info("reassigning glob expression.")
+            test_func = pattern
+            glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
+        else:
+            glob_exp = FileRenamer.get_glob_pattern(pattern, recursive=recursive)
+
+        return [
+            filename for filename in glob.glob(glob_exp, recursive=recursive)
+            if not self._is_ineligible_file(filename) and (test_func is None or test_func(filename))
+        ]
+
+    def scan_mappings(self, mappings, recursive=False):
+        """Single pass per pattern: return {pattern: [matched filenames]} under self.root."""
+        return {pattern: self.find_matches(pattern, recursive=recursive) for pattern in mappings}
+
+    def rename_by_func(self, glob_exp, rename_base, recursive=False, rename_func=lambda x: x, filenames=None):
         count = 0
         cwd = os.getcwd()
         if cwd != self.root:
             os.chdir(self.root)
         failures = []
 
-        test_func = None
-        if callable(glob_exp):
-            logger.info("reassigning glob expression.")
-            test_func = glob_exp
-            glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
-        else:
-            glob_exp = FileRenamer.get_glob_pattern(glob_exp, recursive=recursive)
+        if filenames is None:
+            filenames = self.find_matches(glob_exp, recursive=recursive)
 
-        for filename in glob.glob(glob_exp, recursive=recursive):
-            if self._is_ineligible_file(filename):
-                continue
-            if test_func and not test_func(filename):
-                continue
+        for filename in filenames:
             new_filename = rename_func(filename)
             try:
                 count = self.rename_file(filename, new_filename, count, None, failures)
@@ -200,19 +222,19 @@ class FileRenamer:
             return new_filename
         return rename_func
 
-    def rename_by_ctime(self, glob_exp, rename_base, recursive=False):
+    def rename_by_ctime(self, glob_exp, rename_base, recursive=False, filenames=None):
         """
         Rename all files matching given glob expression to rename_base + creation time in ms
         """
-        self.rename_by_func(glob_exp, rename_base, recursive=recursive, rename_func=self.os_stat_rename_func("st_ctime", rename_base))
+        self.rename_by_func(glob_exp, rename_base, recursive=recursive, rename_func=self.os_stat_rename_func("st_ctime", rename_base), filenames=filenames)
 
-    def rename_by_mtime(self, glob_exp, rename_base, recursive=False):
+    def rename_by_mtime(self, glob_exp, rename_base, recursive=False, filenames=None):
         """
         Rename all files matching given glob expression to rename_base + modification time in ms
         """
-        self.rename_by_func(glob_exp, rename_base, recursive=recursive, rename_func=self.os_stat_rename_func("st_mtime", rename_base))
+        self.rename_by_func(glob_exp, rename_base, recursive=recursive, rename_func=self.os_stat_rename_func("st_mtime", rename_base), filenames=filenames)
 
-    def move_files(self, glob_exp, target_dir, recursive=False, make_dirs=False):
+    def move_files(self, glob_exp, target_dir, recursive=False, make_dirs=False, filenames=None):
         """
         Move all files matching given glob expression to target directory
         """
@@ -222,19 +244,10 @@ class FileRenamer:
             os.chdir(self.root)
         failures = []
 
-        test_func = None
-        if callable(glob_exp):
-            logger.info("reassigning glob expression.")
-            test_func = glob_exp
-            glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
-        else:
-            glob_exp = FileRenamer.get_glob_pattern(glob_exp, recursive=recursive)
+        if filenames is None:
+            filenames = self.find_matches(glob_exp, recursive=recursive)
 
-        for filename in glob.glob(glob_exp, recursive=recursive):
-            if self._is_ineligible_file(filename):
-                continue
-            if test_func and not test_func(filename):
-                continue
+        for filename in filenames:
             if self.root == target_dir and os.path.dirname(filename) == "":
                 continue # Implies we are moving a file to the directory it is already in, so skip
             if not make_dirs and ("/" in filename or "\\" in filename):
@@ -254,21 +267,6 @@ class FileRenamer:
             self.print_summary(count, "move", glob_exp, target_dir, recursive)
         self.print_failures(failures)
 
-    def found_files(self, mappings={}, recursive=False):
-        for item in mappings:
-            if callable(item):
-                test_func = item
-                pattern = FileRenamer.get_glob_pattern(recursive=recursive)
-                for f in glob.glob(pattern, recursive=recursive, root_dir=self.root):
-                    if not self._is_ineligible_file(f) and test_func(f):
-                        return True
-            else:
-                pattern = FileRenamer.get_glob_pattern(item, recursive=recursive)
-                for f in glob.glob(pattern, recursive=recursive, root_dir=self.root):
-                    if not self._is_ineligible_file(f):
-                        return True
-        return False
-
     @staticmethod
     def get_glob_pattern(pattern="", recursive=False):
         if recursive:
@@ -283,29 +281,41 @@ class FileRenamer:
             else:
                 logger.info(f"\nBatch rename at {self.root} with mappings: {mappings}")
 
-    def batch_rename_by_mtime(self, mappings={}, recursive=False, make_dirs=False):
+    def batch_rename_by_mtime(self, mappings={}, recursive=False, make_dirs=False, scanned=None):
         """
         Provide a dictionary of str mappings between glob expressions and rename bases.
+
+        ``scanned``, if given, is a pre-computed {pattern: [filenames]} from a prior
+        ``scan_mappings`` call — pass it through to skip re-scanning per pattern.
         """
         self.log_pre_change(mappings)
         for pattern in mappings:
-            self.rename_by_mtime(pattern, mappings[pattern], recursive=recursive)
+            filenames = scanned[pattern] if scanned is not None else None
+            self.rename_by_mtime(pattern, mappings[pattern], recursive=recursive, filenames=filenames)
 
-    def batch_rename_by_ctime(self, mappings={}, recursive=False, make_dirs=False):
+    def batch_rename_by_ctime(self, mappings={}, recursive=False, make_dirs=False, scanned=None):
         """
         Provide a dictionary of str mappings between glob expressions and rename bases.
+
+        ``scanned``, if given, is a pre-computed {pattern: [filenames]} from a prior
+        ``scan_mappings`` call — pass it through to skip re-scanning per pattern.
         """
         self.log_pre_change(mappings)
         for pattern in mappings:
-            self.rename_by_ctime(pattern, mappings[pattern], recursive=recursive)
+            filenames = scanned[pattern] if scanned is not None else None
+            self.rename_by_ctime(pattern, mappings[pattern], recursive=recursive, filenames=filenames)
 
-    def batch_move_files(self, mappings={}, recursive=False, make_dirs=False):
+    def batch_move_files(self, mappings={}, recursive=False, make_dirs=False, scanned=None):
         """
         Provide a dictionary of str mappings between glob expressions and directory targets.
+
+        ``scanned``, if given, is a pre-computed {pattern: [filenames]} from a prior
+        ``scan_mappings`` call — pass it through to skip re-scanning per pattern.
         """
         self.log_pre_change(mappings)
         for pattern in mappings:
-            self.move_files(pattern, mappings[pattern], recursive=recursive, make_dirs=make_dirs)
+            filenames = scanned[pattern] if scanned is not None else None
+            self.move_files(pattern, mappings[pattern], recursive=recursive, make_dirs=make_dirs, filenames=filenames)
 
 
     def print_summary(self, count, strategy, glob_exp, rename_base, recursive):

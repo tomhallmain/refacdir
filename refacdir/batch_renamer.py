@@ -92,13 +92,6 @@ class BatchRenamer:
             raise Exception(error_msg)
         return file_renamer
 
-    def found_files(self):
-        for location in self.locations:
-            file_renamer = self._get_renamer(location)
-            if file_renamer.found_files(self.mappings, self.recursive):
-                return True
-        return False
-
     def move_files(self):
         self.execute(_func="batch_move_files")
 
@@ -118,15 +111,31 @@ class BatchRenamer:
                 logger.error(error_msg)
                 raise Exception(error_msg)
         _desc = BatchRenamer.DESCRIPTIONS[_func]
-        
+
+        # For real (non-test) runs, scan each location's mappings exactly once up
+        # front. The same {pattern: [filenames]} results decide whether there's
+        # anything to do below, and are then handed to the real operation further
+        # down, so the operation never re-scans files this pass already found.
+        scanned_by_location = None
+        if not self.test:
+            scanned_by_location = {}
+            for location in self.locations:
+                file_renamer = self._get_renamer(location)
+                scanned_by_location[location] = file_renamer.scan_mappings(self.mappings, recursive=self.recursive)
+            any_found = any(
+                filenames
+                for scanned in scanned_by_location.values()
+                for filenames in scanned.values()
+            )
+
         if self.test:
             logger.info(f"|=============== TESTING BATCH RENAME PROCESS: {self.name} (no change to be made) ===============|")
-        elif not self.found_files():
+        elif not any_found:
             logger.warning(f"{self.name} - No files found for {_desc} {Utils.stringify_list(self.locations, do_print=False)}")
             return
         else:
             logger.info(f"|=============== BATCH RENAME PROCESS STARTED: {self.name} ===============|")
-            
+
         logger.info(f"About to {_desc} locations: {Utils.stringify_list(self.locations, do_print=False)}")
         logger.info(f"With mapping patterns: {Utils.stringify_dict(self.mappings, do_print=False)}")
 
@@ -141,6 +150,7 @@ class BatchRenamer:
             logger.info(f"Processing location: {location}")
             file_renamer = self._get_renamer(location)
             operation = getattr(file_renamer, _func)
-            operation(self.mappings, recursive=self.recursive, make_dirs=self.make_dirs)
+            scanned = scanned_by_location[location] if scanned_by_location is not None else None
+            operation(self.mappings, recursive=self.recursive, make_dirs=self.make_dirs, scanned=scanned)
 
         logger.info(f"|=============== BATCH RENAME PROCESS COMPLETE: {self.name} ===============|\n\n")
