@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2025-09-15 13:41-0400\n"
-"PO-Revision-Date: 2025-09-15 13:41-0400\n"
-"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
+"POT-Creation-Date: 2026-07-23 16:26-0400\n"
+"PO-Revision-Date: 2026-07-23 16:26-0400\n"
+"Last-Translator: Translator Name <translator@example.com>\n"
 "Language-Team: es Team <<EMAIL>>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -12,15 +12,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app_qt.py:81
+#: app_qt.py:76 app_qt.py:128
 msgid "RefacDir"
 msgstr "RefacDir"
 
-#: app_qt.py:117
+#: app_qt.py:194
 msgid "File Management"
 msgstr "Gestión de archivos"
 
-#: app_qt.py:130
+#: app_qt.py:207
 msgid "Toggle Theme"
 msgstr "Alternar tema"
 
@@ -28,27 +28,27 @@ msgstr "Alternar tema"
 msgid "Run Backup Tests"
 msgstr "Ejecutar pruebas de copia de seguridad"
 
-#: app_qt.py:140
+#: app_qt.py:217
 msgid "Run Operations"
 msgstr "Ejecutar operaciones"
 
-#: app_qt.py:152
+#: app_qt.py:239
 msgid "Search Configurations"
 msgstr "Buscar en las configuraciones"
 
-#: app_qt.py:157
+#: app_qt.py:244
 msgid "Type to filter..."
 msgstr "Introduzca texto para filtrar..."
 
-#: app_qt.py:168
+#: app_qt.py:255
 msgid "Available Configurations"
 msgstr "Configuraciones disponibles"
 
-#: app_qt.py:215
+#: app_qt.py:302
 msgid "File Management Dashboard"
 msgstr "Panel de control de gestión de archivos"
 
-#: app_qt.py:219
+#: app_qt.py:306
 msgid ""
 "Configure and run file management operations with ease. Select "
 "configurations from the sidebar and customize options below."
@@ -57,79 +57,79 @@ msgstr ""
 "Seleccione las configuraciones en la barra lateral y personalice las "
 "opciones a continuación."
 
-#: app_qt.py:235
+#: app_qt.py:322
 msgid "Operation Settings"
 msgstr "Configuración de la operación"
 
-#: app_qt.py:243
+#: app_qt.py:330
 msgid "Recur Selected Actions"
 msgstr "Repetir acciones seleccionadas"
 
-#: app_qt.py:247
+#: app_qt.py:334
 msgid "Test Mode"
 msgstr "Modo de prueba"
 
-#: app_qt.py:250
+#: app_qt.py:338
 msgid "Skip Confirmations"
 msgstr "Skip Confirmations"
 
-#: app_qt.py:253
+#: app_qt.py:342
 msgid "Only Observers"
 msgstr "Sólo observadores"
 
-#: app_qt.py:268
+#: app_qt.py:381
 msgid "Operation Status"
 msgstr "Estado de funcionamiento"
 
-#: app_qt.py:272 app_qt.py:391 app_qt.py:507
+#: app_qt.py:385 app_qt.py:568 app_qt.py:888
 msgid "Ready"
 msgstr "Listo"
 
-#: app_qt.py:381
+#: app_qt.py:550
 msgid "Running operations..."
 msgstr "Operaciones en curso..."
 
-#: app_qt.py:389
+#: app_qt.py:559
 msgid "Operation failed"
 msgstr "Operación fallida"
 
-#: app_qt.py:417
+#: app_qt.py:684
 msgid "Failed to set target directory to receive marked files."
 msgstr ""
 "No se ha podido establecer el directorio de destino para recibir los "
 "archivos marcados."
 
-#: refacdir/batch.py:161
+#: refacdir/batch.py:265
 msgid "Starting batch operations..."
 msgstr "Iniciando operaciones por lotes..."
 
-#: refacdir/batch.py:177
+#: refacdir/batch.py:281
 msgid "Batch operations completed (skipped {0} actions)"
 msgstr "Operaciones por lotes completadas (se omitieron {0} acciones)"
 
-#: refacdir/batch.py:180
+#: refacdir/batch.py:284
 msgid "Batch operations completed"
 msgstr "Operaciones por lotes completadas"
 
-#: refacdir/batch.py:188
+#: refacdir/batch.py:292
 msgid "Operations cancelled by user"
 msgstr "Operaciones canceladas por el usuario"
 
-#: refacdir/batch.py:224
+#: refacdir/batch.py:342
 msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
 msgstr ""
 "Configuración {0}/{1}: {2} se detuvo después de {3} acciones (se omitieron "
 "{4} acciones)"
 
-#: refacdir/batch.py:257
+#: refacdir/batch.py:397
 msgid "Config {0}/{1}: Running {2} action in {3}"
 msgstr "Configuración {0}/{1}: Ejecutando la acción {2} en {3}"
 
-#: refacdir/batch.py:302
+#: refacdir/batch.py:454
 msgid "Config {0}/{1}: Running {2} {3}/{4} in {5}"
 msgstr "Configuración {0}/{1}: Ejecutando {2} {3}/{4} en {5}"
 
-#: refacdir/batch.py:339
+#: refacdir/batch.py:497
 msgid "Config {0}/{1}: Running renamer mapping {2}/{3} in {4}"
 msgstr ""
 "Configuración {0}/{1}: Ejecutando la asignación del renombrador {2}/{3} en "
@@ -203,31 +203,31 @@ msgstr "Resultados de la prueba del sistema de respaldo"
 msgid "Initializing tests..."
 msgstr "Pruebas iniciales..."
 
-#: ui/test_results_window.py:110
+#: ui/test_results_window.py:173
 msgid "Total Tests: 0"
 msgstr "Total Tests: 0"
 
-#: ui/test_results_window.py:113
+#: ui/test_results_window.py:176
 msgid "Passed: 0"
 msgstr "Pasado: 0"
 
-#: ui/test_results_window.py:117
+#: ui/test_results_window.py:180
 msgid "Failed: 0"
 msgstr "Fallado: 0"
 
-#: ui/test_results_window.py:121
+#: ui/test_results_window.py:184
 msgid "Time: 0:00"
 msgstr "Hora: 0:00"
 
-#: ui/test_results_window.py:130
+#: ui/test_results_window.py:197
 msgid "Close"
 msgstr "Cerrar"
 
-#: ui/test_results_window.py:134
+#: ui/test_results_window.py:201
 msgid "Save Results"
 msgstr "Guardar resultados"
 
-#: ui/test_results_window.py:145
+#: ui/test_results_window.py:218
 msgid "Running tests..."
 msgstr "Realizando pruebas..."
 
@@ -235,7 +235,7 @@ msgstr "Realizando pruebas..."
 msgid "Test directory not found: {0}"
 msgstr "Directorio de pruebas no encontrado: {0}"
 
-#: ui/test_results_window.py:190
+#: ui/test_results_window.py:291
 msgid "Base directory: "
 msgstr "Directorio base: "
 
@@ -247,7 +247,7 @@ msgstr "Directorio de pruebas: "
 msgid "Test files directory: "
 msgstr "Directorio de archivos de prueba: "
 
-#: ui/test_results_window.py:193
+#: ui/test_results_window.py:299
 msgid "Python path: "
 msgstr "Python path: "
 
@@ -263,90 +263,311 @@ msgstr "Archivo de prueba encontrado: "
 msgid "No test files found!"
 msgstr "No hay archivos de prueba encontrados!"
 
-#: ui/test_results_window.py:219
+#: ui/test_results_window.py:328
 msgid "Analyzing test suite..."
 msgstr "Analizando conjunto de pruebas..."
 
-#: ui/test_results_window.py:234
+#: ui/test_results_window.py:344
 msgid "Found {0} tests in {1}"
 msgstr "Encontradas {0} pruebas en {1}"
 
-#: ui/test_results_window.py:238
+#: ui/test_results_window.py:350
 msgid "Error collecting tests from {0}: {1}"
 msgstr "Pruebas de recolección de errores de {0}: {1}"
 
-#: ui/test_results_window.py:257
+#: ui/test_results_window.py:370
 msgid "Running tests from {0}..."
 msgstr "Ejecutando pruebas desde {0}..."
 
-#: ui/test_results_window.py:260
+#: ui/test_results_window.py:374
 msgid "Running tests from {0}:"
 msgstr "Ejecutando pruebas de {0}:"
 
-#: ui/test_results_window.py:285
+#: ui/test_results_window.py:401
 msgid "Error in {0}:"
 msgstr "Error en {0}:"
 
-#: ui/test_results_window.py:303
+#: ui/test_results_window.py:419
 msgid "Error running tests in {0}: {1}"
 msgstr "Pruebas de funcionamiento de error en {0}: {1}"
 
-#: ui/test_results_window.py:318
+#: ui/test_results_window.py:434
 msgid "Unexpected error running tests: {0}"
 msgstr "Pruebas de ejecución de errores no exploradas: {0}"
 
-#: ui/test_results_window.py:338
+#: ui/test_results_window.py:459
 msgid "Save Test Results"
 msgstr "Guardar resultados de la prueba"
 
-#: ui/test_results_window.py:340
+#: ui/test_results_window.py:461
 msgid "Text Files (*.txt);;All Files (*)"
 msgstr "Archivos de texto (*.txt);;Todos los archivos (*)"
 
-#: ui/test_results_window.py:370
+#: ui/test_results_window.py:491
 msgid "Copy"
 msgstr "Copia"
 
-#: ui/test_results_window.py:373
+#: ui/test_results_window.py:494
 msgid "Select All"
 msgstr "Seleccionar todo"
 
-#: ui/test_results_window.py:419
+#: ui/test_results_window.py:540
 msgid "Total Tests: {0}"
 msgstr "Total de pruebas: {0}"
 
-#: ui/test_results_window.py:420
+#: ui/test_results_window.py:541
 msgid "Passed: {0}"
 msgstr "Aprobado: {0}"
 
-#: ui/test_results_window.py:421
+#: ui/test_results_window.py:542
 msgid "Failed: {0}"
 msgstr "Falló: {0}"
 
-#: ui/test_results_window.py:427
+#: ui/test_results_window.py:548
 msgid "Time: {0}:{1:02d}"
 msgstr "Tiempo transcurrido: {0}:{1:02d}"
 
-#: ui/test_results_window.py:437
+#: ui/test_results_window.py:558
 msgid "Test Run Complete - "
 msgstr "Ejecución de prueba completa - "
 
-#: ui/test_results_window.py:438
+#: ui/test_results_window.py:559
 msgid "Total Tests: "
 msgstr "Total Tests: "
 
-#: ui/test_results_window.py:439
+#: ui/test_results_window.py:560
 msgid "Passed: "
 msgstr "Pasado: "
 
-#: ui/test_results_window.py:440
+#: ui/test_results_window.py:561
 msgid "Failed: "
 msgstr "Fallado: "
 
-#: ui/test_results_window.py:443
+#: ui/test_results_window.py:564
 msgid "All tests passed successfully!"
 msgstr "¡Todas las pruebas pasaron con éxito!"
 
-#: ui/test_results_window.py:443
+#: ui/test_results_window.py:564
 msgid "Some tests failed - check results"
 msgstr "Algunas pruebas fallaron - resultados de comprobación"
+
+#: app_qt.py:212
+msgid "Run tests"
+msgstr "Ejecutar pruebas"
+
+#: app_qt.py:222
+msgid "Edit Configs"
+msgstr "Editar configuraciones"
+
+#: app_qt.py:227
+msgid "Job History"
+msgstr "Historial de empleo"
+
+#: app_qt.py:347
+msgid "Persist YAML definition caches between batch runs"
+msgstr "Persistir cachés de definiciones YAML entre ejecuciones por lotes"
+
+#: app_qt.py:351
+msgid ""
+"Unchecked (default): at each run, clear filename_mapping_functions and "
+"filetype_definitions registries before loading configs in this run. Checked:"
+" keep definitions from earlier runs in this session (legacy)."
+msgstr ""
+"Unchecked (default): en cada ejecución, limpiar los registros "
+"filename_mapping_functions y filetype_definitions antes de cargar las "
+"configuraciones en esta ejecución. Checked: conservar las definiciones de "
+"ejecuciones anteriores en esta sesión (heredado)."
+
+#: app_qt.py:363
+msgid " min"
+msgstr " min"
+
+#: app_qt.py:364
+msgid ""
+"Close the UI after this many minutes without keyboard or mouse activity."
+msgstr ""
+"Cierra la interfaz después de estos minutos sin actividad de teclado ni "
+"ratón."
+
+#: app_qt.py:366
+msgid "Idle shutdown"
+msgstr "Apagado por inactividad"
+
+#: app_qt.py:529
+msgid "Queue full"
+msgstr "Cola llena"
+
+#: refacdir/backup/backup_manager.py:78 refacdir/backup/backup_manager.py:95
+msgid "Backup \"{0}\" ({1}/{2}): {3}"
+msgstr "Copia de seguridad \"{0}\" ({1}/{2}): {3}"
+
+#: ui/batch_history_window.py:42
+msgid "(none)"
+msgstr "(ninguno)"
+
+#: ui/batch_history_window.py:45
+msgid " (cancelled)"
+msgstr " (cancelado)"
+
+#: ui/batch_history_window.py:50 ui/batch_history_window.py:78
+msgid "(unknown config)"
+msgstr "(configuración desconocida)"
+
+#: ui/batch_history_window.py:51 ui/batch_history_window.py:79
+#: ui/batch_history_window.py:92
+msgid "(untagged)"
+msgstr "(sin etiqueta)"
+
+#: ui/batch_history_window.py:75
+msgid "(all mappings)"
+msgstr "(todos los mapeos)"
+
+#: ui/batch_history_window.py:119
+msgid "Batch Job History"
+msgstr "Historial de trabajos por lotes"
+
+#: ui/batch_history_window.py:133
+msgid ""
+"Last {0} batch jobs (stored in encrypted cache). Reverse an entire job or a "
+"single renamer mapping."
+msgstr ""
+"Últimos {0} trabajos por lotes (almacenados en caché cifrada). Revertir un "
+"trabajo completo o una única asignación de renombrado."
+
+#: ui/batch_history_window.py:159
+msgid "Refresh"
+msgstr "Actualizar"
+
+#: ui/batch_history_window.py:163 ui/batch_history_window.py:338
+msgid "Preview reverse mapping"
+msgstr "Vista previa de mapeo inverso"
+
+#: ui/batch_history_window.py:167 ui/batch_history_window.py:314
+#: ui/batch_history_window.py:338
+msgid "Reverse mapping"
+msgstr "Mapeo inverso"
+
+#: ui/batch_history_window.py:171 ui/batch_history_window.py:340
+msgid "Preview reverse job"
+msgstr "Vista previa del trabajo inverso"
+
+#: ui/batch_history_window.py:175 ui/batch_history_window.py:320
+#: ui/batch_history_window.py:340
+msgid "Reverse entire job"
+msgstr "Invertir todo el trabajo"
+
+#: ui/batch_history_window.py:194
+msgid ""
+"No batch jobs recorded yet. Run operations (non test mode) to build history."
+msgstr ""
+"Aún no se han registrado trabajos por lotes. Ejecute operaciones (modo no de"
+" prueba) para crear el historial."
+
+#: ui/batch_history_window.py:278
+msgid "Job not found (history may have changed)."
+msgstr "Trabajo no encontrado (el historial puede haber cambiado)."
+
+#: ui/batch_history_window.py:289 ui/batch_history_window.py:296
+#: ui/batch_history_window.py:302 ui/batch_history_window.py:334
+msgid "Batch history"
+msgstr "Historial de lotes"
+
+#: ui/batch_history_window.py:289
+msgid "Select a job first."
+msgstr "Seleccione primero un trabajo."
+
+#: ui/batch_history_window.py:296
+msgid "Select a renamer mapping first."
+msgstr "Seleccione primero una asignación de renombrado."
+
+#: ui/batch_history_window.py:303
+msgid "This job has no mapping tags; use Reverse entire job instead."
+msgstr ""
+"Este trabajo no tiene etiquetas de mapeo; use Reverse entire job en su "
+"lugar."
+
+#: ui/batch_history_window.py:310
+msgid ""
+"Move files back for mapping \"{0}\" in config \"{1}\"?\n"
+"Only operations from this mapping are reversed (newest first). If a later mapping renamed the same file, reverse that mapping first."
+msgstr ""
+"¿Mover archivos de nuevo para el mapeo \"{0}\" en la configuración \"{1}\"?\n"
+"Solo se revertirán las operaciones de este mapeo (más recientes primero). Si un mapeo posterior renombró el mismo archivo, revertir primero ese mapeo."
+
+#: ui/batch_history_window.py:317
+msgid ""
+"Move files back along all recorded rename/move paths for this job?\n"
+"Operations are applied newest-first. Files must still exist at their destination."
+msgstr ""
+"¿Mover los archivos de vuelta por todas las rutas de renombrado/movimiento registradas para este trabajo?\n"
+"Las operaciones se aplican de la más reciente a la más antigua. Los archivos deben seguir existiendo en su destino."
+
+#: ui/batch_history_window.py:342
+msgid ""
+"Attempted: {0}\n"
+"Succeeded: {1}\n"
+"Failed: {2}\n"
+"Skipped (not reversible or missing): {3}"
+msgstr ""
+"Intentado: {0}\n"
+"Éxitos: {1}\n"
+"Falló: {2}\n"
+"Omitido (no reversible o faltante): {3}"
+
+#: ui/test_results_window.py:81
+msgid "Verification tests"
+msgstr "Pruebas de verificación"
+
+#: ui/test_results_window.py:114
+msgid "Verification test results"
+msgstr "Resultados de la prueba de verificación"
+
+#: ui/test_results_window.py:121
+msgid "Suite directory"
+msgstr "Directorio de suite"
+
+#: ui/test_results_window.py:126
+msgid "All suites"
+msgstr "Todas las suites"
+
+#: ui/test_results_window.py:137
+msgid "Click Run suite to start."
+msgstr "Haga clic en Run suite para iniciar."
+
+#: ui/test_results_window.py:193
+msgid "Run suite"
+msgstr "Ejecutar suite"
+
+#: ui/test_results_window.py:246
+msgid "Test tree not found: {0}"
+msgstr "Árbol de prueba no encontrado: {0}"
+
+#: ui/test_results_window.py:258
+msgid "Test suite directory not found: {0}"
+msgstr "Directorio de suite de pruebas no encontrado: {0}"
+
+#: ui/test_results_window.py:277
+msgid "Backup test directory not found (required for fixtures): {0}"
+msgstr ""
+"Directorio de prueba de respaldo no encontrado (requerido para fixtures): "
+"{0}"
+
+#: ui/test_results_window.py:293
+msgid "Pytest targets: "
+msgstr "Objetivos de Pytest: "
+
+#: ui/test_results_window.py:297
+msgid "Backup fixtures directory: "
+msgstr "Directorio de fixtures de respaldo: "
+
+#: ui/test_results_window.py:304
+msgid "Test target not found: {0}"
+msgstr "Objetivo de prueba no encontrado: {0}"
+
+#: ui/test_results_window.py:312
+msgid "Found test target: "
+msgstr "Objetivo de prueba encontrado: "
+
+#: ui/test_results_window.py:316
+msgid "No test targets remain to run."
+msgstr "No quedan objetivos de prueba para ejecutar."
