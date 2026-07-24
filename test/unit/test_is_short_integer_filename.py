@@ -29,6 +29,10 @@ def test_matches_short_all_digit_basenames(filename):
         "12a.jpg",  # mixed alnum
         "1234 (1).jpg",  # parenthetical suffix breaks pure-digit basename
         "",
+        # Regression: a basename with an unrelated "." well before the real
+        # extension must not have everything after that first "." misread as
+        # the extension, leaving a short-looking "stem" before it.
+        "1.Some_Long_Descriptive_Title_Not_Actually_Short.jpg",
     ],
 )
 def test_rejects_non_matching_basenames(filename):

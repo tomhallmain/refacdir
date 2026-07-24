@@ -106,6 +106,8 @@ def test_is_id_min_length(s, min_length, expected, description):
     ("myDocument.txt",            10, False, "non-ID stem even at matching length"),
     ("/some/path/ab3f6d9k2m.png", 10, True,  "ID stem extracted from absolute path"),
     ("no_extension_ab3f",         None, False, "no extension, stem too short for default fixed_length=22"),
+    ("R3fAc7xK2mP9qL7pQr8.Some_Long_Title.jpg", 19, False,
+     "unrelated '.' before the real extension must not be misread as the extension boundary"),
 ])
 def test_is_id_filename(filename, fixed_length, expected, description):
     if fixed_length is None:
