@@ -48,6 +48,22 @@ def test_notorious_default_preset_has_no_fixed_rename_tag():
     assert "maxresdefault" in preset["search_patterns"]
 
 
+def test_notorious_default_preset_orders_specific_patterns_before_their_generic_prefix():
+    """
+    "imgproxy" must come before "img", and "thumbnail" before "thumb" — each
+    shorter entry is a prefix of the longer one, so if BatchRenamer's
+    cross-pattern dedup (first-match-wins, in mapping order) ever needs to
+    break a tie, the more specific pattern should win.
+    """
+    preset = next(
+        p for p in common_pattern_presets()
+        if p["name"] == "Notorious Default/Generic Filenames"
+    )
+    patterns = [part.strip() for part in preset["search_patterns"].split(",")]
+    assert patterns.index("imgproxy.*") < patterns.index("img.*")
+    assert patterns.index("thumbnail.*") < patterns.index("thumb.*")
+
+
 def test_returned_list_is_a_copy_not_shared_mutable_state():
     first = common_pattern_presets()
     first[0]["name"] = "mutated"

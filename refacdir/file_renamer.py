@@ -175,7 +175,17 @@ class FileRenamer:
             filenames = self.find_matches(glob_exp, recursive=recursive)
 
         for filename in filenames:
-            new_filename = rename_func(filename)
+            try:
+                new_filename = rename_func(filename)
+            except FileNotFoundError:
+                # filenames may be a pre-scanned list (BatchRenamer.execute's single
+                # upfront scan across every pattern in this batch): if this file
+                # somehow still wasn't caught by that scan's cross-pattern dedup
+                # (see BatchRenamer._dedupe_cross_pattern_matches) and another
+                # pattern already renamed/moved it away, os.stat here (inside
+                # rename_func) would otherwise raise and abort the whole action.
+                logger.info(f"Skipping {filename}: no longer present (likely already renamed earlier in this run)")
+                continue
             try:
                 count = self.rename_file(filename, new_filename, count, None, failures)
             except OSError as e0:

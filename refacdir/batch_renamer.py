@@ -134,6 +134,38 @@ class BatchRenamer:
             scanned_by_location[location] = file_renamer.scan_mappings(self.mappings, recursive=self.recursive)
         return scanned_by_location
 
+    @staticmethod
+    def _dedupe_cross_pattern_matches(scanned_by_location):
+        """
+        ``scan()`` takes one snapshot of every pattern's matches, per location,
+        before any rename in this batch runs — that snapshot is then handed to
+        the real operation so it never re-scans (see execute()'s comment
+        above). If two patterns in the same mapping both matched the same
+        file (e.g. a broad catch-all alongside a more specific literal), the
+        first pattern processed would rename that file away, then the next
+        pattern would try to act on a name that no longer exists.
+
+        This is a pure in-memory pass over the already-collected match lists
+        (no extra filesystem calls, so it stays cheap even at very large file
+        counts): each matched file is kept under only the first pattern (in
+        mapping/dict order — the same order patterns are later processed in)
+        that claimed it, and dropped from every later pattern's list.
+        """
+        for scanned in scanned_by_location.values():
+            seen = set()
+            for pattern, filenames in scanned.items():
+                deduped = []
+                for filename in filenames:
+                    if filename in seen:
+                        logger.warning(
+                            f"{filename} matches more than one search pattern in "
+                            "this mapping; keeping it under the first pattern only."
+                        )
+                        continue
+                    seen.add(filename)
+                    deduped.append(filename)
+                scanned[pattern] = deduped
+
     def execute(self, _func, _desc="rename files at"):
         if _func not in BatchRenamer.DESCRIPTIONS:
             temp = "batch_" + _func
@@ -152,6 +184,7 @@ class BatchRenamer:
         scanned_by_location = None
         if not self.test:
             scanned_by_location = self.scan()
+            BatchRenamer._dedupe_cross_pattern_matches(scanned_by_location)
             any_found = any(
                 filenames
                 for scanned in scanned_by_location.values()

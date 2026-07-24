@@ -24,8 +24,12 @@ _NOTORIOUS_DEFAULT_BASENAMES = [
     # (only the resolution differs), so downloading thumbnails from more than
     # one video guarantees a collision.
     "maxresdefault", "sddefault", "hqdefault", "mqdefault", "default",
-    # Generic thumbnailing/proxy services and CDNs.
-    "imgproxy", "thumb", "thumbnail",
+    # Generic thumbnailing/proxy services and CDNs. More specific names come
+    # before the shorter, more generic ones they contain as a prefix
+    # ("imgproxy" before "img" below, "thumbnail" before "thumb" here) so
+    # that if a file were ever eligible under more than one entry, the more
+    # specific tag wins (see BatchRenamer._dedupe_cross_pattern_matches).
+    "imgproxy", "thumbnail", "thumb",
     # Servers/tools that fall back to a generic Content-Disposition filename
     # instead of the original one.
     "download", "image", "img", "photo", "picture", "unknown", "index",
