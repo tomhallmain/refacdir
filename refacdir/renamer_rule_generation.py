@@ -14,6 +14,27 @@ _DIGIT_RUN_RE = re.compile(r"\d+")
 _MULTI_SPACE_RE = re.compile(r"\s+")
 _STOPWORDS = {"the", "and", "new", "img", "image", "file", "copy"}
 
+# Basenames that many unrelated sites/tools independently hand out as a "default"
+# name, rather than anything the uploader/tool chose per-file — so unlike a
+# hash/UUID collision (same name = same content), a collision here almost always
+# means two *different* images that just happen to share a generic name. Grouped
+# by where they come from:
+_NOTORIOUS_DEFAULT_BASENAMES = [
+    # YouTube's thumbnail CDN serves these exact names for every single video
+    # (only the resolution differs), so downloading thumbnails from more than
+    # one video guarantees a collision.
+    "maxresdefault", "sddefault", "hqdefault", "mqdefault", "default",
+    # Generic thumbnailing/proxy services and CDNs.
+    "imgproxy", "thumb", "thumbnail",
+    # Servers/tools that fall back to a generic Content-Disposition filename
+    # instead of the original one.
+    "download", "image", "img", "photo", "picture", "unknown", "index",
+    # Screenshot tools and OS "paste"/save-as defaults, and generic
+    # image-captioning/alt-text tools that write one generic name per
+    # output rather than deriving it from the source image.
+    "screenshot", "capture", "untitled", "caption",
+]
+
 
 # Static catalog of well-known filename shapes — unlike suggest_renamer_rules(),
 # these don't require scanning any directory. A user must still explicitly pick
@@ -24,7 +45,12 @@ _COMMON_PATTERN_PRESETS = [
         "search_patterns": "{{is_short_integer_filename}}",
         "rename_tag": "int_",
         "function_hint": "rename_by_ctime",
-        "reason": 'Filenames that are just a short number (up to 5 digits), e.g. "1234.jpg".',
+        "chain_parenthetical_indices": True,
+        "reason": (
+            'Filenames that are just a short number (up to 5 digits), e.g. "1234.jpg" — '
+            "the same browser-download collision as the letter case: re-downloading "
+            'saves it as "1234 (1).jpg", "1234 (2).jpg", etc. rather than overwriting it.'
+        ),
     },
     {
         "name": "Single-Letter/Initialism Basename",
@@ -51,7 +77,43 @@ _COMMON_PATTERN_PRESETS = [
         "search_patterns": "{{is_id_filename}}",
         "rename_tag": "id_",
         "function_hint": "rename_by_ctime",
-        "reason": "Filenames that look like a random ID or hash rather than a human-chosen name.",
+        "reason": (
+            "Filenames that look like a random ID or hash rather than a human-chosen "
+            "name. Deliberately NOT paired with chain_parenthetical_indices: a "
+            'collision here (e.g. two files both matching "{{is_id_filename}}") means '
+            "the same content was downloaded twice, not just the same name — renaming "
+            "would hide a real duplicate from the duplicate remover rather than "
+            "resolve a naming coincidence."
+        ),
+    },
+    {
+        "name": "Notorious Default/Generic Filenames",
+        # Each basename gets a literal "." appended so it only ever matches
+        # as a whole basename ("imgproxy.png") — not as a prefix of some
+        # unrelated longer name ("image_chroma_text_to_image_lora.json"
+        # must NOT match the "image" entry). chain_parenthetical_indices
+        # below still lets "imgproxy (4).png" match via the same rule after
+        # its " (4)" duplicate-download index is stripped.
+        "search_patterns": ", ".join(f"{name}.*" for name in _NOTORIOUS_DEFAULT_BASENAMES),
+        # No rename_tag: each of these is a plain literal pattern, so
+        # FilenameMappingDefinition.construct_mappings auto-derives a distinct
+        # tag per pattern ("maxresdefault.*" -> "maxresdefault_", etc.) rather
+        # than collapsing every match under one shared generic tag.
+        "chain_parenthetical_indices": True,
+        "function_hint": "rename_by_ctime",
+        "reason": (
+            "Basenames that many unrelated sites/tools hand out as a generic default "
+            '(e.g. "maxresdefault"/"hqdefault" from YouTube thumbnails, or a server '
+            'falling back to "image"/"download") rather than anything file-specific — '
+            "collecting more than one is a near-certain collision. Unlike Hash/UUID "
+            "Basename, a collision here means two different images share a generic "
+            "name, not duplicate content, so renaming is the right fix. Each pattern "
+            "keeps its own name as the rename tag (e.g. files matching "
+            '"maxresdefault" become "maxresdefault_<timestamp>") instead of one '
+            "shared generic tag. Only matches the exact basename plus extension (or "
+            'plus a duplicate-download chain index, e.g. "imgproxy (4).png") — never '
+            "as a prefix of a longer, unrelated name."
+        ),
     },
 ]
 

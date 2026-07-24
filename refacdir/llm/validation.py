@@ -34,6 +34,26 @@ def _is_path_existence_error(message: str) -> bool:
     return any(marker in message for marker in _PATH_EXISTENCE_ERROR_MARKERS)
 
 
+def _renamer_missing_rename_tag_errors(action_dict: dict) -> List[str]:
+    """
+    RENAMER-specific pre-check, run before the dry-construct below.
+
+    ``FilenameMappingDefinition.construct_mappings`` now accepts a blank
+    ``rename_tag`` on a mapping rule and auto-derives one per literal search
+    pattern instead — a convenience for static presets/manual editing in the
+    GUI (see refacdir/renamer_rule_generation.py's "Notorious Default/Generic
+    Filenames" preset). An LLM draft should stay fully explicit rather than
+    lean on that auto-derivation, so this enforces ``rename_tag`` as required
+    for every mapping rule here, independent of what construct_mappings itself
+    now permits.
+    """
+    errors = []
+    for rule in action_dict.get("mappings", []) or []:
+        if isinstance(rule, dict) and not rule.get("rename_tag"):
+            errors.append(f"Missing required key: 'rename_tag' (in mapping rule: {rule})")
+    return errors
+
+
 @dataclass
 class ValidationResult:
     """Result of dry-constructing one candidate action dict."""
@@ -111,6 +131,11 @@ def validate_action(action_type: ActionType, action_dict: dict) -> ValidationRes
     Raises ``ValueError`` for action types with no constructor yet — see
     ``construct_for_action_type``.
     """
+    if action_type == ActionType.RENAMER:
+        rename_tag_errors = _renamer_missing_rename_tag_errors(action_dict)
+        if rename_tag_errors:
+            return ValidationResult(action_type=action_type, valid=False, errors=rename_tag_errors)
+
     try:
         construct_for_action_type(action_type, action_dict)
     except ValueError:

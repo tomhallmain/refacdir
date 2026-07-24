@@ -347,6 +347,29 @@ class FilenameMappingDefinition:
         return entry, default_chain_parenthetical_indices
 
     @staticmethod
+    def _derive_rename_tag(pattern):
+        """
+        Auto-derive a rename_tag from a single search pattern when a mapping
+        omits rename_tag: strip any "*" and append "_", e.g. "maxresdefault"
+        -> "maxresdefault_", "0[0-9][0-9]_*" -> "0[0-9][0-9]_". A trailing
+        ".*" (used to anchor a literal to a whole basename, e.g. "imgproxy.*")
+        is stripped as a unit rather than leaving a stray "." behind, so it
+        still derives "imgproxy_".
+
+        Only a plain literal string pattern has a literal to derive from — a
+        custom matcher function (passed directly, or via a "{{...}}" template
+        reference) does not, so those require an explicit rename_tag.
+        """
+        if not isinstance(pattern, str) or "{{" in pattern:
+            raise Exception(
+                "rename_tag is required when a search pattern is not a plain "
+                f"literal string (got {pattern!r}); auto-derivation only works "
+                "for literal patterns."
+            )
+        tag_source = pattern[:-2] if pattern.endswith(".*") else pattern
+        return tag_source.replace("*", "") + "_"
+
+    @staticmethod
     def construct_mappings(mappings_list):
         """
         Build the {compiled_pattern: rename_tag} dict used by RENAMER and
@@ -358,10 +381,16 @@ class FilenameMappingDefinition:
             either/dict-entries. Glob rules follow FileRenamer's semantics —
             a pattern like "foo" matches any filename starting with "foo" (a
             trailing "*" is implied).
-          - ``rename_tag`` (required): the string prefix/target the renamer
-            function uses (e.g. combined with a timestamp for
-            rename_by_ctime, or used as the move-to directory for
-            move_files).
+          - ``rename_tag``: the string prefix/target the renamer function
+            uses (e.g. combined with a timestamp for rename_by_ctime, or
+            used as the move-to directory for move_files). May be omitted
+            (or left blank) when every one of this mapping's search_patterns
+            is a plain literal string — the tag is then auto-derived per
+            pattern as that pattern with any "*" removed, plus a trailing
+            "_" (e.g. "maxresdefault" -> "maxresdefault_"). This only works
+            for a literal string; a custom matcher function or a "{{...}}"
+            templated pattern has no literal text to derive a tag from, so
+            those raise if rename_tag is omitted.
           - ``exclude_patterns`` (optional): same pattern syntax as
             search_patterns; files matching any exclude pattern are never
             selected — checked BEFORE the (possibly expensive) include
@@ -409,7 +438,7 @@ class FilenameMappingDefinition:
         for mapping in mappings_list:
             search_pattern = mapping["search_patterns"]
             funcs = mapping["funcs"] if "funcs" in mapping else []
-            rename_tag = mapping["rename_tag"]
+            rename_tag = mapping.get("rename_tag") or ""
             exclude_patterns = mapping.get("exclude_patterns")
             default_chain = mapping.get("chain_parenthetical_indices", False)
 
@@ -421,7 +450,7 @@ class FilenameMappingDefinition:
                 key = FilenameMappingDefinition._wrap_with_exclude_patterns(
                     compiled, exclude_patterns, funcs
                 )
-                mappings[key] = rename_tag
+                mappings[key] = rename_tag or FilenameMappingDefinition._derive_rename_tag(pattern)
 
             if isinstance(search_pattern, str) or callable(search_pattern):
                 add_key(search_pattern, default_chain)

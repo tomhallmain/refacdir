@@ -149,10 +149,15 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             if preset.get("chain_parenthetical_indices")
             else ""
         )
+        rename_tag_line = (
+            f"Suggested rename_tag: {preset['rename_tag']}\n"
+            if preset.get("rename_tag")
+            else "rename_tag: auto-derived per pattern (each literal pattern becomes its own tag)\n"
+        )
         self.details_label.setText(
             f"Reason: {preset.get('reason', 'n/a')}\n"
             f"Pattern: {preset['search_patterns']}\n"
-            f"Suggested rename_tag: {preset.get('rename_tag', 'n/a')}\n"
+            f"{rename_tag_line}"
             f"Suggested function: {preset.get('function_hint', 'n/a')} "
             "(set this yourself in the Function dropdown; it's not applied automatically)"
             f"{chaining_note}"

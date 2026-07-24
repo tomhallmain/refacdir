@@ -576,7 +576,7 @@ class RenamerActionDialog(BaseActionDialog):
                 pattern_preview = f"{len(patterns)} pattern(s)"
             else:
                 pattern_preview = str(patterns)[:35]
-            tag = str(rule.get("rename_tag", ""))
+            tag = str(rule.get("rename_tag", "")) or "(auto per-pattern)"
             excludes = rule.get("exclude_patterns", [])
             if isinstance(excludes, str):
                 excludes = [excludes]
@@ -627,13 +627,25 @@ class RenamerActionDialog(BaseActionDialog):
         if not patterns_text:
             raise ValueError("search_patterns is required.")
         rename_tag = self.rule_tag_edit.text().strip()
-        if not rename_tag:
-            raise ValueError("rename_tag is required.")
 
         if "," in patterns_text:
             patterns = [part.strip() for part in patterns_text.split(",") if part.strip()]
         else:
             patterns = patterns_text
+
+        if not rename_tag:
+            # Blank is only valid when every pattern is a plain literal string:
+            # FilenameMappingDefinition.construct_mappings then auto-derives a
+            # tag per pattern (see its rename_tag docstring). A "{{...}}"
+            # template/custom-function reference has no literal to derive
+            # from, so that still requires an explicit tag here rather than
+            # failing later when the batch actually runs.
+            pattern_list = patterns if isinstance(patterns, list) else [patterns]
+            if any("{{" in p for p in pattern_list):
+                raise ValueError(
+                    "rename_tag is required when a search pattern uses a "
+                    '"{{...}}" template or custom function reference.'
+                )
 
         exclude_lines = [
             line.strip()
@@ -643,8 +655,9 @@ class RenamerActionDialog(BaseActionDialog):
 
         rule = {
             "search_patterns": patterns,
-            "rename_tag": rename_tag,
         }
+        if rename_tag:
+            rule["rename_tag"] = rename_tag
         if exclude_lines:
             rule["exclude_patterns"] = exclude_lines
         if self.rule_chain_check.isChecked():
