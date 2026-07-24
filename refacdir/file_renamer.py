@@ -81,7 +81,11 @@ class FileRenamer:
                 from refacdir.batch_job_history import record_file_operation
 
                 op_type = "move" if target_dir is not None else "rename"
-                record_file_operation(op_type, filename, new_filename_full_path)
+                # filename/new_filename_full_path are relative to self.root (the
+                # caller chdir's into it before this runs) — record absolute paths
+                # instead, since a later reversal has no reason to be running from
+                # this same cwd and a relative path would silently fail to resolve.
+                record_file_operation(op_type, os.path.abspath(filename), os.path.abspath(new_filename_full_path))
             count += 1
             if self.log_changes:
                 if self.test:

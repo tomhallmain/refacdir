@@ -4,6 +4,9 @@ import os
 
 import pytest
 
+import yaml
+
+from refacdir.batch import BatchJob
 from refacdir.batch_job_history import (
     MAX_BATCH_JOB_HISTORY,
     begin_batch_job,
@@ -13,8 +16,35 @@ from refacdir.batch_job_history import (
     job_mapping_groups,
     record_file_operation,
     recording_context,
+    rescue_legacy_relative_paths,
     reverse_job,
 )
+from refacdir.file_renamer import FileRenamer
+
+
+def _write_renamer_config(tmp_path, monkeypatch, config_name, mapping_name, locations):
+    """
+    Point BatchJob.BASE_DIR at tmp_path and drop a minimal RENAMER-action
+    config there, so ``rescue_legacy_relative_paths``'s best-effort YAML
+    re-read (which resolves config paths against BatchJob.BASE_DIR) finds it.
+    """
+    monkeypatch.setattr(BatchJob, "BASE_DIR", str(tmp_path))
+    config_dict = {
+        "actions": [
+            {
+                "type": "RENAMER",
+                "mappings": [
+                    {
+                        "name": mapping_name,
+                        "function": "rename_by_ctime",
+                        "locations": locations,
+                        "mappings": [],
+                    }
+                ],
+            }
+        ]
+    }
+    (tmp_path / config_name).write_text(yaml.dump(config_dict), encoding="utf-8")
 
 
 def _record_rename(src, dest, **context):
@@ -174,6 +204,179 @@ def test_explicit_meta_overrides_recording_context(tmp_path):
     assert meta["config"] == "cfg.yaml"
     assert meta["mapping_name"] == "from_call"
     assert meta["extra"] == 1
+
+
+def test_filerenamer_records_absolute_paths_so_reverse_works_from_a_different_cwd(tmp_path, monkeypatch):
+    """
+    Regression: FileRenamer.rename_by_ctime/rename_by_mtime chdir into their
+    root before renaming, so the filename/new_filename_full_path passed to
+    rename_file are relative to that root, not absolute. If those relative
+    paths were recorded as-is, reversing later — from whatever cwd the app
+    happens to be in by then, which has nothing to do with the original
+    root — would fail os.path.isfile(dest) for every operation and report
+    everything as "skipped" (the exact symptom reported: reversing a
+    mapping from history skipped every operation).
+    """
+    root = tmp_path / "photos"
+    root.mkdir()
+    (root / "old.jpg").write_text("x", encoding="utf-8")
+
+    fr = FileRenamer(root=str(root), test=False)
+    begin_batch_job(["cfg.yaml"], test=False)
+    with recording_context(config="cfg.yaml", mapping_name="pattern"):
+        fr.rename_by_ctime("old", "new_", recursive=False)
+    job_id = finish_batch_job({}, [], False)
+
+    op = get_batch_job_history()[0]["operations"][0]
+    assert os.path.isabs(op["source"])
+    assert os.path.isabs(op["dest"])
+
+    # Simulate a later app session whose cwd has nothing to do with `root`.
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    result = reverse_job(job_id)
+    assert result.succeeded == 1
+    assert result.skipped == 0
+    assert (root / "old.jpg").is_file()
+
+
+# --- Rescuing legacy relative-path history entries ---
+
+
+def test_rescue_resolves_relative_paths_and_persists_them(tmp_path, monkeypatch):
+    root = tmp_path / "photos"
+    (root / "sub").mkdir(parents=True)
+    (root / "sub" / "new_name.jpg").write_text("x", encoding="utf-8")
+    _write_renamer_config(tmp_path, monkeypatch, "cfg.yaml", "pattern", [str(root)])
+
+    begin_batch_job(["cfg.yaml"], test=False)
+    with recording_context(config="cfg.yaml", mapping_name="pattern"):
+        # Relative paths, as file_renamer.py recorded them before it started
+        # storing absolute paths.
+        record_file_operation("rename", "sub/old_name.jpg", "sub/new_name.jpg")
+    job_id = finish_batch_job({}, [], False)
+
+    op = get_batch_job_history()[0]["operations"][0]
+    assert not os.path.isabs(op["source"])
+    assert not os.path.isabs(op["dest"])
+
+    summary = rescue_legacy_relative_paths(job_id)
+    assert summary == {"repaired": 1, "unresolved": 0}
+
+    repaired = get_batch_job_history()[0]["operations"][0]
+    assert repaired["source"] == os.path.normpath(str(root / "sub" / "old_name.jpg"))
+    assert repaired["dest"] == os.path.normpath(str(root / "sub" / "new_name.jpg"))
+
+    result = reverse_job(job_id)
+    assert result.succeeded == 1
+    assert result.skipped == 0
+    assert (root / "sub" / "old_name.jpg").is_file()
+
+
+def test_rescue_expands_user_home_placeholder_in_location_root(tmp_path, monkeypatch):
+    """
+    Regression: a config's location may use the "{{USER_HOME}}" placeholder
+    (see Utils.fix_path, e.g. "{{USER_HOME}}/Downloads"). Reading the raw
+    YAML location string directly (instead of through Location.construct,
+    which is what a real batch run uses) left the placeholder unexpanded, so
+    the "root" was a literal, nonexistent path and nothing could ever
+    resolve against it.
+    """
+    fake_home = tmp_path / "fake_home"
+    downloads = fake_home / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "new_name.jpg").write_text("x", encoding="utf-8")
+
+    real_expanduser = os.path.expanduser
+    monkeypatch.setattr(
+        os.path, "expanduser",
+        lambda p: str(fake_home) if p == "~" else real_expanduser(p),
+    )
+
+    _write_renamer_config(tmp_path, monkeypatch, "cfg.yaml", "pattern", ["{{USER_HOME}}/Downloads"])
+
+    begin_batch_job(["cfg.yaml"], test=False)
+    with recording_context(config="cfg.yaml", mapping_name="pattern"):
+        record_file_operation("rename", "old_name.jpg", "new_name.jpg")
+    job_id = finish_batch_job({}, [], False)
+
+    summary = rescue_legacy_relative_paths(job_id)
+    assert summary == {"repaired": 1, "unresolved": 0}
+
+    repaired = get_batch_job_history()[0]["operations"][0]
+    assert "{{USER_HOME}}" not in repaired["dest"]
+    assert repaired["dest"] == os.path.normpath(str(downloads / "new_name.jpg"))
+
+    result = reverse_job(job_id)
+    assert result.succeeded == 1
+    assert (downloads / "old_name.jpg").is_file()
+
+
+def test_rescue_is_a_no_op_for_already_absolute_operations(tmp_path):
+    src = tmp_path / "old.txt"
+    dest = tmp_path / "new.txt"
+    src.write_text("x")
+    os.rename(src, dest)
+
+    begin_batch_job(["cfg.yaml"], test=False)
+    record_file_operation("rename", str(src), str(dest))
+    job_id = finish_batch_job({}, [], False)
+
+    assert rescue_legacy_relative_paths(job_id) == {"repaired": 0, "unresolved": 0}
+    assert get_batch_job_history()[0]["operations"][0]["source"] == os.path.normpath(str(src))
+
+
+def test_rescue_leaves_operation_unresolved_when_dest_is_missing_everywhere(tmp_path, monkeypatch):
+    root = tmp_path / "photos"
+    root.mkdir()
+    _write_renamer_config(tmp_path, monkeypatch, "cfg.yaml", "pattern", [str(root)])
+
+    begin_batch_job(["cfg.yaml"], test=False)
+    with recording_context(config="cfg.yaml", mapping_name="pattern"):
+        record_file_operation("rename", "old_name.jpg", "new_name.jpg")
+    job_id = finish_batch_job({}, [], False)
+
+    summary = rescue_legacy_relative_paths(job_id)
+    assert summary == {"repaired": 0, "unresolved": 1}
+    op = get_batch_job_history()[0]["operations"][0]
+    assert not os.path.isabs(op["dest"])  # left untouched, not corrupted
+
+
+def test_rescue_leaves_operation_unresolved_when_match_is_ambiguous(tmp_path, monkeypatch):
+    root_a = tmp_path / "a"
+    root_b = tmp_path / "b"
+    root_a.mkdir()
+    root_b.mkdir()
+    (root_a / "new_name.jpg").write_text("x", encoding="utf-8")
+    (root_b / "new_name.jpg").write_text("y", encoding="utf-8")
+    _write_renamer_config(tmp_path, monkeypatch, "cfg.yaml", "pattern", [str(root_a), str(root_b)])
+
+    begin_batch_job(["cfg.yaml"], test=False)
+    with recording_context(config="cfg.yaml", mapping_name="pattern"):
+        record_file_operation("rename", "old_name.jpg", "new_name.jpg")
+    job_id = finish_batch_job({}, [], False)
+
+    summary = rescue_legacy_relative_paths(job_id)
+    assert summary == {"repaired": 0, "unresolved": 1}
+
+
+def test_rescue_leaves_operation_unresolved_when_config_no_longer_exists(tmp_path, monkeypatch):
+    monkeypatch.setattr(BatchJob, "BASE_DIR", str(tmp_path))
+
+    begin_batch_job(["missing_cfg.yaml"], test=False)
+    with recording_context(config="missing_cfg.yaml", mapping_name="pattern"):
+        record_file_operation("rename", "old_name.jpg", "new_name.jpg")
+    job_id = finish_batch_job({}, [], False)
+
+    summary = rescue_legacy_relative_paths(job_id)
+    assert summary == {"repaired": 0, "unresolved": 1}
+
+
+def test_rescue_unknown_job_raises():
+    with pytest.raises(ValueError, match="Batch job not found"):
+        rescue_legacy_relative_paths("missing-job-id")
 
 
 # --- Whole-job reversal ---

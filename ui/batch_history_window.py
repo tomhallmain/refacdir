@@ -24,6 +24,7 @@ from refacdir.batch_job_history import (
     find_batch_job,
     get_batch_job_history,
     job_mapping_groups,
+    rescue_legacy_relative_paths,
     reverse_job,
 )
 from refacdir.lib.multi_display import SmartWindow
@@ -329,6 +330,11 @@ class BatchHistoryWindow(SmartWindow):
                 return
 
         try:
+            # Best-effort: jobs recorded before absolute paths were stored have
+            # source/dest relative to a root the current cwd has no reason to
+            # match, so reverse_job would otherwise report everything "skipped".
+            # No-op for jobs that are already absolute (nothing to repair).
+            rescue_legacy_relative_paths(job_id)
             result = reverse_job(job_id, config=config, mapping_name=mapping_name, dry_run=dry_run)
         except ValueError as exc:
             QMessageBox.warning(self, _("Batch history"), str(exc))
