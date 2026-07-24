@@ -2,6 +2,7 @@ import glob
 import os
 import re
 import sys
+from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.utils import Utils
 
@@ -158,6 +159,12 @@ class FileRenamer:
                 glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
         else:
             glob_exp = FileRenamer.get_glob_pattern(pattern, recursive=recursive)
+            # glob.glob's OS-level directory scan can be case-insensitive (e.g.
+            # Windows/NTFS), so a plain-string pattern needs a case-sensitive
+            # recheck here — otherwise an already-renamed file like "DEFAULT_x.jpg"
+            # keeps matching a pattern meant for "default", and gets treated as a
+            # fresh rename candidate on every subsequent run.
+            test_func = lambda filename: FilenameMappingDefinition._matches_glob_pattern(filename, pattern)
 
         return [
             filename for filename in glob.glob(glob_exp, recursive=recursive)

@@ -250,6 +250,23 @@ class FilenameMappingDefinition:
         return False
 
     @staticmethod
+    def _describe_pattern(compiled):
+        """
+        Human-readable form of a compiled pattern/matcher, for logging (e.g. the
+        "With mapping patterns: ..." batch-run summary). A plain glob string is
+        already readable as-is; a wrapper matcher (chaining, excludes, ...) carries
+        its own ``pattern_description`` describing what it wraps, so that shows
+        instead of the default ``<function ... at 0x...>`` repr. A bare custom
+        matcher function (no wrapper) falls back to its qualified name.
+        """
+        if not callable(compiled):
+            return compiled
+        description = getattr(compiled, "pattern_description", None)
+        if description is not None:
+            return description
+        return getattr(compiled, "__qualname__", repr(compiled))
+
+    @staticmethod
     def _wrap_with_parenthetical_chaining(include_compiled, chain_parenthetical_indices):
         """
         If enabled, also match a file when its OS/browser duplicate-download index
@@ -278,6 +295,9 @@ class FilenameMappingDefinition:
         # built from the base pattern ("report.pdf*"), so this matcher must see
         # every candidate file — no glob_pattern to narrow find_matches's scan with.
         matcher.glob_pattern = None
+        matcher.pattern_description = (
+            f"chain_parenthetical_indices({FilenameMappingDefinition._describe_pattern(include_compiled)})"
+        )
         return matcher
 
     @staticmethod
@@ -327,6 +347,10 @@ class FilenameMappingDefinition:
         # the include side is still bound by glob_pattern, so find_matches can use
         # it for the OS-level scan and let this matcher do the final include/exclude test.
         matcher.glob_pattern = glob_pattern
+        excludes_desc = ", ".join(FilenameMappingDefinition._describe_pattern(ex) for ex in exclude_compiled)
+        matcher.pattern_description = (
+            f"{FilenameMappingDefinition._describe_pattern(include_compiled)} excluding [{excludes_desc}]"
+        )
         return matcher
 
     @staticmethod

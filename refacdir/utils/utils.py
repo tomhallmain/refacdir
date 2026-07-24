@@ -358,7 +358,11 @@ class Utils:
         s = "{"
         for key, value in d.items():
             if not one_line: s += "\n    "
-            s += f"{key} : {value}, "
+            # A callable dict key (e.g. a compiled filename-mapping matcher) may
+            # carry a "pattern_description" attribute describing what it wraps,
+            # so that shows here instead of the default <function ... at 0x...> repr.
+            key_repr = getattr(key, "pattern_description", key)
+            s += f"{key_repr} : {value}, "
         if len(d) > 0:
             s = s[:-2]
             if not one_line: s += "\n"
