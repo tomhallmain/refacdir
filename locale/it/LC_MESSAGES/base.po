@@ -316,7 +316,7 @@ msgstr "Totale test: {0}"
 
 #: ui/test_results_window.py:541
 msgid "Passed: {0}"
-msgstr "Approvato: {0}"
+msgstr "Passato: {0}"
 
 #: ui/test_results_window.py:542
 msgid "Failed: {0}"
@@ -340,7 +340,7 @@ msgstr "Passato: "
 
 #: ui/test_results_window.py:561
 msgid "Failed: "
-msgstr "Non sono riuscito: "
+msgstr "Fallito: "
 
 #: ui/test_results_window.py:564
 msgid "All tests passed successfully!"
@@ -360,7 +360,7 @@ msgstr "Modifica configurazioni"
 
 #: app_qt.py:227
 msgid "Job History"
-msgstr "Cronologia lavoro"
+msgstr "Cronologia dei lavori"
 
 #: app_qt.py:347
 msgid "Persist YAML definition caches between batch runs"
@@ -444,7 +444,7 @@ msgstr "Anteprima della mappatura inversa"
 #: ui/batch_history_window.py:167 ui/batch_history_window.py:314
 #: ui/batch_history_window.py:338
 msgid "Reverse mapping"
-msgstr "Mappatura inversa"
+msgstr "Invertire la mappatura"
 
 #: ui/batch_history_window.py:171 ui/batch_history_window.py:340
 msgid "Preview reverse job"

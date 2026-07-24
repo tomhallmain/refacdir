@@ -30,7 +30,7 @@ msgstr "Sicherungstests ausführen"
 
 #: app_qt.py:217
 msgid "Run Operations"
-msgstr "Ausführung von Vorgängen"
+msgstr "Vorgänge ausführen"
 
 #: app_qt.py:239
 msgid "Search Configurations"
@@ -71,7 +71,7 @@ msgstr "Prüfmodus"
 
 #: app_qt.py:338
 msgid "Skip Confirmations"
-msgstr "Über uns"
+msgstr "Bestätigungen überspringen"
 
 #: app_qt.py:342
 msgid "Only Observers"
@@ -196,7 +196,7 @@ msgstr "Backup-Systemüberprüfung"
 
 #: ui/test_results_window.py:66
 msgid "Backup System Test Results"
-msgstr "Ergebnisse des Sicherungssystem-prüfungen"
+msgstr "Ergebnisse der Sicherungssystem-Tests"
 
 #: ui/test_results_window.py:74
 msgid "Initializing tests..."
@@ -208,11 +208,11 @@ msgstr "Gesamttests: 0"
 
 #: ui/test_results_window.py:176
 msgid "Passed: 0"
-msgstr "Passiert: 0"
+msgstr "Bestanden: 0"
 
 #: ui/test_results_window.py:180
 msgid "Failed: 0"
-msgstr "Versäumt: 0"
+msgstr "Fehlgeschlagen: 0"
 
 #: ui/test_results_window.py:184
 msgid "Time: 0:00"
@@ -276,11 +276,11 @@ msgstr "Fehler sammeln von {0}: {1}"
 
 #: ui/test_results_window.py:370
 msgid "Running tests from {0}..."
-msgstr "Lauftests von {0}..."
+msgstr "Tests von {0} werden ausgeführt..."
 
 #: ui/test_results_window.py:374
 msgid "Running tests from {0}:"
-msgstr "Lauftests aus {0}:"
+msgstr "Tests aus {0}:"
 
 #: ui/test_results_window.py:401
 msgid "Error in {0}:"
@@ -292,7 +292,7 @@ msgstr "Fehler beim Testen in {0}: {1}"
 
 #: ui/test_results_window.py:434
 msgid "Unexpected error running tests: {0}"
-msgstr "Unerwartete Fehlerlaufversuche: {0}"
+msgstr "Unerwarteter Fehler beim Ausführen der Tests: {0}"
 
 #: ui/test_results_window.py:459
 msgid "Save Test Results"
@@ -304,7 +304,7 @@ msgstr "Textdateien (*.txt);;Alle Dateien (*)"
 
 #: ui/test_results_window.py:491
 msgid "Copy"
-msgstr "Kopie"
+msgstr "Kopieren"
 
 #: ui/test_results_window.py:494
 msgid "Select All"
@@ -336,11 +336,11 @@ msgstr "Gesamttests: "
 
 #: ui/test_results_window.py:560
 msgid "Passed: "
-msgstr "Passiert: "
+msgstr "Bestanden: "
 
 #: ui/test_results_window.py:561
 msgid "Failed: "
-msgstr "Versäumt: "
+msgstr "Fehlgeschlagen: "
 
 #: ui/test_results_window.py:564
 msgid "All tests passed successfully!"
@@ -444,7 +444,7 @@ msgstr "Vorschau der Umkehrzuordnung"
 #: ui/batch_history_window.py:167 ui/batch_history_window.py:314
 #: ui/batch_history_window.py:338
 msgid "Reverse mapping"
-msgstr "Umgekehrte Zuordnung"
+msgstr "Zuordnung umkehren"
 
 #: ui/batch_history_window.py:171 ui/batch_history_window.py:340
 msgid "Preview reverse job"

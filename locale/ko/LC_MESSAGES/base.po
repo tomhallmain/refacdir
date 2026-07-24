@@ -64,15 +64,15 @@ msgstr "선택한 작업 반복"
 
 #: app_qt.py:334
 msgid "Test Mode"
-msgstr "시험 형태"
+msgstr "테스트 모드"
 
 #: app_qt.py:338
 msgid "Skip Confirmations"
-msgstr "자주 묻는 질문"
+msgstr "확인 건너뛰기"
 
 #: app_qt.py:342
 msgid "Only Observers"
-msgstr "만 관찰자"
+msgstr "관찰자만"
 
 #: app_qt.py:381
 msgid "Operation Status"
@@ -80,7 +80,7 @@ msgstr "운영 상태"
 
 #: app_qt.py:385 app_qt.py:568 app_qt.py:888
 msgid "Ready"
-msgstr "지원하다"
+msgstr "준비됨"
 
 #: app_qt.py:550
 msgid "Running operations..."
@@ -112,7 +112,7 @@ msgstr "사용자에 의해 취소된 작업"
 
 #: refacdir/batch.py:342
 msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
-msgstr "구성 {0}/{1}: {2}이 {3}개의 작업 후 중지됨 ({4}개의 작업 건너뼘)"
+msgstr "구성 {0}/{1}: {2}이 {3}개의 작업 후 중지됨 ({4}개의 작업 건너뜀)"
 
 #: refacdir/batch.py:397
 msgid "Config {0}/{1}: Running {2} action in {3}"
@@ -196,7 +196,7 @@ msgstr "초기 테스트 ..."
 
 #: ui/test_results_window.py:173
 msgid "Total Tests: 0"
-msgstr "총 시험: 0 댓글"
+msgstr "총 시험: 0"
 
 #: ui/test_results_window.py:176
 msgid "Passed: 0"
@@ -236,7 +236,7 @@ msgstr "테스트 디렉토리: "
 
 #: ui/test_results_window.py:192
 msgid "Test files directory: "
-msgstr "파일 디렉토리를 테스트: "
+msgstr "테스트 파일 디렉토리: "
 
 #: ui/test_results_window.py:299
 msgid "Python path: "
@@ -268,7 +268,7 @@ msgstr "오류 수집 테스트 {0}: {1}"
 
 #: ui/test_results_window.py:370
 msgid "Running tests from {0}..."
-msgstr "{0}에서 실행 테스트 ..."
+msgstr "{0}에서 테스트 실행 중..."
 
 #: ui/test_results_window.py:374
 msgid "Running tests from {0}:"
@@ -328,7 +328,7 @@ msgstr "총 시험: "
 
 #: ui/test_results_window.py:560
 msgid "Passed: "
-msgstr "공급 능력: "
+msgstr "통과: "
 
 #: ui/test_results_window.py:561
 msgid "Failed: "
@@ -352,7 +352,7 @@ msgstr "구성 편집"
 
 #: app_qt.py:227
 msgid "Job History"
-msgstr "직업 이력"
+msgstr "작업 기록"
 
 #: app_qt.py:347
 msgid "Persist YAML definition caches between batch runs"
@@ -431,7 +431,7 @@ msgstr "역매핑 미리보기"
 #: ui/batch_history_window.py:167 ui/batch_history_window.py:314
 #: ui/batch_history_window.py:338
 msgid "Reverse mapping"
-msgstr "역 매핑"
+msgstr "매핑 뒤집기"
 
 #: ui/batch_history_window.py:171 ui/batch_history_window.py:340
 msgid "Preview reverse job"

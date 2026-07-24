@@ -72,7 +72,7 @@ msgstr "確認をスキップする"
 
 #: app_qt.py:342
 msgid "Only Observers"
-msgstr "唯一のオブザーバー"
+msgstr "オブザーバーのみ"
 
 #: app_qt.py:381
 msgid "Operation Status"
@@ -80,7 +80,7 @@ msgstr "運用状況"
 
 #: app_qt.py:385 app_qt.py:568 app_qt.py:888
 msgid "Ready"
-msgstr "レディー"
+msgstr "準備完了"
 
 #: app_qt.py:550
 msgid "Running operations..."
@@ -172,7 +172,7 @@ msgstr "日間"
 
 #: refacdir/utils/translations.py:72
 msgid "weeks"
-msgstr "週刊"
+msgstr "週間"
 
 #: refacdir/utils/translations.py:74
 msgid "months"
@@ -196,11 +196,11 @@ msgstr "初期化テスト..."
 
 #: ui/test_results_window.py:173
 msgid "Total Tests: 0"
-msgstr "総テスト: 0 の 0"
+msgstr "総テスト: 0"
 
 #: ui/test_results_window.py:176
 msgid "Passed: 0"
-msgstr "渡された: 0"
+msgstr "合格: 0"
 
 #: ui/test_results_window.py:180
 msgid "Failed: 0"
@@ -236,7 +236,7 @@ msgstr "テストディレクトリ: "
 
 #: ui/test_results_window.py:192
 msgid "Test files directory: "
-msgstr "ファイルディレクトリをテスト: "
+msgstr "テストファイルディレクトリ: "
 
 #: ui/test_results_window.py:299
 msgid "Python path: "
@@ -248,7 +248,7 @@ msgstr "テストファイルが見つかりません: {0}"
 
 #: ui/test_results_window.py:205
 msgid "Found test file: "
-msgstr "発見されたテスト ファイル: "
+msgstr "テストファイルが見つかりました: "
 
 #: ui/test_results_window.py:208
 msgid "No test files found!"
@@ -328,7 +328,7 @@ msgstr "総テスト: "
 
 #: ui/test_results_window.py:560
 msgid "Passed: "
-msgstr "渡された: "
+msgstr "合格: "
 
 #: ui/test_results_window.py:561
 msgid "Failed: "
@@ -352,7 +352,7 @@ msgstr "設定の編集"
 
 #: app_qt.py:227
 msgid "Job History"
-msgstr "職歴"
+msgstr "ジョブ履歴"
 
 #: app_qt.py:347
 msgid "Persist YAML definition caches between batch runs"

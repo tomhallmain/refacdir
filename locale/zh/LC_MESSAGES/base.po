@@ -26,7 +26,7 @@ msgstr "切换主题"
 
 #: app_qt.py:135
 msgid "Run Backup Tests"
-msgstr "运行备份 测试"
+msgstr "运行备份测试"
 
 #: app_qt.py:217
 msgid "Run Operations"
@@ -152,7 +152,7 @@ msgstr "星期六"
 
 #: refacdir/utils/translations.py:52
 msgid "Sunday"
-msgstr "礼拜"
+msgstr "星期日"
 
 #: refacdir/utils/translations.py:64
 msgid "seconds"
@@ -196,7 +196,7 @@ msgstr "初始化测试..."
 
 #: ui/test_results_window.py:173
 msgid "Total Tests: 0"
-msgstr "测试总数: 0 个"
+msgstr "测试总数：0"
 
 #: ui/test_results_window.py:176
 msgid "Passed: 0"
@@ -208,7 +208,7 @@ msgstr "失败: 0"
 
 #: ui/test_results_window.py:184
 msgid "Time: 0:00"
-msgstr "时间: 0: 00"
+msgstr "时间：0:00"
 
 #: ui/test_results_window.py:197
 msgid "Close"
@@ -224,35 +224,35 @@ msgstr "正在运行测试..."
 
 #: ui/test_results_window.py:170
 msgid "Test directory not found: {0}"
-msgstr "未找到测试目录 : {0}"
+msgstr "未找到测试目录：{0}"
 
 #: ui/test_results_window.py:291
 msgid "Base directory: "
-msgstr "基准目录 : "
+msgstr "基准目录： "
 
 #: ui/test_results_window.py:191
 msgid "Test directory: "
-msgstr "测试目录 : "
+msgstr "测试目录： "
 
 #: ui/test_results_window.py:192
 msgid "Test files directory: "
-msgstr "测试文件目录 : "
+msgstr "测试文件目录： "
 
 #: ui/test_results_window.py:299
 msgid "Python path: "
-msgstr "Python 路径 : "
+msgstr "Python 路径： "
 
 #: ui/test_results_window.py:198
 msgid "Test file not found: {0}"
-msgstr "找不到测试文件 : {0}"
+msgstr "找不到测试文件：{0}"
 
 #: ui/test_results_window.py:205
 msgid "Found test file: "
-msgstr "找到测试文件 : "
+msgstr "找到测试文件： "
 
 #: ui/test_results_window.py:208
 msgid "No test files found!"
-msgstr "找不到测试文件 !"
+msgstr "找不到测试文件!"
 
 #: ui/test_results_window.py:328
 msgid "Analyzing test suite..."
@@ -264,7 +264,7 @@ msgstr "在{1} 中找到{0} 测试"
 
 #: ui/test_results_window.py:350
 msgid "Error collecting tests from {0}: {1}"
-msgstr "从{0} 收集测试出错 : {1}"
+msgstr "从{0} 收集测试出错：{1}"
 
 #: ui/test_results_window.py:370
 msgid "Running tests from {0}..."
@@ -272,19 +272,19 @@ msgstr "从{0} 运行测试..."
 
 #: ui/test_results_window.py:374
 msgid "Running tests from {0}:"
-msgstr "从{0} 运行测试 :"
+msgstr "从{0} 运行测试："
 
 #: ui/test_results_window.py:401
 msgid "Error in {0}:"
-msgstr "{0} 中的错误 :"
+msgstr "{0} 中的错误："
 
 #: ui/test_results_window.py:419
 msgid "Error running tests in {0}: {1}"
-msgstr "运行{0}测试时出错 : {1}"
+msgstr "运行{0}测试时出错：{1}"
 
 #: ui/test_results_window.py:434
 msgid "Unexpected error running tests: {0}"
-msgstr "运行中的意外错误 : {0}"
+msgstr "运行中的意外错误：{0}"
 
 #: ui/test_results_window.py:459
 msgid "Save Test Results"
@@ -292,7 +292,7 @@ msgstr "保存测试结果"
 
 #: ui/test_results_window.py:461
 msgid "Text Files (*.txt);;All Files (*)"
-msgstr "文本文件 (*.txt)；；所有文件 (*)"
+msgstr "文本文件 (*.txt);;所有文件 (*)"
 
 #: ui/test_results_window.py:491
 msgid "Copy"
@@ -324,15 +324,15 @@ msgstr "测试运行完成 - "
 
 #: ui/test_results_window.py:559
 msgid "Total Tests: "
-msgstr "测试总数: "
+msgstr "测试总数： "
 
 #: ui/test_results_window.py:560
 msgid "Passed: "
-msgstr "通过 : "
+msgstr "通过： "
 
 #: ui/test_results_window.py:561
 msgid "Failed: "
-msgstr "失败 : "
+msgstr "失败： "
 
 #: ui/test_results_window.py:564
 msgid "All tests passed successfully!"
@@ -352,7 +352,7 @@ msgstr "编辑配置"
 
 #: app_qt.py:227
 msgid "Job History"
-msgstr "工作经历"
+msgstr "作业历史"
 
 #: app_qt.py:347
 msgid "Persist YAML definition caches between batch runs"
@@ -430,7 +430,7 @@ msgstr "预览逆向映射"
 #: ui/batch_history_window.py:167 ui/batch_history_window.py:314
 #: ui/batch_history_window.py:338
 msgid "Reverse mapping"
-msgstr "逆向映射"
+msgstr "反转映射"
 
 #: ui/batch_history_window.py:171 ui/batch_history_window.py:340
 msgid "Preview reverse job"
@@ -457,7 +457,7 @@ msgstr "批次历史"
 
 #: ui/batch_history_window.py:289
 msgid "Select a job first."
-msgstr "请先选择一个职位。"
+msgstr "请先选择一个作业。"
 
 #: ui/batch_history_window.py:296
 msgid "Select a renamer mapping first."
@@ -509,7 +509,7 @@ msgstr "套件目录"
 
 #: ui/test_results_window.py:126
 msgid "All suites"
-msgstr "所有套房"
+msgstr "所有测试套件"
 
 #: ui/test_results_window.py:137
 msgid "Click Run suite to start."
@@ -525,11 +525,11 @@ msgstr "未找到测试树：{0}"
 
 #: ui/test_results_window.py:258
 msgid "Test suite directory not found: {0}"
-msgstr "未找到测试套件目录: {0}"
+msgstr "未找到测试套件目录：{0}"
 
 #: ui/test_results_window.py:277
 msgid "Backup test directory not found (required for fixtures): {0}"
-msgstr "未找到备份测试目录（用于固定装置）: {0}"
+msgstr "未找到备份测试目录（用于固定装置）：{0}"
 
 #: ui/test_results_window.py:293
 msgid "Pytest targets: "

@@ -63,7 +63,7 @@ msgstr "Paramètres de fonctionnement"
 
 #: app_qt.py:330
 msgid "Recur Selected Actions"
-msgstr "Récurer les actions sélectionnées"
+msgstr "Répéter les actions sélectionnées"
 
 #: app_qt.py:334
 msgid "Test Mode"
@@ -206,7 +206,7 @@ msgstr "Total des essais: 0"
 
 #: ui/test_results_window.py:176
 msgid "Passed: 0"
-msgstr "Décédé : 0"
+msgstr "Réussi : 0"
 
 #: ui/test_results_window.py:180
 msgid "Failed: 0"
@@ -254,7 +254,7 @@ msgstr "Fichier de test introuvable : {0}"
 
 #: ui/test_results_window.py:205
 msgid "Found test file: "
-msgstr "Fichier de test trouvé & #160;: "
+msgstr "Fichier de test trouvé : "
 
 #: ui/test_results_window.py:208
 msgid "No test files found!"
@@ -298,11 +298,11 @@ msgstr "Enregistrer les résultats du test"
 
 #: ui/test_results_window.py:461
 msgid "Text Files (*.txt);;All Files (*)"
-msgstr "Fichiers texte (*.txt) ;;Tous les fichiers (*)"
+msgstr "Fichiers texte (*.txt);;Tous les fichiers (*)"
 
 #: ui/test_results_window.py:491
 msgid "Copy"
-msgstr "Copie"
+msgstr "Copier"
 
 #: ui/test_results_window.py:494
 msgid "Select All"
@@ -334,7 +334,7 @@ msgstr "Total des essais: "
 
 #: ui/test_results_window.py:560
 msgid "Passed: "
-msgstr "Décédé : "
+msgstr "Réussi : "
 
 #: ui/test_results_window.py:561
 msgid "Failed: "
@@ -443,7 +443,7 @@ msgstr "Aperçu du mappage inverse"
 #: ui/batch_history_window.py:167 ui/batch_history_window.py:314
 #: ui/batch_history_window.py:338
 msgid "Reverse mapping"
-msgstr "Mappage inverse"
+msgstr "Inverser le mappage"
 
 #: ui/batch_history_window.py:171 ui/batch_history_window.py:340
 msgid "Preview reverse job"
