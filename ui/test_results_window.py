@@ -239,6 +239,16 @@ class TestResultsWindow(SmartWindow):
                 # Remove any other paths that might interfere
                 sys.path = [p for p in sys.path if not p.lower().endswith('weidr')]
                 
+                # "All suites" walks the whole test/ tree from a background thread
+                # while this very app's QApplication/event loop is alive on the main
+                # thread. test/ui/* (pytestmark = pytest.mark.ui) uses pytest-qt's
+                # qtbot to build and drive real QWidgets, which reuses the process's
+                # one live QApplication.instance() and requires the main thread —
+                # doing that from here is a cross-thread Qt violation that hangs the
+                # UI. Deselect the "ui" marker for this scope only; picking a suite
+                # directory (including "ui" itself) explicitly is unaffected.
+                extra_pytest_args = []
+
                 if suite_filter == "__all__":
                     test_root = os.path.normpath(os.path.join(base_dir, "test"))
                     logger.info("Suite filter: all (pytest on %s)", test_root)
@@ -249,6 +259,14 @@ class TestResultsWindow(SmartWindow):
                         self.signals.test_complete.emit()
                         return
                     test_files = [test_root]
+                    extra_pytest_args = ["-m", "not ui"]
+                    skip_msg = _(
+                        "Excluding Qt UI tests (marker \"ui\") from All suites: "
+                        "they drive real widgets via the app's own QApplication "
+                        "and would hang running inside it."
+                    ) + "\n"
+                    logger.info(skip_msg.strip())
+                    self.signals.update_text.emit(skip_msg, "important")
                 else:
                     suite_path = os.path.normpath(
                         os.path.join(base_dir, "test", suite_filter)
@@ -336,7 +354,10 @@ class TestResultsWindow(SmartWindow):
                                 self.count = len(items)
                         
                         counter = TestCounter()
-                        pytest.main(['--collect-only', '-v', test_file], plugins=[counter])
+                        pytest.main(
+                            ['--collect-only', '-v', test_file] + extra_pytest_args,
+                            plugins=[counter],
+                        )
                         
                         if counter.count > 0:
                             total_tests += counter.count
@@ -413,7 +434,7 @@ class TestResultsWindow(SmartWindow):
                         collector = ResultCollector(self.signals)
                         
                         # Run tests with proper config
-                        pytest.main(['-v', test_file], plugins=[collector])
+                        pytest.main(['-v', test_file] + extra_pytest_args, plugins=[collector])
                         
                     except Exception as e:
                         error_msg = "\n" + _("Error running tests in {0}: {1}").format(test_file, str(e)) + "\n"
