@@ -27,6 +27,19 @@ _COMMON_PATTERN_PRESETS = [
         "reason": 'Filenames that are just a short number (up to 5 digits), e.g. "1234.jpg".',
     },
     {
+        "name": "Single-Letter/Initialism Basename",
+        "search_patterns": "{{is_short_alpha_filename}}",
+        "rename_tag": "letter_",
+        "function_hint": "rename_by_ctime",
+        "chain_parenthetical_indices": True,
+        "reason": (
+            'Filenames that are just one or two letters, e.g. "O.jpg" or "R.png" — '
+            "a known browser-download collision: re-downloading (or saving from a "
+            'different tab/page) the same image saves it as "R (1).png", "R (2).png", '
+            "etc. rather than overwriting it."
+        ),
+    },
+    {
         "name": "Camera Photo (IMG_####)",
         "search_patterns": "IMG_",
         "rename_tag": "cam_",

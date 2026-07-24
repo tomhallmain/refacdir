@@ -702,9 +702,10 @@ class RenamerActionDialog(BaseActionDialog):
 
         Only ever runs in response to the user explicitly selecting a suggestion
         and clicking OK in the suggester dialog — never automatically. Only
-        fills ``rename_tag`` when the field is still blank, so it can't clobber
-        something the user already typed; the (mapping-level) function is never
-        touched here, only shown as a hint in the suggester's details pane.
+        fills ``rename_tag`` (and checks ``chain_parenthetical_indices``) when
+        not already set, so it can't clobber something the user already chose;
+        the (mapping-level) function is never touched here, only shown as a
+        hint in the suggester's details pane.
         """
         pattern = str(payload.get("search_patterns", "")).strip()
         if not pattern:
@@ -720,6 +721,9 @@ class RenamerActionDialog(BaseActionDialog):
         rename_tag = str(payload.get("rename_tag", "")).strip()
         if rename_tag and not self.rule_tag_edit.text().strip():
             self.rule_tag_edit.setText(rename_tag)
+
+        if payload.get("chain_parenthetical_indices") and not self.rule_chain_check.isChecked():
+            self.rule_chain_check.setChecked(True)
 
 
 class DuplicateRemoverActionDialog(BaseActionDialog):

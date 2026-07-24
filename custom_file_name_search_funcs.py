@@ -55,6 +55,13 @@ def is_short_integer_filename(filename, max_length=5):
     return filename_part.isdigit() and 1 <= len(filename_part) <= max_length
 
 
+def is_short_alpha_filename(filename, max_length=2):
+    """True if the basename (minus extension) is purely letters, 1-max_length chars long."""
+    file_basename = os.path.basename(filename)
+    filename_part = file_basename.split(".")[0] if "." in file_basename else file_basename
+    return filename_part.isalpha() and 1 <= len(filename_part) <= max_length
+
+
 @persistent_cache
 def is_id_filename(filename, fixed_length=22):
     file_basename = os.path.basename(filename)

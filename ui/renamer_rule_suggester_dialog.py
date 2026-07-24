@@ -141,14 +141,21 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         self._result_rule = {
             "search_patterns": preset["search_patterns"],
             "rename_tag": preset.get("rename_tag", ""),
+            "chain_parenthetical_indices": preset.get("chain_parenthetical_indices", False),
             "_source": "preset",
         }
+        chaining_note = (
+            '\nAlso matches OS/browser duplicate-download copies, e.g. "R (1).png".'
+            if preset.get("chain_parenthetical_indices")
+            else ""
+        )
         self.details_label.setText(
             f"Reason: {preset.get('reason', 'n/a')}\n"
             f"Pattern: {preset['search_patterns']}\n"
             f"Suggested rename_tag: {preset.get('rename_tag', 'n/a')}\n"
             f"Suggested function: {preset.get('function_hint', 'n/a')} "
             "(set this yourself in the Function dropdown; it's not applied automatically)"
+            f"{chaining_note}"
         )
 
     def _on_selection_changed(self, row: int):
