@@ -142,9 +142,16 @@ class FileRenamer:
 
         test_func = None
         if callable(pattern):
-            logger.info("reassigning glob expression.")
             test_func = pattern
-            glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
+            glob_pattern = getattr(pattern, "glob_pattern", None)
+            if glob_pattern is not None:
+                # The matcher is only wrapping a plain glob (e.g. for exclude_patterns
+                # filtering) — reuse that glob string so the scan stays narrow instead
+                # of falling all the way back to an unfiltered whole-tree walk.
+                glob_exp = FileRenamer.get_glob_pattern(glob_pattern, recursive=recursive)
+            else:
+                logger.info("reassigning glob expression.")
+                glob_exp = FileRenamer.get_glob_pattern(recursive=recursive)
         else:
             glob_exp = FileRenamer.get_glob_pattern(pattern, recursive=recursive)
 

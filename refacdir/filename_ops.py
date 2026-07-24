@@ -274,6 +274,10 @@ class FilenameMappingDefinition:
             stripped = _strip_parenthetical_index(path)
             return stripped != path and base_match(stripped)
 
+        # A parenthetical-indexed duplicate ("report (1).pdf") won't match a glob
+        # built from the base pattern ("report.pdf*"), so this matcher must see
+        # every candidate file — no glob_pattern to narrow find_matches's scan with.
+        matcher.glob_pattern = None
         return matcher
 
     @staticmethod
@@ -289,11 +293,18 @@ class FilenameMappingDefinition:
         if callable(include_compiled):
             def include_match(path):
                 return include_compiled(path)
+            # Forward whatever the wrapped-in matcher already knows: a plain glob
+            # string if it's just carrying an unwrapped include pattern (e.g. from
+            # a skipped parenthetical-chaining wrap), or None if it's a genuinely
+            # arbitrary matcher (custom search func, or chaining) with no glob to
+            # narrow a scan with.
+            glob_pattern = getattr(include_compiled, "glob_pattern", None)
         else:
             include_str = include_compiled
 
             def include_match(path):
                 return FilenameMappingDefinition._matches_glob_pattern(path, include_str)
+            glob_pattern = include_str
 
         def is_excluded(path):
             for ex in exclude_compiled:
@@ -312,6 +323,10 @@ class FilenameMappingDefinition:
                 return False
             return include_match(path)
 
+        # Excluding some files doesn't widen the set of *names* that can match —
+        # the include side is still bound by glob_pattern, so find_matches can use
+        # it for the OS-level scan and let this matcher do the final include/exclude test.
+        matcher.glob_pattern = glob_pattern
         return matcher
 
     @staticmethod
