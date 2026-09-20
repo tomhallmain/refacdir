@@ -448,7 +448,7 @@ def test_file_mode_dirs_only():
 
 @pytest.mark.skipif(
     sys.platform == "win32",
-    reason="chmod on a directory does not block writes the same way as on POSIX; see docs/BACKUP_TEST_COVERAGE.md",
+    reason="chmod on a directory does not block writes on Windows the way it does on POSIX",
 )
 def test_error_handling():
     """Test error handling when the target directory is not writable."""

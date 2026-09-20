@@ -663,8 +663,7 @@ class BatchJob:
                 hash, slower but detects any content change), FILENAME
                 (fastest, but a file with the same name and DIFFERENT
                 content is treated as unchanged and skipped — a known,
-                deliberate tradeoff, not a bug — see
-                docs/BACKUP_TEST_COVERAGE.md), or FILENAME_AND_PARENT (like
+                deliberate tradeoff, not a bug), or FILENAME_AND_PARENT (like
                 FILENAME but also keys on the parent directory name).
               - ``exclude_dirs`` / ``exclude_removal_dirs`` (optional,
                 default []): lists of locations to skip;

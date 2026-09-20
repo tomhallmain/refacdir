@@ -3,10 +3,9 @@ Prompt-facing description of refacdir's config YAML dialect, assembled from
 docstrings on the actual ``BatchJob.construct_*`` methods (and a few shared
 building blocks) rather than a hand-maintained duplicate. Keeping the schema
 description physically attached to the code it describes means a change to
-one is far more likely to surface the other in the same review — the same
-staleness problem flagged for docs/BACKUP_TEST_COVERAGE.md and
-docs/NON_BACKUP_ACTIONS_TEST_COVERAGE.md, except here drift degrades LLM
-output quality silently instead of just going stale on a shelf.
+one is far more likely to surface the other in the same review. A separate
+hand-maintained copy drifts silently, and drift here degrades LLM output
+quality rather than merely going stale.
 
 See docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 1.
 
