@@ -32,6 +32,7 @@ SUPPORTED_ACTION_CONSTRUCTORS = {
     ActionType.DIRECTORY_OBSERVER: "construct_directory_observer",
     ActionType.DIRECTORY_FLATTENER: "construct_directory_flattener",
     ActionType.NAMED_SUBDIR_COLLECTOR: "construct_named_subdir_collector",
+    ActionType.ARCHIVE_EXTRACTOR: "construct_archive_extractor",
 }
 
 # Shared building blocks referenced by more than one action type's schema.

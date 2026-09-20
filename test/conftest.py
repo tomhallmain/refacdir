@@ -22,10 +22,10 @@ Shared helpers (``test/test_utils.py``) and fixtures (``test/fixtures/``) stay a
 Use pytest-qt's ``qtbot`` fixture (see ``test/ui/conftest.py``).
 Install ``pytest-qt``; ``qt_api = pyside6`` is set in ``pytest.ini``. Only ``test/ui/`` tests
 should request ``qtbot``; other suites are unaffected.
-Singleton patches below include UI modules that bind ``app_info_cache`` or ``config`` at
-import time so isolated instances are visible after those imports.
+``repoint_singleton_bindings`` below sweeps ``sys.modules`` by object identity, so a
+module binding ``app_info_cache`` or ``config`` at import time is isolated without being
+named anywhere here.
 """
-import importlib
 import json
 import os
 import sys
@@ -46,52 +46,30 @@ from refacdir.filename_ops import FiletypesDefinition, FilenameMappingDefinition
 
 _PROJECT_ROOT = _TEST_ROOT.parent
 
-# Modules that may hold a module-level ``app_info_cache`` reference after import.
-_APP_INFO_CACHE_PATCH_MODULES = (
-    "refacdir.duplicate_remover",
-    "app_qt",
-)
 
-# Modules that may hold module-level ``config`` / ``_config`` references after import.
-_CONFIG_PATCH_MODULES = (
-    "app_qt",
-    "extensions.refacdir_server",
-    "refacdir.image_categorizer",
-    "ui.app_style",
-)
+def repoint_singleton_bindings(monkeypatch, attr_name, old_obj, new_obj) -> None:
+    """Repoint every imported module's module-level binding of *old_obj* to
+    *new_obj* (undone automatically by monkeypatch at test teardown).
 
+    Modules that do e.g. ``from refacdir.utils.app_info_cache import app_info_cache``
+    at module level hold their own reference to the singleton, so patching only
+    the source module leaves those bindings stale — historically handled by a
+    per-module patch list that had to be extended every time a new module
+    adopted the import style. Sweeping sys.modules retires that whack-a-mole:
+    the identity comparison guarantees only bindings to the exact old object
+    are touched, and modules imported later get the new object naturally via
+    the patched source module.
 
-def _import_module(name: str):
-    try:
-        return importlib.import_module(name)
-    except Exception:
-        return None
-
-
-def _patch_app_info_cache_singleton(monkeypatch, cache_instance) -> None:
-    """Patch app_info_cache everywhere tests may hold a reference."""
-    cache_module = importlib.import_module("refacdir.utils.app_info_cache")
-    monkeypatch.setattr(cache_module, "app_info_cache", cache_instance)
-
-    for module_name in _APP_INFO_CACHE_PATCH_MODULES:
-        module = _import_module(module_name)
-        if module is not None and hasattr(module, "app_info_cache"):
-            monkeypatch.setattr(module, "app_info_cache", cache_instance)
-
-
-def _patch_config_singleton(monkeypatch, config_instance) -> None:
-    """Patch config everywhere tests may hold a reference."""
-    config_module = importlib.import_module("refacdir.config")
-    monkeypatch.setattr(config_module, "config", config_instance)
-
-    for module_name in _CONFIG_PATCH_MODULES:
-        module = _import_module(module_name)
-        if module is None:
+    Call it once per attribute name a singleton is bound under — ``app_qt``
+    imports the config singleton as ``_config``, so ``config`` alone would
+    leave that binding stale.
+    """
+    for module in list(sys.modules.values()):
+        try:
+            if getattr(module, attr_name, None) is old_obj:
+                monkeypatch.setattr(module, attr_name, new_obj)
+        except Exception:
             continue
-        if hasattr(module, "config"):
-            monkeypatch.setattr(module, "config", config_instance)
-        if hasattr(module, "_config"):
-            monkeypatch.setattr(module, "_config", config_instance)
 
 _MINIMAL_TEST_CONFIG_JSON = {
     "foreground_color": "white",
@@ -141,8 +119,8 @@ def restore_batch_registries():
 @pytest.fixture(autouse=True)
 def isolated_app_singletons(tmp_path, monkeypatch):
     """Point cache/config singletons at a fresh per-test temp directory."""
-    from refacdir.utils.app_info_cache import AppInfoCache
-    from refacdir.config import Config
+    import refacdir.config as config_module
+    import refacdir.utils.app_info_cache as cache_module
 
     cache_dir = tmp_path / "cache"
     configs_dir = tmp_path / "configs"
@@ -157,11 +135,17 @@ def isolated_app_singletons(tmp_path, monkeypatch):
     monkeypatch.setenv("REFACDIR_CACHE_DIR", str(cache_dir))
     monkeypatch.setenv("REFACDIR_CONFIGS_DIR", str(configs_dir))
 
-    new_cache = AppInfoCache()
-    _patch_app_info_cache_singleton(monkeypatch, new_cache)
+    # Each sweep repoints the source module itself plus every imported module
+    # holding a module-level binding of that singleton.
+    old_cache = cache_module.app_info_cache
+    repoint_singleton_bindings(
+        monkeypatch, "app_info_cache", old_cache, cache_module.AppInfoCache()
+    )
 
-    config_instance = Config()
-    _patch_config_singleton(monkeypatch, config_instance)
+    old_config = config_module.config
+    config_instance = config_module.Config()
+    repoint_singleton_bindings(monkeypatch, "config", old_config, config_instance)
+    repoint_singleton_bindings(monkeypatch, "_config", old_config, config_instance)
 
     yield
 

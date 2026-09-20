@@ -26,6 +26,7 @@ _EXPECTED_SUPPORTED = {
     ActionType.DIRECTORY_OBSERVER,
     ActionType.DIRECTORY_FLATTENER,
     ActionType.NAMED_SUBDIR_COLLECTOR,
+    ActionType.ARCHIVE_EXTRACTOR,
 }
 
 
@@ -98,6 +99,14 @@ def test_directory_flattener_schema_mentions_required_fields():
 def test_named_subdir_collector_schema_mentions_required_fields():
     description = get_schema_description(ActionType.NAMED_SUBDIR_COLLECTOR)
     for keyword in ("root", "subdir_names", "clear_sources", "subdir_depth"):
+        assert keyword in description
+
+
+def test_archive_extractor_schema_mentions_required_fields():
+    description = get_schema_description(ActionType.ARCHIVE_EXTRACTOR)
+    for keyword in (
+        "search_dir", "target_dir", "pattern", "preserve_structure", "delete_sources",
+    ):
         assert keyword in description
 
 

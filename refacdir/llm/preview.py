@@ -12,6 +12,8 @@ type's own read-only scan mechanism already collects:
   — there's no distinct "preview" vs. "real run" for it).
 - NAMED_SUBDIR_COLLECTOR: ``preview()`` (wraps its existing ``_collect_work``
   scan).
+- ARCHIVE_EXTRACTOR: ``preview()`` (wraps its ``_plan`` scan; reads archive
+  directories only, never extracts).
 - BACKUP: ``setup()`` + the new ``BackupMapping.preview_changes()``.
 
 Nothing here executes or mutates, regardless of the draft's own
@@ -27,6 +29,9 @@ from typing import Any, Dict
 
 from refacdir.batch import ActionType
 from refacdir.llm.validation import construct_for_action_type
+from refacdir.utils.translations import I18N
+
+_ = I18N._
 
 
 @dataclass
@@ -97,10 +102,21 @@ def _preview_named_subdir_collector(action_type: ActionType, collector) -> Previ
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=work)
 
 
+def _preview_archive_extractor(action_type: ActionType, extractor) -> PreviewResult:
+    plan = extractor.preview()
+    summary = _("{0} file(s) would be extracted from {1} archive(s) into {2}.").format(
+        len(plan["planned"]), len(plan["archives"]), extractor.target_dir
+    )
+    if plan["unreadable"]:
+        summary += " " + _("{0} archive(s) could not be read.").format(len(plan["unreadable"]))
+    return PreviewResult(action_type=action_type, available=True, summary=summary, details=plan)
+
+
 _PREVIEW_DISPATCH = {
     ActionType.DUPLICATE_REMOVER: _preview_duplicate_remover,
     ActionType.DIRECTORY_OBSERVER: _preview_directory_observer,
     ActionType.NAMED_SUBDIR_COLLECTOR: _preview_named_subdir_collector,
+    ActionType.ARCHIVE_EXTRACTOR: _preview_archive_extractor,
     ActionType.BACKUP: _preview_backup,
 }
 

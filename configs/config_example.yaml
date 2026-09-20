@@ -208,3 +208,27 @@ actions:
     ]
     recursive: true
     exclude_dirs: []
+
+
+- type: "ARCHIVE_EXTRACTOR"
+  mappings:
+
+  # Flat merge (default): every file lands directly in target_dir, and a name
+  # collision takes the source archive's stem as a suffix.
+  - name: "Downloads ZIP merge"
+    test: true
+    search_dir: "{{USER_HOME}}\\Downloads"
+    target_dir: "{{USER_HOME}}\\Downloads\\extracted"
+    pattern: "report_*.zip"
+    recursive: true
+
+  # preserve_structure keeps each archive's own folders under
+  # target_dir/<archive stem>/. delete_sources trashes an archive only once
+  # every member of it extracted successfully.
+  - name: "Archived projects"
+    test: true
+    search_dir: "D:\\archives"
+    target_dir: "D:\\archives_unpacked"
+    pattern: "*.zip"
+    preserve_structure: true
+    delete_sources: false

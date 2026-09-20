@@ -11,7 +11,10 @@ from refacdir.llm.safety import apply_safety_defaults
 
 @pytest.mark.parametrize(
     "action_type",
-    [ActionType.RENAMER, ActionType.BACKUP, ActionType.DIRECTORY_FLATTENER, ActionType.NAMED_SUBDIR_COLLECTOR],
+    [
+        ActionType.RENAMER, ActionType.BACKUP, ActionType.DIRECTORY_FLATTENER,
+        ActionType.NAMED_SUBDIR_COLLECTOR, ActionType.ARCHIVE_EXTRACTOR,
+    ],
 )
 def test_forces_test_true_regardless_of_draft_value(action_type):
     result = apply_safety_defaults(action_type, {"name": "x", "test": False})
@@ -20,7 +23,10 @@ def test_forces_test_true_regardless_of_draft_value(action_type):
 
 @pytest.mark.parametrize(
     "action_type",
-    [ActionType.RENAMER, ActionType.BACKUP, ActionType.DIRECTORY_FLATTENER, ActionType.NAMED_SUBDIR_COLLECTOR],
+    [
+        ActionType.RENAMER, ActionType.BACKUP, ActionType.DIRECTORY_FLATTENER,
+        ActionType.NAMED_SUBDIR_COLLECTOR, ActionType.ARCHIVE_EXTRACTOR,
+    ],
 )
 def test_forces_test_true_when_absent_from_draft(action_type):
     result = apply_safety_defaults(action_type, {"name": "x"})

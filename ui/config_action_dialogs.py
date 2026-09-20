@@ -25,9 +25,12 @@ from PySide6.QtWidgets import (
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
 from refacdir.llm.config_schema import supported_action_types
+from refacdir.utils.translations import I18N
 from refacdir.utils.utils import Utils
 from .llm_config_chat_dialog import LLMConfigChatDialog
 from .renamer_rule_suggester_dialog import RenamerRuleSuggesterDialog
+
+_ = I18N._
 
 
 def _default_action_dict(action_type: ActionType) -> dict:
@@ -857,6 +860,39 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
         ]
 
 
+class ArchiveExtractorActionDialog(BaseActionDialog):
+    def hint_text(self) -> str:
+        return _(
+            "Extracts ZIP archives matching pattern under search_dir into target_dir. "
+            "target_dir is created if missing and always skipped while searching, so extracted "
+            "files are never re-ingested; it cannot be search_dir or a parent of it. "
+            "preserve_structure: keep each archive's folders under target_dir/<archive stem>/ "
+            "(default off writes everything flat, tagging a collision with the archive's name). "
+            "delete_sources: trash an archive once all of its members extracted."
+        )
+
+    def default_mapping(self) -> dict:
+        return {
+            "name": "archive_extractor mapping",
+            "search_dir": ".",
+            "target_dir": "./extracted",
+            "pattern": "*.zip",
+        }
+
+    def property_key_options(self) -> list[str]:
+        return [
+            "search_dir",
+            "target_dir",
+            "pattern",
+            "recursive",
+            "normalise",
+            "preserve_structure",
+            "delete_sources",
+            "test",
+            "skip_confirm",
+        ]
+
+
 def create_action_dialog(parent, action_type: ActionType, action_data: dict | None = None) -> BaseActionDialog:
     dialog_map = {
         ActionType.BACKUP: BackupActionDialog,
@@ -866,6 +902,7 @@ def create_action_dialog(parent, action_type: ActionType, action_data: dict | No
         ActionType.DIRECTORY_FLATTENER: DirectoryFlattenerActionDialog,
         ActionType.IMAGE_CATEGORIZER: ImageCategorizerActionDialog,
         ActionType.NAMED_SUBDIR_COLLECTOR: NamedSubdirCollectorActionDialog,
+        ActionType.ARCHIVE_EXTRACTOR: ArchiveExtractorActionDialog,
     }
     dialog_cls = dialog_map.get(action_type, BaseActionDialog)
     return dialog_cls(parent=parent, action_type=action_type, action_data=action_data)

@@ -22,6 +22,7 @@ _TEST_FIELD_ACTION_TYPES = frozenset((
     ActionType.BACKUP,
     ActionType.DIRECTORY_FLATTENER,
     ActionType.NAMED_SUBDIR_COLLECTOR,
+    ActionType.ARCHIVE_EXTRACTOR,
 ))
 
 
@@ -30,8 +31,8 @@ def apply_safety_defaults(action_type: ActionType, action_dict: dict) -> dict:
     Return a COPY of ``action_dict`` with the safest dry-run/confirmation
     field forced for ``action_type``:
 
-    - RENAMER, BACKUP, DIRECTORY_FLATTENER, NAMED_SUBDIR_COLLECTOR: top-level
-      ``test`` forced to ``True``.
+    - RENAMER, BACKUP, DIRECTORY_FLATTENER, NAMED_SUBDIR_COLLECTOR,
+      ARCHIVE_EXTRACTOR: top-level ``test`` forced to ``True``.
     - DUPLICATE_REMOVER: has no ``test`` field at all (see
       ``construct_duplicate_remover``) — ``skip_confirm`` is forced to
       ``False`` instead, so ``DuplicateRemover.run()``'s own built-in

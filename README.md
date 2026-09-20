@@ -10,6 +10,7 @@ Available batch actions include:
   - `rename_by_ctime`
   - `rename_by_mtime`
 - Directory flattening - take all files in recursive directories and flatten them into the base directory
+- Archive extraction - unpack ZIP files matching a name pattern and merge their contents into one directory
 - Backups, with the following modes:
   - `PUSH_AND_REMOVE`
   - `PUSH`

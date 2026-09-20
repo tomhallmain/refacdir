@@ -2,6 +2,7 @@ from enum import Enum
 import os
 import yaml
 
+from refacdir.archive_extractor import ArchiveExtractor
 from refacdir.backup.backup_manager import BackupManager
 from refacdir.backup.backup_mapping import BackupMode, FileMode, HashMode, BackupMapping
 
@@ -179,6 +180,7 @@ class ActionType(Enum):
     DIRECTORY_FLATTENER = 'DIRECTORY_FLATTENER'
     IMAGE_CATEGORIZER = 'IMAGE_CATEGORIZER'
     NAMED_SUBDIR_COLLECTOR = 'NAMED_SUBDIR_COLLECTOR'
+    ARCHIVE_EXTRACTOR = 'ARCHIVE_EXTRACTOR'
 
     def get_varname(self):
         return self.value.lower()
@@ -824,6 +826,67 @@ class BatchJob:
             skip_confirm=skip_confirm,
             clear_sources=clear_sources,
             subdir_depth=subdir_depth,
+        )
+
+    def construct_archive_extractor(self, yaml_dict={}):
+        """
+        Build an ArchiveExtractor from an ARCHIVE_EXTRACTOR action's YAML dict.
+        Finds ZIP archives whose filename matches a pattern under ``search_dir``
+        and extracts their contents into ``target_dir``, merging any number of
+        archives into that one place.
+
+        Required keys:
+          - ``name`` (str)
+          - ``search_dir`` (required): a single location searched for archives
+            — see ``Location.construct``.
+          - ``target_dir`` (required): a single location extracted files are
+            written to — see ``Location.construct``. Created if missing, and
+            always excluded from the search, so a file extracted by an earlier
+            run is never picked up as input by a later one. It may not be
+            ``search_dir`` itself, nor an ancestor of it.
+
+        Optional keys:
+          - ``pattern`` (str, default ``"*.zip"``): fnmatch pattern tested
+            against each archive's filename, e.g. ``"report_*.zip"`` or
+            ``"data_?.zip"``. Only ``.zip`` files are considered either way.
+          - ``recursive`` (bool, default True): search subdirectories of
+            ``search_dir`` too.
+          - ``normalise`` (bool, default True): NFKC-normalise filename and
+            pattern before matching, so a name holding a non-breaking space or
+            a decomposed accent still matches a pattern typed plainly.
+          - ``preserve_structure`` (bool, default False): keep each archive's
+            internal folders, under ``target_dir/<archive stem>/``. Left False,
+            files are written flat into ``target_dir`` and a name collision
+            takes the source archive's stem (then a counter) as a suffix.
+          - ``delete_sources`` (bool, default False): send an archive to the
+            trash once every member of it extracted successfully. An archive
+            with any failed member is kept.
+          - ``test`` / ``skip_confirm``: default to the batch-level setting.
+        """
+        name = yaml_dict["name"]
+        search_dir = Location.construct(yaml_dict["search_dir"]).root
+        target_dir = Location.construct(yaml_dict["target_dir"]).root
+        pattern = Utils.get_from_dict(yaml_dict, "pattern", "*.zip")
+        recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
+        normalise = Utils.get_from_dict(yaml_dict, "normalise", True)
+        preserve_structure = Utils.get_from_dict(yaml_dict, "preserve_structure", False)
+        delete_sources = Utils.get_from_dict(yaml_dict, "delete_sources", False)
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        logger.info(
+            f"Constructing archive extractor: {name} from {search_dir} into {target_dir}"
+        )
+        return ArchiveExtractor(
+            name,
+            search_dir,
+            target_dir,
+            pattern=pattern,
+            recursive=recursive,
+            normalise=normalise,
+            preserve_structure=preserve_structure,
+            delete_sources=delete_sources,
+            test=test,
+            skip_confirm=skip_confirm,
         )
 
 
