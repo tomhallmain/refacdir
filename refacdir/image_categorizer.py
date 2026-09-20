@@ -2,21 +2,28 @@ import os
 import sys
 
 from refacdir.config import config
+from refacdir.utils.translations import I18N
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for image categorizer
 logger = setup_logger('image_categorizer')
+_ = I18N._
 
 weidr_imported = False
 
 if config.weidr_loc is not None:
     try:
-        sys.path.insert(0, config.weidr_loc)
-        from compare.compare_embeddings_clip import CompareEmbedding
+        # Weidr keeps its first-party packages under src/ and imports them
+        # unprefixed internally (``from compare.base_compare import ...``), so
+        # src/ is the entry that goes on the path. Appended, not prepended:
+        # Weidr's src/ui would otherwise shadow this project's own top-level
+        # ui package, which app_qt.py imports after this module is loaded.
+        sys.path.append(os.path.join(config.weidr_loc, "src"))
+        from compare.compare_embeddings_clip import CompareEmbeddingClip
         weidr_imported = True
     except Exception as e:
-        logger.error(f"Failed to import Simple Image Compare: {e}")
+        logger.error(f"Failed to import Weidr: {e}")
 
 
 class ImageCategorizer:
@@ -37,7 +44,7 @@ class ImageCategorizer:
         self.segregation_map = {}
 
         if not weidr_imported:
-            raise Exception("Invalid ImageCategorizer config - Simple image compare not imported")
+            raise Exception("Invalid ImageCategorizer config - Weidr not imported")
 
         if not Utils.isdir_with_retry(source_dir):
             raise Exception(f"Source directory {source_dir} is invalid")
@@ -56,51 +63,81 @@ class ImageCategorizer:
         if len(categories) == 0:
             raise Exception("No categories provided")
         
+        # Each category's own output folder is excluded from the scan so a second
+        # run does not re-categorize files an earlier run already sorted. These
+        # are not validated for existence: run() creates them.
         for category in categories:
-            full_path = os.path.join(os.path.abspath(self.source_dir), d)
+            full_path = os.path.join(os.path.abspath(self.source_dir), category)
             self.exclude_dirs.append(full_path)
             self.segregation_map[category] = []
 
     def run(self):
-        files = self._get_files()
-
-        for f in files:
-            temp_dict = {}
-            for category in self.categories:
-                temp_dict[category] = category
-            similarities = CompareEmbedding.single_text_compare(f, temp_dict)
+        for f in self._get_files():
+            temp_dict = {category: category for category in self.categories}
+            similarities = CompareEmbeddingClip.single_text_compare(f, temp_dict)
             max_similarity = max(similarities.values())
-            for k, v in similarities.items():
-                if v == max_similarity:
-                    max_category = k
-                    self.segregation_map[max_category].append(f)
+            for category, similarity in similarities.items():
+                if similarity == max_similarity:
+                    # One category per file: on a tie the first match wins, so the
+                    # file is never queued for two destinations and moved twice.
+                    self.segregation_map[category].append(f)
+                    break
+
+        planned = [(category, f) for category, files in self.segregation_map.items() for f in files]
+        if len(planned) == 0:
+            logger.warning(f"{self.name}: no images found to categorize under {self.source_dir}")
+            return
+
+        if self.test:
+            logger.info(
+                f"|=============== TEST (dry run) {self.name}: no files moved ===============|"
+            )
+            logger.info(f"TEST {self.name}: would categorize {len(planned)} image(s)")
+            for category, f in planned:
+                logger.info(f"TEST move {f} -> {self._category_path(category, f)}")
+            return
+
+        logger.info(f"{self.name}: categorizing {len(planned)} image(s) under {self.source_dir}")
+        if not self.skip_confirm:
+            confirm = input(
+                _("Confirm categorization of {0} image(s) into {1} categories (y/n): ").format(
+                    len(planned), len(self.categories)
+                )
+            )
+            if confirm.lower() != "y":
+                logger.info("Operation cancelled by user")
+                return
 
         for category in self.categories:
-            new_dir = os.path.join(self.source_dir, category)
-            if not os.path.isdir(new_dir):
-                os.mkdir(new_dir)
-        
-        for category, files in self.segregation_map.items():
-            new_dir = os.path.join(self.source_dir, category)
-            for f in files:
-                new_path = os.path.join(new_dir, os.path.basename(f))
-                if not os.path.exists(new_path):
-                    Utils.move(f, new_path)
-                else:
-                    logger.warning(f"File already exists: {new_path}")
+            os.makedirs(os.path.join(self.source_dir, category), exist_ok=True)
 
+        for category, f in planned:
+            new_path = self._category_path(category, f)
+            if os.path.exists(new_path):
+                logger.warning(f"File already exists: {new_path}")
+                continue
+            Utils.move(f, new_path)
+            logger.info(f"moved {f} -> {new_path}")
+
+    def _category_path(self, category, file_path):
+        return os.path.join(self.source_dir, category, os.path.basename(file_path))
 
     def _get_files(self):
-        for ext in self.file_types:
-            for root, dirs, files in os.walk(self.source_dir):
-                if not self.recursive and len(dirs) > 0:
-                    continue
-                for f in files:
-                    if f.endswith(ext) and not self._is_excluded(root):
-                        yield os.path.join(root, f)
+        for root, dirs, files in os.walk(self.source_dir):
+            if self._is_excluded(root):
+                dirs[:] = []
+                continue
+            if not self.recursive:
+                dirs[:] = []
+            for f in files:
+                if any(f.endswith(ext) for ext in self.file_types):
+                    yield os.path.join(root, f)
 
-    def _is_excluded(self, file_path):
-        for d in self.exclude_dirs:
-            if file_path.startswith(d):
+    def _is_excluded(self, dir_path):
+        """True when dir_path is an excluded directory or sits inside one."""
+        dir_path = os.path.normcase(os.path.abspath(dir_path))
+        for excluded in self.exclude_dirs:
+            excluded = os.path.normcase(os.path.abspath(excluded))
+            if dir_path == excluded or dir_path.startswith(excluded + os.sep):
                 return True
         return False

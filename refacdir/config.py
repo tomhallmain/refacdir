@@ -104,7 +104,7 @@ class Config:
     def print_config_settings(self):
         logger.info("Settings active:")
         if self.weidr_loc is not None:
-            logger.info(f" - Using simple image compare path at {self.weidr_loc}")
+            logger.info(f" - Using Weidr path at {self.weidr_loc}")
         else:
             pass
 #            logger.info(f" - Simple image compare location is not set or invalid.")
