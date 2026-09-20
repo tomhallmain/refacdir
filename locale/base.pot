@@ -1,14 +1,14 @@
 # Translations template for APPLICATION.
-# Copyright (C) 2026 AUTHOR NAME <author@example.com>
+# Copyright (C) 2026 THOMAS HALL <tomhall.main@gmail.com>
 # This file is distributed under the same license as the APPLICATION project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: APPLICATION 1.0\n"
-"Report-Msgid-Bugs-To: Translator Name <translator@example.com>\n"
-"POT-Creation-Date: 2026-07-23 16:03-0400\n"
-"PO-Revision-Date: 2026-07-23 16:03-0400\n"
+"Report-Msgid-Bugs-To: Thomas Hall <tomhall.main@gmail.com>\n"
+"POT-Creation-Date: 2026-09-20 19:13-0400\n"
+"PO-Revision-Date: 2026-09-20 19:13-0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,156 +16,236 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: app_qt.py:76 app_qt.py:128
+#: app_qt.py:74 app_qt.py:126 app_qt.py:188
 msgid "RefacDir"
 msgstr ""
 
-#: app_qt.py:194
+#: app_qt.py:192
 msgid "File Management"
 msgstr ""
 
-#: app_qt.py:207
+#: app_qt.py:205
 msgid "Toggle Theme"
 msgstr ""
 
-#: app_qt.py:212
+#: app_qt.py:210
 msgid "Run tests"
 msgstr ""
 
-#: app_qt.py:217
+#: app_qt.py:215
 msgid "Run Operations"
 msgstr ""
 
-#: app_qt.py:222
+#: app_qt.py:220
 msgid "Edit Configs"
 msgstr ""
 
-#: app_qt.py:227
+#: app_qt.py:225
 msgid "Job History"
 msgstr ""
 
-#: app_qt.py:239
+#: app_qt.py:237
 msgid "Search Configurations"
 msgstr ""
 
-#: app_qt.py:244
+#: app_qt.py:242
 msgid "Type to filter..."
 msgstr ""
 
-#: app_qt.py:255
+#: app_qt.py:253
 msgid "Available Configurations"
 msgstr ""
 
-#: app_qt.py:302
+#: app_qt.py:300
 msgid "File Management Dashboard"
 msgstr ""
 
-#: app_qt.py:306
+#: app_qt.py:304
 msgid ""
 "Configure and run file management operations with ease. Select configurations from the sidebar and customize options "
 "below."
 msgstr ""
 
-#: app_qt.py:322
+#: app_qt.py:320
 msgid "Operation Settings"
 msgstr ""
 
-#: app_qt.py:330
+#: app_qt.py:328
 msgid "Recur Selected Actions"
 msgstr ""
 
-#: app_qt.py:334
+#: app_qt.py:332
 msgid "Test Mode"
 msgstr ""
 
-#: app_qt.py:338
+#: app_qt.py:336
 msgid "Skip Confirmations"
 msgstr ""
 
-#: app_qt.py:342
+#: app_qt.py:340
 msgid "Only Observers"
 msgstr ""
 
-#: app_qt.py:347
+#: app_qt.py:345
 msgid "Persist YAML definition caches between batch runs"
 msgstr ""
 
-#: app_qt.py:351
+#: app_qt.py:349
 msgid ""
 "Unchecked (default): at each run, clear filename_mapping_functions and filetype_definitions registries before loading"
 " configs in this run. Checked: keep definitions from earlier runs in this session (legacy)."
 msgstr ""
 
-#: app_qt.py:363
+#: app_qt.py:361
 msgid " min"
 msgstr ""
 
-#: app_qt.py:364
+#: app_qt.py:362
 msgid "Close the UI after this many minutes without keyboard or mouse activity."
 msgstr ""
 
-#: app_qt.py:366
+#: app_qt.py:364
 msgid "Idle shutdown"
 msgstr ""
 
-#: app_qt.py:381
+#: app_qt.py:379
 msgid "Operation Status"
 msgstr ""
 
-#: app_qt.py:385 app_qt.py:568 app_qt.py:888
+#: app_qt.py:383 app_qt.py:566 app_qt.py:886
 msgid "Ready"
 msgstr ""
 
-#: app_qt.py:529
+#: app_qt.py:527
 msgid "Queue full"
 msgstr ""
 
-#: app_qt.py:550
+#: app_qt.py:548
 msgid "Running operations..."
 msgstr ""
 
-#: app_qt.py:559
+#: app_qt.py:557
 msgid "Operation failed"
 msgstr ""
 
-#: app_qt.py:684
+#: app_qt.py:682
 msgid "Failed to set target directory to receive marked files."
 msgstr ""
 
-#: refacdir/batch.py:265
+#: refacdir/archive_extractor.py:300
+msgid "Confirm extraction of {0} file(s) from {1} archive(s) into {2} (y/n): "
+msgstr ""
+
+#: refacdir/batch.py:266
 msgid "Starting batch operations..."
 msgstr ""
 
-#: refacdir/batch.py:281
+#: refacdir/batch.py:282
 msgid "Batch operations completed (skipped {0} actions)"
 msgstr ""
 
-#: refacdir/batch.py:284
+#: refacdir/batch.py:285
 msgid "Batch operations completed"
 msgstr ""
 
-#: refacdir/batch.py:292
+#: refacdir/batch.py:293
 msgid "Operations cancelled by user"
 msgstr ""
 
-#: refacdir/batch.py:342
+#: refacdir/batch.py:343
 msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
 msgstr ""
 
-#: refacdir/batch.py:397
+#: refacdir/batch.py:398
 msgid "Config {0}/{1}: Running {2} action in {3}"
 msgstr ""
 
-#: refacdir/batch.py:454
+#: refacdir/batch.py:455
 msgid "Config {0}/{1}: Running {2} {3}/{4} in {5}"
 msgstr ""
 
-#: refacdir/batch.py:497
+#: refacdir/batch.py:498
 msgid "Config {0}/{1}: Running renamer mapping {2}/{3} in {4}"
 msgstr ""
 
-#: refacdir/backup/backup_manager.py:78 refacdir/backup/backup_manager.py:95
+#: refacdir/batch_renamer.py:208
+msgid "Confirm (y/n) "
+msgstr ""
+
+#: refacdir/duplicate_remover.py:197
+msgid "Confirm all duplicates removal (Y/n): "
+msgstr ""
+
+#: refacdir/duplicate_remover.py:203
+msgid "Remove duplicates with confirmation one by one? (Y/n): "
+msgstr ""
+
+#: refacdir/duplicate_remover.py:209
+msgid "Save duplicates report? (Y/n): "
+msgstr ""
+
+#: refacdir/duplicate_remover.py:352
+msgid "OK to remove? (Y/n): "
+msgstr ""
+
+#: refacdir/file_renamer.py:384
+msgid "Rename all files in {0}? Confirm (y/n): "
+msgstr ""
+
+#: refacdir/file_renamer.py:386
+msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
+msgstr ""
+
+#: refacdir/image_categorizer.py:102
+msgid "Confirm categorization of {0} image(s) into {1} categories (y/n): "
+msgstr ""
+
+#: refacdir/named_subdir_collector.py:227
+msgid "Confirm named subdir collection (y/n): "
+msgstr ""
+
+#: refacdir/backup/backup_manager.py:77 refacdir/backup/backup_manager.py:94
 msgid "Backup \"{0}\" ({1}/{2}): {3}"
+msgstr ""
+
+#: refacdir/backup/backup_manager.py:110
+msgid ""
+"\n"
+"CONFIRM BACKUP (y/n): "
+msgstr ""
+
+#: refacdir/backup/backup_manager.py:114
+msgid ""
+"\n"
+"CONFIRM BACKUP AGAIN (y/n): "
+msgstr ""
+
+#: refacdir/llm/preview.py:55
+msgid "{0} file(s) matched across {1} location(s)."
+msgstr ""
+
+#: refacdir/llm/preview.py:74
+msgid "{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be removed (mirror-mode mappings only)."
+msgstr ""
+
+#: refacdir/llm/preview.py:84
+msgid "{0} duplicate file(s) would be removed across {1} group(s)."
+msgstr ""
+
+#: refacdir/llm/preview.py:94
+msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
+msgstr ""
+
+#: refacdir/llm/preview.py:102
+msgid "{0} file(s) would be collected into {1} named subdir(s)."
+msgstr ""
+
+#: refacdir/llm/preview.py:110
+msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
+msgstr ""
+
+#: refacdir/llm/preview.py:114
+msgid "{0} archive(s) could not be read."
 msgstr ""
 
 #: refacdir/utils/translations.py:40
@@ -224,93 +304,97 @@ msgstr ""
 msgid "years"
 msgstr ""
 
-#: ui/batch_history_window.py:42
+#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91 ui/config_editor_window.py:257
+msgid "(new config)"
+msgstr ""
+
+#: ui/batch_history_window.py:41
 msgid "(none)"
 msgstr ""
 
-#: ui/batch_history_window.py:45
+#: ui/batch_history_window.py:44
 msgid " (cancelled)"
 msgstr ""
 
-#: ui/batch_history_window.py:50 ui/batch_history_window.py:78
+#: ui/batch_history_window.py:49 ui/batch_history_window.py:77
 msgid "(unknown config)"
 msgstr ""
 
-#: ui/batch_history_window.py:51 ui/batch_history_window.py:79 ui/batch_history_window.py:92
+#: ui/batch_history_window.py:50 ui/batch_history_window.py:78 ui/batch_history_window.py:91
 msgid "(untagged)"
 msgstr ""
 
-#: ui/batch_history_window.py:75
+#: ui/batch_history_window.py:74
 msgid "(all mappings)"
 msgstr ""
 
-#: ui/batch_history_window.py:119
+#: ui/batch_history_window.py:118
 msgid "Batch Job History"
 msgstr ""
 
-#: ui/batch_history_window.py:133
+#: ui/batch_history_window.py:132
 msgid "Last {0} batch jobs (stored in encrypted cache). Reverse an entire job or a single renamer mapping."
 msgstr ""
 
-#: ui/batch_history_window.py:159
+#: ui/batch_history_window.py:158
 msgid "Refresh"
 msgstr ""
 
-#: ui/batch_history_window.py:163 ui/batch_history_window.py:338
+#: ui/batch_history_window.py:162 ui/batch_history_window.py:342
 msgid "Preview reverse mapping"
 msgstr ""
 
-#: ui/batch_history_window.py:167 ui/batch_history_window.py:314 ui/batch_history_window.py:338
+#: ui/batch_history_window.py:166 ui/batch_history_window.py:313 ui/batch_history_window.py:342
 msgid "Reverse mapping"
 msgstr ""
 
-#: ui/batch_history_window.py:171 ui/batch_history_window.py:340
+#: ui/batch_history_window.py:170 ui/batch_history_window.py:344
 msgid "Preview reverse job"
 msgstr ""
 
-#: ui/batch_history_window.py:175 ui/batch_history_window.py:320 ui/batch_history_window.py:340
+#: ui/batch_history_window.py:174 ui/batch_history_window.py:319 ui/batch_history_window.py:344
 msgid "Reverse entire job"
 msgstr ""
 
-#: ui/batch_history_window.py:194
+#: ui/batch_history_window.py:193
 msgid "No batch jobs recorded yet. Run operations (non test mode) to build history."
 msgstr ""
 
-#: ui/batch_history_window.py:278
+#: ui/batch_history_window.py:277
 msgid "Job not found (history may have changed)."
 msgstr ""
 
-#: ui/batch_history_window.py:289 ui/batch_history_window.py:296 ui/batch_history_window.py:302
-#: ui/batch_history_window.py:334
+#: ui/batch_history_window.py:288 ui/batch_history_window.py:295 ui/batch_history_window.py:301
+#: ui/batch_history_window.py:338
 msgid "Batch history"
 msgstr ""
 
-#: ui/batch_history_window.py:289
+#: ui/batch_history_window.py:288
 msgid "Select a job first."
 msgstr ""
 
-#: ui/batch_history_window.py:296
+#: ui/batch_history_window.py:295
 msgid "Select a renamer mapping first."
 msgstr ""
 
-#: ui/batch_history_window.py:303
+#: ui/batch_history_window.py:302
 msgid "This job has no mapping tags; use Reverse entire job instead."
 msgstr ""
 
-#: ui/batch_history_window.py:310
+#: ui/batch_history_window.py:309
 msgid ""
 "Move files back for mapping \"{0}\" in config \"{1}\"?\n"
 "Only operations from this mapping are reversed (newest first). If a later mapping renamed the same file, reverse that"
 " mapping first."
 msgstr ""
 
-#: ui/batch_history_window.py:317
+#: ui/batch_history_window.py:316
 msgid ""
 "Move files back along all recorded rename/move paths for this job?\n"
 "Operations are applied newest-first. Files must still exist at their destination."
 msgstr ""
 
-#: ui/batch_history_window.py:342
+#: ui/batch_history_window.py:346
 msgid ""
 "Attempted: {0}\n"
 "Succeeded: {1}\n"
@@ -318,183 +402,643 @@ msgid ""
 "Skipped (not reversible or missing): {3}"
 msgstr ""
 
-#: ui/test_results_window.py:81
-msgid "Verification tests"
+#: ui/config_action_dialogs.py:74 ui/config_action_dialogs.py:158
+msgid "Remove"
 msgstr ""
 
-#: ui/test_results_window.py:114
-msgid "Verification test results"
+#: ui/config_action_dialogs.py:118
+msgid "Edit mappings using the list and details panel."
 msgstr ""
 
-#: ui/test_results_window.py:121
-msgid "Suite directory"
+#: ui/config_action_dialogs.py:129
+msgid "(unnamed)"
 msgstr ""
 
-#: ui/test_results_window.py:126
-msgid "All suites"
+#: ui/config_action_dialogs.py:130
+msgid "{0} ({1} key(s))"
 msgstr ""
 
-#: ui/test_results_window.py:137
-msgid "Click Run suite to start."
+#: ui/config_action_dialogs.py:139
+msgid "Action Type"
 msgstr ""
 
-#: ui/test_results_window.py:173
-msgid "Total Tests: 0"
+#: ui/config_action_dialogs.py:143
+msgid "Notes"
 msgstr ""
 
-#: ui/test_results_window.py:176
-msgid "Passed: 0"
+#: ui/config_action_dialogs.py:148
+msgid "Mappings"
 msgstr ""
 
-#: ui/test_results_window.py:180
-msgid "Failed: 0"
+#: ui/config_action_dialogs.py:155
+msgid "Add"
 msgstr ""
 
-#: ui/test_results_window.py:184
-msgid "Time: 0:00"
+#: ui/config_action_dialogs.py:161
+msgid "Draft with AI..."
 msgstr ""
 
-#: ui/test_results_window.py:193
-msgid "Run suite"
+#: ui/config_action_dialogs.py:173
+msgid "Mapping Details"
 msgstr ""
 
-#: ui/test_results_window.py:197
+#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:419
+msgid "Name"
+msgstr ""
+
+#: ui/config_action_dialogs.py:198
+msgid "Properties"
+msgstr ""
+
+#: ui/config_action_dialogs.py:205
+msgid "Add Property"
+msgstr ""
+
+#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:491
+msgid "Save Mapping"
+msgstr ""
+
+#: ui/config_action_dialogs.py:292
+msgid "Select Mapping"
+msgstr ""
+
+#: ui/config_action_dialogs.py:292
+msgid "Choose a mapping to save."
+msgstr ""
+
+#: ui/config_action_dialogs.py:300
+msgid "Invalid Mapping"
+msgstr ""
+
+#: ui/config_action_dialogs.py:370
+msgid "Validation failed: {0}"
+msgstr ""
+
+#: ui/config_action_dialogs.py:379
+msgid "Backup mappings may include backup_mappings list and options."
+msgstr ""
+
+#: ui/config_action_dialogs.py:396
+msgid "Each mapping defines function, locations, rename rules, and optional flags."
+msgstr ""
+
+#: ui/config_action_dialogs.py:424
+msgid "Function"
+msgstr ""
+
+#: ui/config_action_dialogs.py:427 ui/renamer_rule_suggester_dialog.py:75
+msgid "Options"
+msgstr ""
+
+#: ui/config_action_dialogs.py:443
+msgid "Locations (one root path per line)"
+msgstr ""
+
+#: ui/config_action_dialogs.py:450
+msgid "Rename Rules"
+msgstr ""
+
+#: ui/config_action_dialogs.py:457
+msgid "Add / Update Rule"
+msgstr ""
+
+#: ui/config_action_dialogs.py:460
+msgid "Remove Rule"
+msgstr ""
+
+#: ui/config_action_dialogs.py:463
+msgid "New Rule Draft"
+msgstr ""
+
+#: ui/config_action_dialogs.py:466
+msgid "Suggest Rules..."
+msgstr ""
+
+#: ui/config_action_dialogs.py:473
+msgid "pattern or comma-separated patterns"
+msgstr ""
+
+#: ui/config_action_dialogs.py:476
+msgid "optional; one glob per line"
+msgstr ""
+
+#: ui/config_action_dialogs.py:679
+msgid "Invalid Rule"
+msgstr ""
+
+#: ui/config_action_dialogs.py:745
+msgid "Duplicate remover mappings usually contain source dirs and exclusion settings."
+msgstr ""
+
+#: ui/config_action_dialogs.py:761
+msgid "Directory observer mappings usually contain sortable/extra/parent dirs and file_types."
+msgstr ""
+
+#: ui/config_action_dialogs.py:776
+msgid "Directory flattener mappings usually include location and search_patterns."
+msgstr ""
+
+#: ui/config_action_dialogs.py:790
+msgid "Image categorizer mappings include source_dir, categories, and filters."
+msgstr ""
+
+#: ui/config_action_dialogs.py:808
+msgid ""
+"Collects files from nested folders whose basename is in subdir_names into root/<name>/. For subdir_names use comma-"
+"separated folder names in this dialog (recommended). root: directory tree to scan. clear_sources: remove emptied "
+"nested dirs after moves. subdir_depth (default 1): only root/<top-level-child>/<label>/; larger values allow more "
+"intermediate folders; -1 means any depth."
+msgstr ""
+
+#: ui/config_action_dialogs.py:864
+msgid ""
+"Extracts ZIP archives matching pattern under search_dir into target_dir. target_dir is created if missing and always "
+"skipped while searching, so extracted files are never re-ingested; it cannot be search_dir or a parent of it. "
+"preserve_structure: keep each archive's folders under target_dir/<archive stem>/ (default off writes everything flat,"
+" tagging a collision with the archive's name). delete_sources: trash an archive once all of its members extracted."
+msgstr ""
+
+#: ui/config_editor_window.py:61
+msgid "New Config"
+msgstr ""
+
+#: ui/config_editor_window.py:65
+msgid "Open Selected"
+msgstr ""
+
+#: ui/config_editor_window.py:69
+msgid "Reload List"
+msgstr ""
+
+#: ui/config_editor_window.py:79
+msgid "Config Files"
+msgstr ""
+
+#: ui/config_editor_window.py:87
+msgid "Config Content"
+msgstr ""
+
+#: ui/config_editor_window.py:93
+msgid "Path"
+msgstr ""
+
+#: ui/config_editor_window.py:95
+msgid "Will run"
+msgstr ""
+
+#: ui/config_editor_window.py:97
+msgid "Status"
+msgstr ""
+
+#: ui/config_editor_window.py:100
+msgid "Actions"
+msgstr ""
+
+#: ui/config_editor_window.py:107
+msgid "Add Action"
+msgstr ""
+
+#: ui/config_editor_window.py:111
+msgid "Edit Action"
+msgstr ""
+
+#: ui/config_editor_window.py:115
+msgid "Remove Action"
+msgstr ""
+
+#: ui/config_editor_window.py:119
+msgid "Move Up"
+msgstr ""
+
+#: ui/config_editor_window.py:123
+msgid "Move Down"
+msgstr ""
+
+#: ui/config_editor_window.py:129
+msgid "Global YAML Blocks"
+msgstr ""
+
+#: ui/config_editor_window.py:143
+msgid "Save"
+msgstr ""
+
+#: ui/config_editor_window.py:146
+msgid "Save As"
+msgstr ""
+
+#: ui/config_editor_window.py:149
+msgid "Cancel"
+msgstr ""
+
+#: ui/config_editor_window.py:230
+msgid "Select Config"
+msgstr ""
+
+#: ui/config_editor_window.py:230
+msgid "Choose a config from the list first."
+msgstr ""
+
+#: ui/config_editor_window.py:237
+msgid "Missing File"
+msgstr ""
+
+#: ui/config_editor_window.py:237
+msgid ""
+"Config not found:\n"
+"{0}"
+msgstr ""
+
+#: ui/config_editor_window.py:249
+msgid "Load Error"
+msgstr ""
+
+#: ui/config_editor_window.py:281
+msgid "{0}. {1} ({2} mapping(s))"
+msgstr ""
+
+#: ui/config_editor_window.py:306 ui/config_editor_window.py:328
+msgid "Select Action"
+msgstr ""
+
+#: ui/config_editor_window.py:306
+msgid "Choose an action to edit."
+msgstr ""
+
+#: ui/config_editor_window.py:314
+msgid "Invalid Action"
+msgstr ""
+
+#: ui/config_editor_window.py:314
+msgid "Unsupported action type: {0}"
+msgstr ""
+
+#: ui/config_editor_window.py:328
+msgid "Choose an action to remove."
+msgstr ""
+
+#: ui/config_editor_window.py:375
+msgid "Save Error"
+msgstr ""
+
+#: ui/config_editor_window.py:381
+msgid "Validation Error"
+msgstr ""
+
+#: ui/config_editor_window.py:387
+msgid "Save Config As"
+msgstr ""
+
+#: ui/config_editor_window.py:389
+msgid "YAML Files (*.yaml)"
+msgstr ""
+
+#: ui/config_editor_window.py:403
+msgid "Save As Error"
+msgstr ""
+
+#: ui/config_editor_window.py:409
+msgid "Saved"
+msgstr ""
+
+#: ui/config_editor_window.py:409
+msgid ""
+"Saved config:\n"
+"{0}"
+msgstr ""
+
+#: ui/custom_title_bar.py:99
+msgid "Minimize"
+msgstr ""
+
+#: ui/custom_title_bar.py:104 ui/custom_title_bar.py:125
+msgid "Maximize"
+msgstr ""
+
+#: ui/custom_title_bar.py:109 ui/llm_config_chat_dialog.py:154 ui/test_results_window.py:195
 msgid "Close"
 msgstr ""
 
-#: ui/test_results_window.py:201
-msgid "Save Results"
+#: ui/custom_title_bar.py:122
+msgid "Restore"
 msgstr ""
 
-#: ui/test_results_window.py:218
-msgid "Running tests..."
+#: ui/duplicate_review_dialogs.py:35
+msgid "Uncheck any files you do not want to remove."
 msgstr ""
 
-#: ui/test_results_window.py:246
-msgid "Test tree not found: {0}"
-msgstr ""
-
-#: ui/test_results_window.py:258
-msgid "Test suite directory not found: {0}"
-msgstr ""
-
-#: ui/test_results_window.py:277
-msgid "Backup test directory not found (required for fixtures): {0}"
-msgstr ""
-
-#: ui/test_results_window.py:291
-msgid "Base directory: "
-msgstr ""
-
-#: ui/test_results_window.py:293
-msgid "Pytest targets: "
-msgstr ""
-
-#: ui/test_results_window.py:297
-msgid "Backup fixtures directory: "
-msgstr ""
-
-#: ui/test_results_window.py:299
-msgid "Python path: "
-msgstr ""
-
-#: ui/test_results_window.py:304
-msgid "Test target not found: {0}"
-msgstr ""
-
-#: ui/test_results_window.py:312
-msgid "Found test target: "
-msgstr ""
-
-#: ui/test_results_window.py:316
-msgid "No test targets remain to run."
-msgstr ""
-
-#: ui/test_results_window.py:328
-msgid "Analyzing test suite..."
-msgstr ""
-
-#: ui/test_results_window.py:344
-msgid "Found {0} tests in {1}"
-msgstr ""
-
-#: ui/test_results_window.py:350
-msgid "Error collecting tests from {0}: {1}"
-msgstr ""
-
-#: ui/test_results_window.py:370
-msgid "Running tests from {0}..."
-msgstr ""
-
-#: ui/test_results_window.py:374
-msgid "Running tests from {0}:"
-msgstr ""
-
-#: ui/test_results_window.py:401
-msgid "Error in {0}:"
-msgstr ""
-
-#: ui/test_results_window.py:419
-msgid "Error running tests in {0}: {1}"
-msgstr ""
-
-#: ui/test_results_window.py:434
-msgid "Unexpected error running tests: {0}"
-msgstr ""
-
-#: ui/test_results_window.py:459
-msgid "Save Test Results"
-msgstr ""
-
-#: ui/test_results_window.py:461
-msgid "Text Files (*.txt);;All Files (*)"
-msgstr ""
-
-#: ui/test_results_window.py:491
-msgid "Copy"
-msgstr ""
-
-#: ui/test_results_window.py:494
+#: ui/duplicate_review_dialogs.py:57 ui/test_results_window.py:513
 msgid "Select All"
 msgstr ""
 
-#: ui/test_results_window.py:540
-msgid "Total Tests: {0}"
+#: ui/duplicate_review_dialogs.py:60
+msgid "Select None"
 msgstr ""
 
-#: ui/test_results_window.py:541
-msgid "Passed: {0}"
+#: ui/duplicate_review_dialogs.py:133
+msgid "Remove All ({0})"
 msgstr ""
 
-#: ui/test_results_window.py:542
-msgid "Failed: {0}"
+#: ui/duplicate_review_dialogs.py:137
+msgid "Review All ({0})"
 msgstr ""
 
-#: ui/test_results_window.py:548
-msgid "Time: {0}:{1:02d}"
+#: ui/duplicate_review_dialogs.py:142
+msgid "Review Non-Obvious ({0})"
 msgstr ""
 
-#: ui/test_results_window.py:558
-msgid "Test Run Complete - "
+#: ui/llm_config_chat_dialog.py:113
+msgid "Model"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:116
+msgid "Endpoint override"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:118
+msgid "blank = default local Ollama endpoint"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:122
+msgid "Draft"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:127
+msgid "Conversation"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:134
+msgid "Current Draft"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:141
+msgid "Preview (what this would touch)"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:149
+msgid "Apply"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:166
+msgid "Description Required"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:166
+msgid "Describe the action you want first."
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:245
+msgid "No Draft"
+msgstr ""
+
+#: ui/llm_config_chat_dialog.py:245
+msgid "Draft an action first."
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:53
+msgid "Common Patterns (no directory needed)"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:61
+msgid "Detected From Files"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:68
+msgid "Browse"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:71
+msgid "Directory"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:73
+msgid "Scan recursively"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:78
+msgid "Analyze Filenames"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:87
+msgid "Pick a suggestion to preview details."
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:103
+msgid "Select Directory"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:110
+msgid "Directory Required"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:110
+msgid "Please choose a directory first."
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:113
+msgid "Invalid Directory"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:113
+msgid ""
+"Not a valid directory:\n"
+"{0}"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:123
+msgid "No strong filename patterns detected."
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:197
+msgid "Select Suggestion"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:197
+msgid "Pick a suggestion first."
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:201
+msgid "Invalid Suggestion"
+msgstr ""
+
+#: ui/renamer_rule_suggester_dialog.py:201
+msgid "Selected suggestion has no usable pattern."
+msgstr ""
+
+#: ui/test_results_window.py:79
+msgid "Verification tests"
+msgstr ""
+
+#: ui/test_results_window.py:112
+msgid "Verification test results"
+msgstr ""
+
+#: ui/test_results_window.py:119
+msgid "Suite directory"
+msgstr ""
+
+#: ui/test_results_window.py:124
+msgid "All suites"
+msgstr ""
+
+#: ui/test_results_window.py:135
+msgid "Click Run suite to start."
+msgstr ""
+
+#: ui/test_results_window.py:171
+msgid "Total Tests: 0"
+msgstr ""
+
+#: ui/test_results_window.py:174
+msgid "Passed: 0"
+msgstr ""
+
+#: ui/test_results_window.py:178
+msgid "Failed: 0"
+msgstr ""
+
+#: ui/test_results_window.py:182
+msgid "Time: 0:00"
+msgstr ""
+
+#: ui/test_results_window.py:191
+msgid "Run suite"
+msgstr ""
+
+#: ui/test_results_window.py:199
+msgid "Save Results"
+msgstr ""
+
+#: ui/test_results_window.py:216
+msgid "Running tests..."
+msgstr ""
+
+#: ui/test_results_window.py:254
+msgid "Test tree not found: {0}"
+msgstr ""
+
+#: ui/test_results_window.py:262
+msgid ""
+"Excluding Qt UI tests (marker \"ui\") from All suites: they drive real widgets via the app's own QApplication and "
+"would hang running inside it."
+msgstr ""
+
+#: ui/test_results_window.py:274
+msgid "Test suite directory not found: {0}"
+msgstr ""
+
+#: ui/test_results_window.py:293
+msgid "Backup test directory not found (required for fixtures): {0}"
+msgstr ""
+
+#: ui/test_results_window.py:307
+msgid "Base directory: "
+msgstr ""
+
+#: ui/test_results_window.py:309
+msgid "Pytest targets: "
+msgstr ""
+
+#: ui/test_results_window.py:313
+msgid "Backup fixtures directory: "
+msgstr ""
+
+#: ui/test_results_window.py:315
+msgid "Python path: "
+msgstr ""
+
+#: ui/test_results_window.py:320
+msgid "Test target not found: {0}"
+msgstr ""
+
+#: ui/test_results_window.py:328
+msgid "Found test target: "
+msgstr ""
+
+#: ui/test_results_window.py:332
+msgid "No test targets remain to run."
+msgstr ""
+
+#: ui/test_results_window.py:344
+msgid "Analyzing test suite..."
+msgstr ""
+
+#: ui/test_results_window.py:363
+msgid "Found {0} tests in {1}"
+msgstr ""
+
+#: ui/test_results_window.py:369
+msgid "Error collecting tests from {0}: {1}"
+msgstr ""
+
+#: ui/test_results_window.py:389
+msgid "Running tests from {0}..."
+msgstr ""
+
+#: ui/test_results_window.py:393
+msgid "Running tests from {0}:"
+msgstr ""
+
+#: ui/test_results_window.py:420
+msgid "Error in {0}:"
+msgstr ""
+
+#: ui/test_results_window.py:438
+msgid "Error running tests in {0}: {1}"
+msgstr ""
+
+#: ui/test_results_window.py:453
+msgid "Unexpected error running tests: {0}"
+msgstr ""
+
+#: ui/test_results_window.py:478
+msgid "Save Test Results"
+msgstr ""
+
+#: ui/test_results_window.py:480
+msgid "Text Files (*.txt);;All Files (*)"
+msgstr ""
+
+#: ui/test_results_window.py:510
+msgid "Copy"
 msgstr ""
 
 #: ui/test_results_window.py:559
-msgid "Total Tests: "
+msgid "Total Tests: {0}"
 msgstr ""
 
 #: ui/test_results_window.py:560
-msgid "Passed: "
+msgid "Passed: {0}"
 msgstr ""
 
 #: ui/test_results_window.py:561
+msgid "Failed: {0}"
+msgstr ""
+
+#: ui/test_results_window.py:567
+msgid "Time: {0}:{1:02d}"
+msgstr ""
+
+#: ui/test_results_window.py:577
+msgid "Test Run Complete - "
+msgstr ""
+
+#: ui/test_results_window.py:578
+msgid "Total Tests: "
+msgstr ""
+
+#: ui/test_results_window.py:579
+msgid "Passed: "
+msgstr ""
+
+#: ui/test_results_window.py:580
 msgid "Failed: "
 msgstr ""
 
-#: ui/test_results_window.py:564
+#: ui/test_results_window.py:583
 msgid "All tests passed successfully!"
 msgstr ""
 
-#: ui/test_results_window.py:564
+#: ui/test_results_window.py:583
 msgid "Some tests failed - check results"
 msgstr ""
 
