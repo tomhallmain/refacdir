@@ -89,3 +89,9 @@ class I18N:
     Then for each locale once the PO files are set up as desired, run below in the deepest locale directory to produce the MO file from the PO file:
         ```python C:\Python310\Tools\i18n\msgfmt.py -o base.mo base```
     '''
+
+
+# Module-level alias for ``from refacdir.utils.translations import _``. Binding the
+# function object here stays correct across a locale switch: ``I18N._`` resolves
+# ``I18N.translate`` on every call, and ``install_locale`` rebinds that attribute.
+_ = I18N._

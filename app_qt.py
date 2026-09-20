@@ -21,7 +21,7 @@ from refacdir.lib.multi_display import SmartMainWindow
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
 from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.logger import setup_logger
-from refacdir.utils.translations import I18N
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from ui import (
     AppActions,
@@ -37,8 +37,6 @@ from ui import (
     run_duplicate_review_dialog,
 )
 from ui.inactivity_shutdown import DEFAULT_INACTIVITY_TIMEOUT_MINUTES, InactivityShutdown
-
-_ = I18N._
 
 # Set up logger for UI
 logger = setup_logger('ui')
@@ -187,7 +185,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         title_layout = QVBoxLayout(title_section)
         title_layout.setContentsMargins(0, 0, 0, 20)
         
-        title = QLabel("RefacDir")
+        title = QLabel(_("RefacDir"))
         title.setFont(QFont("Helvetica", 16, QFont.Bold))
         title_layout.addWidget(title)
         

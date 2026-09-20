@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
 )
 
 from refacdir.lib.multi_display import SmartDialog
+from refacdir.utils.translations import _
+
 from refacdir.renamer_rule_generation import common_pattern_presets, suggest_renamer_rules
 
 
@@ -48,7 +50,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
 
         layout = QVBoxLayout(self)
 
-        presets_group = QGroupBox("Common Patterns (no directory needed)")
+        presets_group = QGroupBox(_("Common Patterns (no directory needed)"))
         presets_layout = QVBoxLayout(presets_group)
         self.preset_list = QListWidget()
         self.preset_list.currentRowChanged.connect(self._on_preset_selection_changed)
@@ -56,24 +58,24 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         layout.addWidget(presets_group)
         self._populate_presets()
 
-        detected_group = QGroupBox("Detected From Files")
+        detected_group = QGroupBox(_("Detected From Files"))
         detected_layout = QVBoxLayout(detected_group)
         form = QFormLayout()
 
         dir_row = QHBoxLayout()
         self.directory_edit = QLineEdit(initial_directory)
         dir_row.addWidget(self.directory_edit, 1)
-        browse_btn = QPushButton("Browse")
+        browse_btn = QPushButton(_("Browse"))
         browse_btn.clicked.connect(self._browse_directory)
         dir_row.addWidget(browse_btn)
-        form.addRow("Directory", dir_row)
+        form.addRow(_("Directory"), dir_row)
 
-        self.recursive_check = QCheckBox("Scan recursively")
+        self.recursive_check = QCheckBox(_("Scan recursively"))
         self.recursive_check.setChecked(False)
-        form.addRow("Options", self.recursive_check)
+        form.addRow(_("Options"), self.recursive_check)
         detected_layout.addLayout(form)
 
-        analyze_btn = QPushButton("Analyze Filenames")
+        analyze_btn = QPushButton(_("Analyze Filenames"))
         analyze_btn.clicked.connect(self._analyze)
         detected_layout.addWidget(analyze_btn)
 
@@ -82,7 +84,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         detected_layout.addWidget(self.suggestion_list, 1)
         layout.addWidget(detected_group, 1)
 
-        self.details_label = QLabel("Pick a suggestion to preview details.")
+        self.details_label = QLabel(_("Pick a suggestion to preview details."))
         self.details_label.setWordWrap(True)
         layout.addWidget(self.details_label)
 
@@ -98,17 +100,17 @@ class RenamerRuleSuggesterDialog(SmartDialog):
 
     def _browse_directory(self):
         start_dir = self.directory_edit.text().strip() or os.getcwd()
-        selected = QFileDialog.getExistingDirectory(self, "Select Directory", start_dir)
+        selected = QFileDialog.getExistingDirectory(self, _("Select Directory"), start_dir)
         if selected:
             self.directory_edit.setText(selected)
 
     def _analyze(self):
         directory = self.directory_edit.text().strip()
         if not directory:
-            QMessageBox.information(self, "Directory Required", "Please choose a directory first.")
+            QMessageBox.information(self, _("Directory Required"), _("Please choose a directory first."))
             return
         if not os.path.isdir(directory):
-            QMessageBox.warning(self, "Invalid Directory", f"Not a valid directory:\n{directory}")
+            QMessageBox.warning(self, _("Invalid Directory"), _("Not a valid directory:\n{0}").format(directory))
             return
 
         self._suggestions = suggest_renamer_rules(
@@ -118,7 +120,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         )
         self.suggestion_list.clear()
         if not self._suggestions:
-            self.details_label.setText("No strong filename patterns detected.")
+            self.details_label.setText(_("No strong filename patterns detected."))
             return
 
         for idx, item in enumerate(self._suggestions):
@@ -192,11 +194,11 @@ class RenamerRuleSuggesterDialog(SmartDialog):
 
     def _accept_selected(self):
         if self._result_rule is None:
-            QMessageBox.information(self, "Select Suggestion", "Pick a suggestion first.")
+            QMessageBox.information(self, _("Select Suggestion"), _("Pick a suggestion first."))
             return
         pattern = str(self._result_rule.get("search_patterns", "")).strip()
         if not pattern:
-            QMessageBox.warning(self, "Invalid Suggestion", "Selected suggestion has no usable pattern.")
+            QMessageBox.warning(self, _("Invalid Suggestion"), _("Selected suggestion has no usable pattern."))
             return
         # Apply without closing so user can quickly pick multiple suggestions.
         payload = {k: v for k, v in self._result_rule.items() if k != "_source"}

@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from refacdir.lib.multi_display import SmartDialog
+from refacdir.utils.translations import _
 
 
 class DuplicateDetailsDialog(SmartDialog):
@@ -31,7 +32,7 @@ class DuplicateDetailsDialog(SmartDialog):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        self.info = QLabel("Uncheck any files you do not want to remove.")
+        self.info = QLabel(_("Uncheck any files you do not want to remove."))
         self.info.setWordWrap(True)
         layout.addWidget(self.info)
 
@@ -53,10 +54,10 @@ class DuplicateDetailsDialog(SmartDialog):
         layout.addWidget(self.list_widget, 1)
 
         button_row = QHBoxLayout()
-        self.select_all_btn = QPushButton("Select All")
+        self.select_all_btn = QPushButton(_("Select All"))
         self.select_all_btn.clicked.connect(lambda: self._set_all_checks(Qt.Checked))
         button_row.addWidget(self.select_all_btn)
-        self.select_none_btn = QPushButton("Select None")
+        self.select_none_btn = QPushButton(_("Select None"))
         self.select_none_btn.clicked.connect(lambda: self._set_all_checks(Qt.Unchecked))
         button_row.addWidget(self.select_none_btn)
         button_row.addStretch()
@@ -129,16 +130,16 @@ class DuplicateSummaryDialog(SmartDialog):
         layout.addWidget(label)
 
         button_row = QHBoxLayout()
-        remove_all_btn = QPushButton(f"Remove All ({total})")
+        remove_all_btn = QPushButton(_("Remove All ({0})").format(total))
         remove_all_btn.clicked.connect(self._on_remove_all)
         button_row.addWidget(remove_all_btn)
 
-        review_all_btn = QPushButton(f"Review All ({total})")
+        review_all_btn = QPushButton(_("Review All ({0})").format(total))
         review_all_btn.clicked.connect(self._on_review_all)
         button_row.addWidget(review_all_btn)
 
         if non_obvious > 0:
-            review_non_obvious_btn = QPushButton(f"Review Non-Obvious ({non_obvious})")
+            review_non_obvious_btn = QPushButton(_("Review Non-Obvious ({0})").format(non_obvious))
             review_non_obvious_btn.clicked.connect(self._on_review_non_obvious)
             button_row.addWidget(review_non_obvious_btn)
 

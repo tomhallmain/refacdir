@@ -38,6 +38,8 @@ from PySide6.QtWidgets import (
 
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
+from refacdir.utils.translations import _
+
 from refacdir.llm.config_schema import supported_action_types
 from refacdir.llm.conversation import DEFAULT_MAX_ATTEMPTS, draft_action
 from refacdir.llm.client import LLM
@@ -108,35 +110,35 @@ class LLMConfigChatDialog(SmartDialog):
         layout.addWidget(self.description_edit)
 
         model_row = QHBoxLayout()
-        model_row.addWidget(QLabel("Model"))
+        model_row.addWidget(QLabel(_("Model")))
         self.model_edit = QLineEdit(default_model)
         model_row.addWidget(self.model_edit, 1)
-        model_row.addWidget(QLabel("Endpoint override"))
+        model_row.addWidget(QLabel(_("Endpoint override")))
         self.endpoint_edit = QLineEdit()
-        self.endpoint_edit.setPlaceholderText("blank = default local Ollama endpoint")
+        self.endpoint_edit.setPlaceholderText(_("blank = default local Ollama endpoint"))
         model_row.addWidget(self.endpoint_edit, 1)
         layout.addLayout(model_row)
 
-        self.draft_btn = QPushButton("Draft")
+        self.draft_btn = QPushButton(_("Draft"))
         self.draft_btn.setEnabled(self._supported)
         self.draft_btn.clicked.connect(self._on_draft_clicked)
         layout.addWidget(self.draft_btn)
 
-        conversation_group = QGroupBox("Conversation")
+        conversation_group = QGroupBox(_("Conversation"))
         conversation_layout = QVBoxLayout(conversation_group)
         self.conversation_log = QTextEdit()
         self.conversation_log.setReadOnly(True)
         conversation_layout.addWidget(self.conversation_log)
         layout.addWidget(conversation_group, 1)
 
-        draft_group = QGroupBox("Current Draft")
+        draft_group = QGroupBox(_("Current Draft"))
         draft_layout = QVBoxLayout(draft_group)
         self.draft_view = QTextEdit()
         self.draft_view.setReadOnly(True)
         draft_layout.addWidget(self.draft_view)
         layout.addWidget(draft_group, 1)
 
-        preview_group = QGroupBox("Preview (what this would touch)")
+        preview_group = QGroupBox(_("Preview (what this would touch)"))
         preview_layout = QVBoxLayout(preview_group)
         self.preview_view = QTextEdit()
         self.preview_view.setReadOnly(True)
@@ -144,12 +146,12 @@ class LLMConfigChatDialog(SmartDialog):
         layout.addWidget(preview_group, 1)
 
         button_row = QHBoxLayout()
-        self.apply_btn = QPushButton("Apply")
+        self.apply_btn = QPushButton(_("Apply"))
         self.apply_btn.setEnabled(False)
         self.apply_btn.clicked.connect(self._on_apply_clicked)
         button_row.addWidget(self.apply_btn)
         button_row.addStretch()
-        close_btn = QPushButton("Close")
+        close_btn = QPushButton(_("Close"))
         close_btn.clicked.connect(self.close)
         button_row.addWidget(close_btn)
         layout.addLayout(button_row)
@@ -161,7 +163,7 @@ class LLMConfigChatDialog(SmartDialog):
             return
         description = self.description_edit.toPlainText().strip()
         if not description:
-            QMessageBox.information(self, "Description Required", "Describe the action you want first.")
+            QMessageBox.information(self, _("Description Required"), _("Describe the action you want first."))
             return
 
         self.draft_btn.setEnabled(False)
@@ -240,7 +242,7 @@ class LLMConfigChatDialog(SmartDialog):
 
     def _on_apply_clicked(self):
         if self._draft_result is None or not self._draft_result.success:
-            QMessageBox.information(self, "No Draft", "Draft an action first.")
+            QMessageBox.information(self, _("No Draft"), _("Draft an action first."))
             return
         # Apply without closing, matching RenamerRuleSuggesterDialog — the
         # user may want to describe and apply another action next.

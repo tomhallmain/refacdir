@@ -10,6 +10,7 @@ from typing import Iterable
 
 from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.utils import Utils
+from refacdir.utils.translations import _
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for duplicate remover
@@ -193,19 +194,19 @@ class DuplicateRemover:
                 return
 
             self.handle_duplicates(testing=True)
-            confirm = input("Confirm all duplicates removal (Y/n): ")
+            confirm = input(_("Confirm all duplicates removal (Y/n): "))
             if confirm.lower().strip() == "y":
                 logger.info("User confirmed removal of all duplicates")
                 self.handle_duplicates(testing=False)
                 return
             logger.info("No change made.")
-            confirm = input("Remove duplicates with confirmation one by one? (Y/n): ")
+            confirm = input(_("Remove duplicates with confirmation one by one? (Y/n): "))
             if confirm.lower().strip() == "y":
                 logger.info("User chose to remove duplicates with individual confirmation")
                 self.handle_duplicates(testing=False, skip_confirm=False)
                 return
             logger.info("No change made.")
-            confirm_report = input("Save duplicates report? (Y/n): ")
+            confirm_report = input(_("Save duplicates report? (Y/n): "))
             if confirm_report.lower() == "y":
                 logger.info("User chose to save duplicates report")
                 self.save_report()
@@ -348,7 +349,7 @@ class DuplicateRemover:
                 if not skip_confirm:
                     logger.info("Keeping file:               " + best_duplicate)
                     logger.info("Removing duplicate files: " + str(duplicates_to_remove))
-                    confirm = input(f"OK to remove? (Y/n): ")
+                    confirm = input(_("OK to remove? (Y/n): "))
                     if confirm.lower() != "y":
                         logger.info("User skipped removal of duplicates")
                         continue

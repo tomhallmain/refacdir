@@ -24,9 +24,7 @@ from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
 from PySide6.QtCore import Signal, QObject, Qt
 from refacdir.lib.multi_display import SmartWindow
 from refacdir.utils.logger import setup_logger
-from refacdir.utils.translations import I18N
-
-_ = I18N._
+from refacdir.utils.translations import _
 
 # Set up logger for test results
 logger = setup_logger('test_results')
@@ -475,7 +473,7 @@ class TestResultsWindow(SmartWindow):
         
     def save_results(self):
         """Save test results to a file"""
-        file_name, _ = QFileDialog.getSaveFileName(
+        file_name, _selected_filter = QFileDialog.getSaveFileName(
             self,
             _("Save Test Results"),
             "",

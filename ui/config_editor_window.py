@@ -24,6 +24,8 @@ from PySide6.QtWidgets import (
 from refacdir.batch import ActionType, BatchArgs
 from refacdir.config import Config
 from refacdir.lib.multi_display import SmartWindow
+from refacdir.utils.translations import _
+
 from refacdir.utils.logger import setup_logger
 from .config_action_dialogs import create_action_dialog
 
@@ -56,15 +58,15 @@ class ConfigEditorWindow(SmartWindow):
         layout = QVBoxLayout(self)
 
         top_buttons = QHBoxLayout()
-        self.new_btn = QPushButton("New Config")
+        self.new_btn = QPushButton(_("New Config"))
         self.new_btn.clicked.connect(self.new_config)
         top_buttons.addWidget(self.new_btn)
 
-        self.open_btn = QPushButton("Open Selected")
+        self.open_btn = QPushButton(_("Open Selected"))
         self.open_btn.clicked.connect(self.open_selected_config)
         top_buttons.addWidget(self.open_btn)
 
-        self.reload_btn = QPushButton("Reload List")
+        self.reload_btn = QPushButton(_("Reload List"))
         self.reload_btn.clicked.connect(self.reload_config_list)
         top_buttons.addWidget(self.reload_btn)
         top_buttons.addStretch()
@@ -74,7 +76,7 @@ class ConfigEditorWindow(SmartWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left side: config files
-        left_panel = QGroupBox("Config Files")
+        left_panel = QGroupBox(_("Config Files"))
         left_layout = QVBoxLayout(left_panel)
         self.config_list = QListWidget()
         self.config_list.itemDoubleClicked.connect(lambda *_: self.open_selected_config())
@@ -82,49 +84,49 @@ class ConfigEditorWindow(SmartWindow):
         splitter.addWidget(left_panel)
 
         # Right side: editor
-        right_panel = QGroupBox("Config Content")
+        right_panel = QGroupBox(_("Config Content"))
         right_layout = QVBoxLayout(right_panel)
 
         info_form = QFormLayout()
-        self.path_label = QLabel("(new config)")
+        self.path_label = QLabel(_("(new config)"))
         self.path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        info_form.addRow("Path", self.path_label)
+        info_form.addRow(_("Path"), self.path_label)
 
-        self.will_run_checkbox = QCheckBox("Will run")
+        self.will_run_checkbox = QCheckBox(_("Will run"))
         self.will_run_checkbox.setChecked(True)
-        info_form.addRow("Status", self.will_run_checkbox)
+        info_form.addRow(_("Status"), self.will_run_checkbox)
         right_layout.addLayout(info_form)
 
-        action_group = QGroupBox("Actions")
+        action_group = QGroupBox(_("Actions"))
         action_layout = QVBoxLayout(action_group)
         self.actions_list = QListWidget()
         self.actions_list.itemDoubleClicked.connect(lambda *_: self.edit_selected_action())
         action_layout.addWidget(self.actions_list)
 
         action_buttons = QGridLayout()
-        self.add_action_btn = QPushButton("Add Action")
+        self.add_action_btn = QPushButton(_("Add Action"))
         self.add_action_btn.clicked.connect(self.add_action)
         action_buttons.addWidget(self.add_action_btn, 0, 0)
 
-        self.edit_action_btn = QPushButton("Edit Action")
+        self.edit_action_btn = QPushButton(_("Edit Action"))
         self.edit_action_btn.clicked.connect(self.edit_selected_action)
         action_buttons.addWidget(self.edit_action_btn, 0, 1)
 
-        self.remove_action_btn = QPushButton("Remove Action")
+        self.remove_action_btn = QPushButton(_("Remove Action"))
         self.remove_action_btn.clicked.connect(self.remove_selected_action)
         action_buttons.addWidget(self.remove_action_btn, 1, 0)
 
-        self.move_action_up_btn = QPushButton("Move Up")
+        self.move_action_up_btn = QPushButton(_("Move Up"))
         self.move_action_up_btn.clicked.connect(lambda: self.move_selected_action(-1))
         action_buttons.addWidget(self.move_action_up_btn, 1, 1)
 
-        self.move_action_down_btn = QPushButton("Move Down")
+        self.move_action_down_btn = QPushButton(_("Move Down"))
         self.move_action_down_btn.clicked.connect(lambda: self.move_selected_action(1))
         action_buttons.addWidget(self.move_action_down_btn, 2, 1)
         action_layout.addLayout(action_buttons)
         right_layout.addWidget(action_group)
 
-        yaml_group = QGroupBox("Global YAML Blocks")
+        yaml_group = QGroupBox(_("Global YAML Blocks"))
         yaml_layout = QVBoxLayout(yaml_group)
         yaml_layout.addWidget(QLabel("filename_mapping_functions"))
         self.filename_funcs_editor = QTextEdit()
@@ -138,13 +140,13 @@ class ConfigEditorWindow(SmartWindow):
 
         save_buttons = QHBoxLayout()
         save_buttons.addStretch()
-        self.save_btn = QPushButton("Save")
+        self.save_btn = QPushButton(_("Save"))
         self.save_btn.clicked.connect(self.save_current_config)
         save_buttons.addWidget(self.save_btn)
-        self.save_as_btn = QPushButton("Save As")
+        self.save_as_btn = QPushButton(_("Save As"))
         self.save_as_btn.clicked.connect(self.save_as_config)
         save_buttons.addWidget(self.save_as_btn)
-        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn = QPushButton(_("Cancel"))
         self.cancel_btn.clicked.connect(self.close)
         save_buttons.addWidget(self.cancel_btn)
         right_layout.addLayout(save_buttons)
@@ -225,14 +227,14 @@ class ConfigEditorWindow(SmartWindow):
     def open_selected_config(self):
         item = self.config_list.currentItem()
         if item is None:
-            QMessageBox.information(self, "Select Config", "Choose a config from the list first.")
+            QMessageBox.information(self, _("Select Config"), _("Choose a config from the list first."))
             return
         self.load_config(item.text())
 
     def load_config(self, config_rel_path: str):
         abs_path = self._config_abs_path(config_rel_path)
         if not os.path.exists(abs_path):
-            QMessageBox.warning(self, "Missing File", f"Config not found:\n{abs_path}")
+            QMessageBox.warning(self, _("Missing File"), _("Config not found:\n{0}").format(abs_path))
             return
         try:
             with open(abs_path, "r", encoding="utf-8") as handle:
@@ -244,7 +246,7 @@ class ConfigEditorWindow(SmartWindow):
             self._sync_ui_from_data()
         except Exception as exc:
             logger.error(f"Failed loading config {abs_path}: {exc}")
-            QMessageBox.critical(self, "Load Error", str(exc))
+            QMessageBox.critical(self, _("Load Error"), str(exc))
 
     def new_config(self):
         self.current_config_data = self._new_config_template()
@@ -252,7 +254,7 @@ class ConfigEditorWindow(SmartWindow):
         self._sync_ui_from_data()
 
     def _sync_ui_from_data(self):
-        self.path_label.setText(self.current_config_path or "(new config)")
+        self.path_label.setText(self.current_config_path or _("(new config)"))
         self.will_run_checkbox.setChecked(bool(self.current_config_data.get("will_run", True)))
         self.filename_funcs_editor.setPlainText(
             yaml.safe_dump(
@@ -275,7 +277,9 @@ class ConfigEditorWindow(SmartWindow):
         for idx, action in enumerate(self.current_config_data.get("actions", [])):
             action_type = action.get("type", "UNKNOWN")
             mapping_count = len(action.get("mappings", []))
-            self.actions_list.addItem(f"{idx + 1}. {action_type} ({mapping_count} mapping(s))")
+            self.actions_list.addItem(
+                _("{0}. {1} ({2} mapping(s))").format(idx + 1, action_type, mapping_count)
+            )
 
     def add_action(self):
         values = [a.value for a in ActionType]
@@ -299,14 +303,16 @@ class ConfigEditorWindow(SmartWindow):
     def edit_selected_action(self):
         idx = self._selected_action_index()
         if idx is None:
-            QMessageBox.information(self, "Select Action", "Choose an action to edit.")
+            QMessageBox.information(self, _("Select Action"), _("Choose an action to edit."))
             return
         actions = self.current_config_data.setdefault("actions", [])
         action = actions[idx]
         try:
             action_type = ActionType[action["type"]]
         except Exception:
-            QMessageBox.warning(self, "Invalid Action", f"Unsupported action type: {action.get('type')}")
+            QMessageBox.warning(
+                self, _("Invalid Action"), _("Unsupported action type: {0}").format(action.get("type"))
+            )
             return
         dialog = create_action_dialog(self, action_type=action_type, action_data=copy.deepcopy(action))
         if dialog.exec():
@@ -319,7 +325,7 @@ class ConfigEditorWindow(SmartWindow):
     def remove_selected_action(self):
         idx = self._selected_action_index()
         if idx is None:
-            QMessageBox.information(self, "Select Action", "Choose an action to remove.")
+            QMessageBox.information(self, _("Select Action"), _("Choose an action to remove."))
             return
         actions = self.current_config_data.setdefault("actions", [])
         del actions[idx]
@@ -366,21 +372,21 @@ class ConfigEditorWindow(SmartWindow):
             self._after_save(self.current_config_path)
         except Exception as exc:
             logger.error(f"Failed saving config: {exc}")
-            QMessageBox.critical(self, "Save Error", str(exc))
+            QMessageBox.critical(self, _("Save Error"), str(exc))
 
     def save_as_config(self):
         try:
             self._sync_data_from_ui()
         except Exception as exc:
-            QMessageBox.critical(self, "Validation Error", str(exc))
+            QMessageBox.critical(self, _("Validation Error"), str(exc))
             return
 
         default_dir = Config.configs_dir()
-        path, _ = QFileDialog.getSaveFileName(
+        path, _selected_filter = QFileDialog.getSaveFileName(
             self,
-            "Save Config As",
+            _("Save Config As"),
             os.path.join(default_dir, "new_config.yaml"),
-            "YAML Files (*.yaml)",
+            _("YAML Files (*.yaml)"),
         )
         if not path:
             return
@@ -394,10 +400,10 @@ class ConfigEditorWindow(SmartWindow):
             self._after_save(rel_path)
         except Exception as exc:
             logger.error(f"Failed save-as config: {exc}")
-            QMessageBox.critical(self, "Save As Error", str(exc))
+            QMessageBox.critical(self, _("Save As Error"), str(exc))
 
     def _after_save(self, config_rel_path: str):
         self.path_label.setText(config_rel_path)
         self.reload_config_list()
         self.config_saved.emit(config_rel_path)
-        QMessageBox.information(self, "Saved", f"Saved config:\n{config_rel_path}")
+        QMessageBox.information(self, _("Saved"), _("Saved config:\n{0}").format(config_rel_path))

@@ -29,9 +29,7 @@ from typing import Any, Dict
 
 from refacdir.batch import ActionType
 from refacdir.llm.validation import construct_for_action_type
-from refacdir.utils.translations import I18N
-
-_ = I18N._
+from refacdir.utils.translations import _
 
 
 @dataclass
@@ -54,7 +52,9 @@ def _preview_batch_renamer(action_type: ActionType, renamer) -> PreviewResult:
             rules.append({"rename_tag": renamer.mappings.get(pattern, ""), "matched_files": files})
             total += len(files)
         details[str(location)] = rules
-    summary = f"{total} file(s) matched across {len(scanned_by_location)} location(s)."
+    summary = _("{0} file(s) matched across {1} location(s).").format(
+        total, len(scanned_by_location)
+    )
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=details)
 
 
@@ -70,10 +70,10 @@ def _preview_backup(action_type: ActionType, backup_manager) -> PreviewResult:
         details[mapping.name] = changes
         total_add_or_update += len(changes["to_add_or_update"])
         total_remove_stale += len(changes["to_remove_stale"])
-    summary = (
-        f"{total_add_or_update} file(s) would be added/updated, "
-        f"{total_remove_stale} stale file(s)/dir(s) would be removed (mirror-mode mappings only)."
-    )
+    summary = _(
+        "{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
+        "removed (mirror-mode mappings only)."
+    ).format(total_add_or_update, total_remove_stale)
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=details)
 
 
@@ -81,24 +81,27 @@ def _preview_duplicate_remover(action_type: ActionType, duplicate_remover) -> Pr
     duplicate_remover.find_duplicates()
     payload = duplicate_remover.build_review_payload()
     total = payload["total_duplicate_files"]
-    summary = f"{total} duplicate file(s) would be removed across {len(payload['groups'])} group(s)."
+    summary = _("{0} duplicate file(s) would be removed across {1} group(s).").format(
+        total, len(payload["groups"])
+    )
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=payload)
 
 
 def _preview_directory_observer(action_type: ActionType, observer) -> PreviewResult:
     observer.observe()
     details = {directory: dict(dir_data.dict) for directory, dir_data in observer.dir_data.items()}
-    summary = (
-        f"{observer.total_file_count_types} of {observer.total_file_count} total file(s) "
-        f"matched tracked types across {len(details)} directory/directories."
-    )
+    summary = _(
+        "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
+    ).format(observer.total_file_count_types, observer.total_file_count, len(details))
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=details)
 
 
 def _preview_named_subdir_collector(action_type: ActionType, collector) -> PreviewResult:
     work = collector.preview()
     total = len(work["work_items"])
-    summary = f"{total} file(s) would be collected into {len(collector.subdir_names)} named subdirector(y/ies)."
+    summary = _("{0} file(s) would be collected into {1} named subdir(s).").format(
+        total, len(collector.subdir_names)
+    )
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=work)
 
 

@@ -25,12 +25,10 @@ from PySide6.QtWidgets import (
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
 from refacdir.llm.config_schema import supported_action_types
-from refacdir.utils.translations import I18N
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from .llm_config_chat_dialog import LLMConfigChatDialog
 from .renamer_rule_suggester_dialog import RenamerRuleSuggesterDialog
-
-_ = I18N._
 
 
 def _default_action_dict(action_type: ActionType) -> dict:
@@ -73,7 +71,7 @@ class MappingPropertyRow(QWidget):
                 self.value_edit.setText(dumped)
         layout.addWidget(self.value_edit, 5)
 
-        self.remove_btn = QPushButton("Remove")
+        self.remove_btn = QPushButton(_("Remove"))
         layout.addWidget(self.remove_btn)
 
     def key(self) -> str:
@@ -117,7 +115,7 @@ class BaseActionDialog(SmartDialog):
         self._refresh_mapping_list()
 
     def hint_text(self) -> str:
-        return "Edit mappings using the list and details panel."
+        return _("Edit mappings using the list and details panel.")
 
     def property_key_options(self) -> list[str]:
         # TODO: Derive these options from centralized schemas tied to BatchJob
@@ -128,8 +126,8 @@ class BaseActionDialog(SmartDialog):
         return {"name": f"{self._action_type.value.lower()} mapping"}
 
     def mapping_summary(self, mapping: dict) -> str:
-        name = mapping.get("name", "(unnamed)")
-        return f"{name} ({len(mapping.keys())} key(s))"
+        name = mapping.get("name", _("(unnamed)"))
+        return _("{0} ({1} key(s))").format(name, len(mapping.keys()))
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
@@ -138,29 +136,29 @@ class BaseActionDialog(SmartDialog):
         self.type_combo = QComboBox()
         self.type_combo.addItem(self._action_type.value)
         self.type_combo.setEnabled(False)
-        form.addRow("Action Type", self.type_combo)
+        form.addRow(_("Action Type"), self.type_combo)
 
         self.hint_label = QLabel(self.hint_text())
         self.hint_label.setWordWrap(True)
-        form.addRow("Notes", self.hint_label)
+        form.addRow(_("Notes"), self.hint_label)
         layout.addLayout(form)
 
         body_layout = QHBoxLayout()
 
-        left_group = QGroupBox("Mappings")
+        left_group = QGroupBox(_("Mappings"))
         left_layout = QVBoxLayout(left_group)
         self.mapping_list = QListWidget()
         self.mapping_list.currentRowChanged.connect(self._on_mapping_selected)
         left_layout.addWidget(self.mapping_list)
 
         map_btns = QHBoxLayout()
-        self.add_mapping_btn = QPushButton("Add")
+        self.add_mapping_btn = QPushButton(_("Add"))
         self.add_mapping_btn.clicked.connect(self._on_add_mapping)
         map_btns.addWidget(self.add_mapping_btn)
-        self.remove_mapping_btn = QPushButton("Remove")
+        self.remove_mapping_btn = QPushButton(_("Remove"))
         self.remove_mapping_btn.clicked.connect(self._on_remove_mapping)
         map_btns.addWidget(self.remove_mapping_btn)
-        self.ai_draft_btn = QPushButton("Draft with AI...")
+        self.ai_draft_btn = QPushButton(_("Draft with AI..."))
         self.ai_draft_btn.clicked.connect(self._open_ai_draft_dialog)
         if self._action_type not in supported_action_types():
             self.ai_draft_btn.setEnabled(False)
@@ -172,7 +170,7 @@ class BaseActionDialog(SmartDialog):
         left_layout.addLayout(map_btns)
         body_layout.addWidget(left_group, 2)
 
-        right_group = QGroupBox("Mapping Details")
+        right_group = QGroupBox(_("Mapping Details"))
         right_layout = QVBoxLayout(right_group)
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
@@ -194,23 +192,23 @@ class BaseActionDialog(SmartDialog):
     def _build_mapping_detail_widgets(self):
         self.detail_form = QFormLayout()
         self.name_edit = QLineEdit()
-        self.detail_form.addRow("Name", self.name_edit)
+        self.detail_form.addRow(_("Name"), self.name_edit)
         self.detail_layout.addLayout(self.detail_form)
 
-        props_group = QGroupBox("Properties")
+        props_group = QGroupBox(_("Properties"))
         props_layout = QVBoxLayout(props_group)
         self.props_container = QWidget()
         self.props_container_layout = QVBoxLayout(self.props_container)
         self.props_container_layout.setContentsMargins(0, 0, 0, 0)
         props_layout.addWidget(self.props_container)
 
-        add_prop_btn = QPushButton("Add Property")
+        add_prop_btn = QPushButton(_("Add Property"))
         add_prop_btn.clicked.connect(self._on_add_property_row)
         props_layout.addWidget(add_prop_btn)
         self.detail_layout.addWidget(props_group)
 
         detail_buttons = QHBoxLayout()
-        self.save_mapping_btn = QPushButton("Save Mapping")
+        self.save_mapping_btn = QPushButton(_("Save Mapping"))
         self.save_mapping_btn.clicked.connect(self._on_save_mapping)
         detail_buttons.addWidget(self.save_mapping_btn)
         detail_buttons.addStretch()
@@ -291,7 +289,7 @@ class BaseActionDialog(SmartDialog):
 
     def _on_save_mapping(self):
         if self._selected_mapping_index is None:
-            QMessageBox.information(self, "Select Mapping", "Choose a mapping to save.")
+            QMessageBox.information(self, _("Select Mapping"), _("Choose a mapping to save."))
             return
         try:
             updated = self._build_mapping_from_editor()
@@ -299,7 +297,7 @@ class BaseActionDialog(SmartDialog):
             self._refresh_mapping_list()
             self.mapping_list.setCurrentRow(self._selected_mapping_index)
         except Exception as exc:
-            QMessageBox.warning(self, "Invalid Mapping", str(exc))
+            QMessageBox.warning(self, _("Invalid Mapping"), str(exc))
 
     def _on_add_mapping(self):
         self._mappings.append(self.default_mapping())
@@ -369,7 +367,7 @@ class BaseActionDialog(SmartDialog):
             }
             self.accept()
         except Exception as exc:
-            self.hint_label.setText(f"Validation failed: {exc}")
+            self.hint_label.setText(_("Validation failed: {0}").format(exc))
             self.hint_label.setStyleSheet("color: #f44336;")
 
     def result_action(self) -> dict | None:
@@ -378,7 +376,7 @@ class BaseActionDialog(SmartDialog):
 
 class BackupActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
-        return "Backup mappings may include backup_mappings list and options."
+        return _("Backup mappings may include backup_mappings list and options.")
 
     def property_key_options(self) -> list[str]:
         # TODO: Sync this list with BatchJob.construct_backup schema metadata.
@@ -395,7 +393,7 @@ class RenamerActionDialog(BaseActionDialog):
     """Structured renamer mapping editor with nested rename rules."""
 
     def hint_text(self) -> str:
-        return "Each mapping defines function, locations, rename rules, and optional flags."
+        return _("Each mapping defines function, locations, rename rules, and optional flags.")
 
     def default_mapping(self) -> dict:
         return {
@@ -418,15 +416,15 @@ class RenamerActionDialog(BaseActionDialog):
     def _build_mapping_detail_widgets(self):
         self.detail_form = QFormLayout()
         self.name_edit = QLineEdit()
-        self.detail_form.addRow("Name", self.name_edit)
+        self.detail_form.addRow(_("Name"), self.name_edit)
 
         self.function_combo = QComboBox()
         self.function_combo.setEditable(True)
         self.function_combo.addItems(["rename_by_ctime", "move_files"])
-        self.detail_form.addRow("Function", self.function_combo)
+        self.detail_form.addRow(_("Function"), self.function_combo)
         self.detail_layout.addLayout(self.detail_form)
 
-        options_group = QGroupBox("Options")
+        options_group = QGroupBox(_("Options"))
         options_layout = QGridLayout(options_group)
         self.recursive_check = QCheckBox("recursive")
         self.will_run_check = QCheckBox("will_run")
@@ -442,40 +440,40 @@ class RenamerActionDialog(BaseActionDialog):
         options_layout.addWidget(self.find_unused_check, 2, 1)
         self.detail_layout.addWidget(options_group)
 
-        locations_group = QGroupBox("Locations (one root path per line)")
+        locations_group = QGroupBox(_("Locations (one root path per line)"))
         locations_layout = QVBoxLayout(locations_group)
         self.locations_editor = QTextEdit()
         self.locations_editor.setMinimumHeight(110)
         locations_layout.addWidget(self.locations_editor)
         self.detail_layout.addWidget(locations_group)
 
-        rules_group = QGroupBox("Rename Rules")
+        rules_group = QGroupBox(_("Rename Rules"))
         rules_layout = QVBoxLayout(rules_group)
         self.rules_list = QListWidget()
         self.rules_list.currentRowChanged.connect(self._on_rule_selected)
         rules_layout.addWidget(self.rules_list)
 
         rule_btn_row = QHBoxLayout()
-        self.upsert_rule_btn = QPushButton("Add / Update Rule")
+        self.upsert_rule_btn = QPushButton(_("Add / Update Rule"))
         self.upsert_rule_btn.clicked.connect(self._on_upsert_rule)
         rule_btn_row.addWidget(self.upsert_rule_btn)
-        self.remove_rule_btn = QPushButton("Remove Rule")
+        self.remove_rule_btn = QPushButton(_("Remove Rule"))
         self.remove_rule_btn.clicked.connect(self._on_remove_rule)
         rule_btn_row.addWidget(self.remove_rule_btn)
-        self.new_rule_btn = QPushButton("New Rule Draft")
+        self.new_rule_btn = QPushButton(_("New Rule Draft"))
         self.new_rule_btn.clicked.connect(self._on_new_rule_draft)
         rule_btn_row.addWidget(self.new_rule_btn)
-        self.suggest_rules_btn = QPushButton("Suggest Rules...")
+        self.suggest_rules_btn = QPushButton(_("Suggest Rules..."))
         self.suggest_rules_btn.clicked.connect(self._open_rule_suggester)
         rule_btn_row.addWidget(self.suggest_rules_btn)
         rules_layout.addLayout(rule_btn_row)
 
         rule_editor_form = QFormLayout()
         self.rule_search_edit = QLineEdit()
-        self.rule_search_edit.setPlaceholderText("pattern or comma-separated patterns")
+        self.rule_search_edit.setPlaceholderText(_("pattern or comma-separated patterns"))
         rule_editor_form.addRow("search_patterns", self.rule_search_edit)
         self.rule_exclude_edit = QTextEdit()
-        self.rule_exclude_edit.setPlaceholderText("optional; one glob per line")
+        self.rule_exclude_edit.setPlaceholderText(_("optional; one glob per line"))
         self.rule_exclude_edit.setMinimumHeight(70)
         rule_editor_form.addRow("exclude_patterns", self.rule_exclude_edit)
         self.rule_chain_check = QCheckBox(
@@ -490,7 +488,7 @@ class RenamerActionDialog(BaseActionDialog):
         self.detail_layout.addWidget(rules_group, 1)
 
         detail_buttons = QHBoxLayout()
-        self.save_mapping_btn = QPushButton("Save Mapping")
+        self.save_mapping_btn = QPushButton(_("Save Mapping"))
         self.save_mapping_btn.clicked.connect(self._on_save_mapping)
         detail_buttons.addWidget(self.save_mapping_btn)
         detail_buttons.addStretch()
@@ -678,7 +676,7 @@ class RenamerActionDialog(BaseActionDialog):
             self._refresh_rules_list()
             self.rules_list.setCurrentRow(self._selected_rule_index)
         except Exception as exc:
-            QMessageBox.warning(self, "Invalid Rule", str(exc))
+            QMessageBox.warning(self, _("Invalid Rule"), str(exc))
 
     def _on_remove_rule(self):
         row = self.rules_list.currentRow()
@@ -744,7 +742,7 @@ class RenamerActionDialog(BaseActionDialog):
 
 class DuplicateRemoverActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
-        return "Duplicate remover mappings usually contain source dirs and exclusion settings."
+        return _("Duplicate remover mappings usually contain source dirs and exclusion settings.")
 
     def property_key_options(self) -> list[str]:
         # TODO: Sync this list with BatchJob.construct_duplicate_remover metadata.
@@ -760,7 +758,7 @@ class DuplicateRemoverActionDialog(BaseActionDialog):
 
 class DirectoryObserverActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
-        return "Directory observer mappings usually contain sortable/extra/parent dirs and file_types."
+        return _("Directory observer mappings usually contain sortable/extra/parent dirs and file_types.")
 
     def property_key_options(self) -> list[str]:
         # TODO: Sync this list with BatchJob.construct_directory_observer metadata.
@@ -775,7 +773,7 @@ class DirectoryObserverActionDialog(BaseActionDialog):
 
 class DirectoryFlattenerActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
-        return "Directory flattener mappings usually include location and search_patterns."
+        return _("Directory flattener mappings usually include location and search_patterns.")
 
     def property_key_options(self) -> list[str]:
         # TODO: Sync this list with BatchJob.construct_directory_flattener metadata.
@@ -789,7 +787,7 @@ class DirectoryFlattenerActionDialog(BaseActionDialog):
 
 class ImageCategorizerActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
-        return "Image categorizer mappings include source_dir, categories, and filters."
+        return _("Image categorizer mappings include source_dir, categories, and filters.")
 
     def property_key_options(self) -> list[str]:
         # TODO: Sync this list with BatchJob.construct_image_categorizer metadata.
@@ -806,7 +804,7 @@ class ImageCategorizerActionDialog(BaseActionDialog):
 
 class NamedSubdirCollectorActionDialog(BaseActionDialog):
     def hint_text(self) -> str:
-        return (
+        return _(
             "Collects files from nested folders whose basename is in subdir_names into root/<name>/. "
             "For subdir_names use comma-separated folder names in this dialog (recommended). "
             "root: directory tree to scan. clear_sources: remove emptied nested dirs after moves. "

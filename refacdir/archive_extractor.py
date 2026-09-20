@@ -39,11 +39,10 @@ import zipfile
 
 from refacdir.backup.backup_mapping import remove_file
 from refacdir.utils.logger import setup_logger
-from refacdir.utils.translations import I18N
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 
 logger = setup_logger("archive_extractor")
-_ = I18N._
 
 _MAX_UNIQUE_ATTEMPTS = 99999
 _DRY_RUN_LOG_LIMIT = 50

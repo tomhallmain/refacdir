@@ -28,9 +28,7 @@ from refacdir.batch_job_history import (
     reverse_job,
 )
 from refacdir.lib.multi_display import SmartWindow
-from refacdir.utils.translations import I18N
-
-_ = I18N._
+from refacdir.utils.translations import _
 
 
 def _format_job_summary(job: dict) -> str:

@@ -17,6 +17,7 @@ from pathlib import Path
 
 from refacdir.file_renamer import FileRenamer
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 
 logger = setup_logger("named_subdir_collector")
@@ -223,7 +224,7 @@ class NamedSubdirCollector:
             f"{self.name}: collecting {len(work_items)} file(s) into bucket folders at {self.root}"
         )
         if not self.skip_confirm:
-            confirm = input("Confirm named subdir collection (y/n): ")
+            confirm = input(_("Confirm named subdir collection (y/n): "))
             if confirm.lower() != "y":
                 logger.info("Operation cancelled by user")
                 return

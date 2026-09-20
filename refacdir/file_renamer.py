@@ -4,6 +4,7 @@ import re
 import sys
 from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 
 # Set up logger for file renamer
@@ -380,9 +381,9 @@ def main():
         logger.info("Recursive option set")
 
     if glob_exp == "*.*":
-        confirm = input(f"Rename all files in {wd}? Confirm (y/n): ")
+        confirm = input(_("Rename all files in {0}? Confirm (y/n): ").format(wd))
     else:
-        confirm = input(f"Rename files according to glob pattern {glob_exp} in {wd}? Confirm (y/n): ")
+        confirm = input(_("Rename files according to glob pattern {0} in {1}? Confirm (y/n): ").format(glob_exp, wd))
 
     if confirm.lower() != "y":
         logger.info("No action taken.")

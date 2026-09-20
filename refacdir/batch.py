@@ -13,13 +13,12 @@ from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
 from refacdir.named_subdir_collector import NamedSubdirCollector
-from refacdir.utils.translations import I18N
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for batch operations
 logger = setup_logger('batch')
-_ = I18N._
 
 class BatchArgs:
     def __init__(self, recache_configs=False, configs=None):

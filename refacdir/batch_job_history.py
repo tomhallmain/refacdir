@@ -191,7 +191,7 @@ def _operation_matches_filter(
 
 def _legacy_renamer_roots(config: str, mapping_name: str) -> list[str]:
     """
-    Best-effort recovery of the root director(y/ies) a "renamer" mapping used,
+    Best-effort recovery of the root directories a "renamer" mapping used,
     by re-reading its config YAML — used only to resolve history entries
     recorded with a path relative to that root, from before ``rename_file``
     started recording absolute paths (see file_renamer.py). Returns an empty

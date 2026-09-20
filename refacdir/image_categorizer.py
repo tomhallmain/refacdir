@@ -2,13 +2,12 @@ import os
 import sys
 
 from refacdir.config import config
-from refacdir.utils.translations import I18N
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for image categorizer
 logger = setup_logger('image_categorizer')
-_ = I18N._
 
 weidr_imported = False
 

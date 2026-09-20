@@ -3,6 +3,7 @@ import os
 from refacdir.file_renamer import FileRenamer
 from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.utils import Utils
+from refacdir.utils.translations import _
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for batch renamer
@@ -204,7 +205,7 @@ class BatchRenamer:
 
         if not self.test:
             if not self.skip_confirm:
-                confirm = input("Confirm (y/n) ")
+                confirm = input(_("Confirm (y/n) "))
                 if confirm.lower() != "y":
                     logger.info("Operation cancelled by user")
                     return

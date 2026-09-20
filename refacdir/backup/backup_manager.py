@@ -1,9 +1,8 @@
 from refacdir.utils.logger import setup_logger
-from refacdir.utils.translations import I18N
+from refacdir.utils.translations import _
 
 # Set up logger for backup manager
 logger = setup_logger('backup_manager')
-_ = I18N._
 
 
 class BackupManager:
@@ -108,11 +107,11 @@ class BackupManager:
             mapping.report_failures()
 
     def confirm_backups(self):
-        confirm = input("\nCONFIRM BACKUP (y/n): ")
+        confirm = input(_("\nCONFIRM BACKUP (y/n): "))
         if not confirm.lower() == "y":
             logger.info("No change made.")
             exit()
-        confirm = input("\nCONFIRM BACKUP AGAIN (y/n): ")
+        confirm = input(_("\nCONFIRM BACKUP AGAIN (y/n): "))
         if not confirm.lower() == "y":
             logger.info("No change made.")
             exit()

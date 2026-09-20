@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from refacdir.batch import BatchArgs
 from refacdir.config import Config
+from refacdir.utils.translations import _
 from ui.config_editor_window import ConfigEditorWindow
 
 from test.ui.conftest import read_config_file, write_config_content, write_runnable_config
@@ -90,7 +91,7 @@ def test_load_config_missing_file_does_not_mutate_state(
     editor.load_config("configs/does_not_exist.yaml")
 
     assert editor.current_config_path is None
-    assert editor.path_label.text() == "(new config)"
+    assert editor.path_label.text() == _("(new config)")
     assert warned and "does_not_exist.yaml" in warned[0]
     assert Config.configs_dir() in warned[0]
 
