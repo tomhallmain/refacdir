@@ -5,8 +5,6 @@ Runs a candidate dict through the SAME ``BatchJob.construct_*`` method a real
 batch run would use, so validation stays correct automatically as the schema
 evolves — no separate hand-rolled schema to maintain (see
 refacdir/llm/config_schema.py's module docstring for why that matters).
-
-See docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 2.
 """
 
 from dataclasses import dataclass, field
@@ -18,9 +16,8 @@ from refacdir.llm.config_schema import SUPPORTED_ACTION_CONSTRUCTORS
 # Distinct, stable substrings from the exception messages construct_* methods
 # (via DuplicateRemover/DirectoryObserver) raise when a referenced directory
 # doesn't exist on disk. Treated as warnings, not errors: the user may be
-# describing a not-yet-existing setup, and the YAML's SHAPE is still correct —
-# see "Decide how to handle constructors that expect real paths to exist" in
-# docs/LLM_CONFIG_CHAT_SCOPE.md's Phase 2 entry. Every other action type's
+# describing a not-yet-existing setup, and the YAML's SHAPE is still correct.
+# Every other action type's
 # construct_* method has no eager path-existence check at all (FileRenamer/
 # BackupManager/NamedSubdirCollector resolve paths lazily, at execution time).
 _PATH_EXISTENCE_ERROR_MARKERS = (
@@ -90,15 +87,14 @@ def construct_for_action_type(action_type: ActionType, action_dict: dict):
 
     Low-level building block shared by ``validate_action`` (below, which
     turns a construction failure into a structured ``ValidationResult``) and
-    ``refacdir/llm/preview.py`` (Phase 4, which needs the actual constructed
+    ``refacdir/llm/preview.py`` (which needs the actual constructed
     object — not just a valid/invalid verdict — to build a match/affected-file
     preview via each action type's own read-only scan mechanism).
 
     ``action_dict`` is the shape ``construct_*`` itself expects — e.g. for
     RENAMER, ONE renamer group (name/function/mappings/locations), not the
     outer ``{"type": "RENAMER", "mappings": [...]}`` action wrapper containing
-    potentially several groups (matches this feature's v1 scope: one action
-    per conversation — see docs/LLM_CONFIG_CHAT_SCOPE.md).
+    potentially several groups (one action per conversation).
 
     Raises ``ValueError`` for action types with no constructor yet (currently
     just ``ActionType.IMAGE_CATEGORIZER``) — same boundary as
@@ -106,8 +102,8 @@ def construct_for_action_type(action_type: ActionType, action_dict: dict):
     """
     if action_type not in SUPPORTED_ACTION_CONSTRUCTORS:
         raise ValueError(
-            f"No construction support for {action_type.name} yet "
-            "(see docs/LLM_CONFIG_CHAT_SCOPE.md — not in Phase 1/2 scope)."
+            f"No construction support for {action_type.name}; it has no "
+            "entry in SUPPORTED_ACTION_CONSTRUCTORS."
         )
 
     method_name = SUPPORTED_ACTION_CONSTRUCTORS[action_type]

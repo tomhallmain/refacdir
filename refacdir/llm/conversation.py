@@ -1,17 +1,15 @@
 """
-Headless draft/validate/retry conversation loop (Phase 3,
-docs/LLM_CONFIG_CHAT_SCOPE.md).
+Headless draft/validate/retry conversation loop.
 
 Turns a plain-language action description into a validated action dict:
 ask the LLM for a single JSON object -> parse it -> dry-construct it via
-refacdir.llm.validation.validate_action (Phase 2) -> on a parse or
-validation failure, feed the problem back to the LLM and retry, capped at
-a small number of attempts.
+refacdir.llm.validation.validate_action -> on a parse or validation failure,
+feed the problem back to the LLM and retry, capped at a small number of
+attempts.
 
-Deliberately no UI yet (Phase 5) — this module's own ``__main__`` block is
-the "testable via script/CLI first" tool called for in the Phase 3 scope
-entry, for manually checking whether the retry loop actually converges
-against a real Ollama instance before any UI work begins.
+This module's own ``__main__`` block drives the loop from the CLI, for
+manually checking whether the retry loop actually converges against a real
+Ollama instance.
 
 Language: English only for now (see SUPPORTED_LANGUAGES) — the schema
 descriptions this loop embeds in its system prompt (refacdir/llm/config_schema.py)
@@ -43,7 +41,7 @@ def _validate_language(language: str) -> None:
     if language not in SUPPORTED_LANGUAGES:
         raise ValueError(
             f"Unsupported language {language!r}; only {SUPPORTED_LANGUAGES} "
-            "implemented so far (see docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 3)."
+            "implemented so far."
         )
 
 
@@ -205,7 +203,7 @@ def draft_action(
             query = _build_retry_prompt(description, attempt)
             continue
 
-        # Force the safest dry-run/confirmation field (Phase 4) before this
+        # Force the safest dry-run/confirmation field before this
         # draft is ever validated or returned — regardless of what the model
         # said (or hallucinated) for it. See refacdir/llm/safety.py.
         parsed = apply_safety_defaults(action_type, parsed)
@@ -236,8 +234,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
             "Manually exercise the draft/validate/retry loop against a real "
-            "Ollama instance — de-risking script for Phase 3, see "
-            "docs/LLM_CONFIG_CHAT_SCOPE.md. Not an automated test: "
+            "Ollama instance. Not an automated test: "
             "test/llm/test_conversation.py covers the loop mechanics with a "
             "stub LLM; this script is for checking real-model convergence."
         )
@@ -254,7 +251,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--preview",
         action="store_true",
-        help="On success, also run the Phase 4 match/affected-file preview (refacdir/llm/preview.py) and print it.",
+        help="On success, also run the match/affected-file preview (refacdir/llm/preview.py) and print it.",
     )
     args = parser.parse_args()
 

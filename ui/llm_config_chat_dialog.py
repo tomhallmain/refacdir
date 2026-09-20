@@ -1,12 +1,12 @@
 """
-"Chat with LLM to define configs" dialog (Phase 5, docs/LLM_CONFIG_CHAT_SCOPE.md).
+"Chat with LLM to define configs" dialog.
 
 Non-modal, "apply without closing" — the same pattern as
 ``RenamerRuleSuggesterDialog``: the user can draft, review, and apply more
 than one action in a single session without the dialog closing itself.
 Nothing is written to the real batch config until the user explicitly clicks
-Apply; the draft/validate/retry loop (Phase 3) already forces every
-successful draft into its safest dry-run state (Phase 4) before it ever
+Apply; the draft/validate/retry loop already forces every
+successful draft into its safest dry-run state before it ever
 reaches this dialog, and Apply only ever emits a signal — this dialog never
 touches a config file directly.
 
@@ -18,7 +18,7 @@ non-GUI thread; the connected slot below still runs on the GUI thread.
 
 Model/endpoint are plain fields on this dialog rather than a new app-wide LLM
 settings object — refacdir has no such settings object yet, and adding one is
-out of scope here (see docs/LLM_CONFIG_CHAT_SCOPE.md's Phase 5 notes).
+out of scope here.
 """
 
 import json
@@ -57,8 +57,8 @@ class _DraftWorkerSignals(QObject):
 class LLMConfigChatDialog(SmartDialog):
     """
     Draft one complete action (for a single, fixed ``action_type``) from a
-    plain-language description, via the Phase 3 draft/validate/retry loop,
-    then preview (Phase 4) what it would touch before the user applies it.
+    plain-language description, via the draft/validate/retry loop, then
+    preview what it would touch before the user applies it.
 
     Emits ``action_drafted`` with the validated action dict only when the
     user explicitly clicks Apply — never automatically. The dialog stays
@@ -88,15 +88,14 @@ class LLMConfigChatDialog(SmartDialog):
 
         layout = QVBoxLayout(self)
 
-        intro_text = (
-            f"Describe the {action_type.value} action you want in plain language. "
-            "Nothing is written to the config until you click Apply below."
-        )
+        intro_text = _(
+            "Describe the {0} action you want in plain language. Nothing is "
+            "written to the config until you click Apply below."
+        ).format(action_type.value)
         if not self._supported:
-            intro_text = (
-                f"{action_type.value} actions aren't supported by the AI drafting "
-                "feature yet (see docs/LLM_CONFIG_CHAT_SCOPE.md)."
-            )
+            intro_text = _(
+                "{0} actions aren't supported by the AI drafting feature yet."
+            ).format(action_type.value)
         intro = QLabel(intro_text)
         intro.setWordWrap(True)
         layout.addWidget(intro)

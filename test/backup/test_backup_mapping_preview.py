@@ -1,8 +1,8 @@
 """
 Tests for ``BackupMapping.preview_changes()`` — a read-only summary of what
 ``backup()`` would do, built from the hash tables ``setup()`` already
-collects. Added for the LLM config-chat feature's Phase 4 match/affected-file
-preview (docs/LLM_CONFIG_CHAT_SCOPE.md), but it's a general-purpose addition
+collects. Added for the LLM config-chat feature's match/affected-file
+preview, but it's a general-purpose addition
 to BackupMapping, not LLM-specific itself — these tests exercise it directly,
 independent of anything in refacdir/llm/.
 """

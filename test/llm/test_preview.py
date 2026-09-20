@@ -1,6 +1,6 @@
 """
-Tests for refacdir/llm/preview.py — the Phase 4 match/affected-file preview
-for a validated LLM-drafted action dict (docs/LLM_CONFIG_CHAT_SCOPE.md).
+Tests for refacdir/llm/preview.py — the match/affected-file preview
+for a validated LLM-drafted action dict.
 
 Each action type gets one real-directory case (confirming the preview
 actually reuses that action type's own scan mechanism and finds real matches)

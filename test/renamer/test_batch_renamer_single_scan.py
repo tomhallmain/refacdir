@@ -52,7 +52,7 @@ def test_real_run_analyzes_each_file_once_per_mapping(tmp_path):
 
 def test_scan_is_a_public_read_only_preview_of_execute(tmp_path):
     """``scan()`` (extracted from ``execute()``'s single-scan pass so it can be
-    called independently, e.g. by refacdir/llm/preview.py's Phase 4 preview)
+    called independently, e.g. by refacdir/llm/preview.py's preview)
     must find matches without moving/renaming anything, regardless of
     ``test``."""
     (tmp_path / "a.txt").write_text("x", encoding="utf-8")

@@ -1,13 +1,12 @@
 """
-Safety defaults for LLM-drafted action dicts (Phase 4,
-docs/LLM_CONFIG_CHAT_SCOPE.md).
+Safety defaults for LLM-drafted action dicts.
 
 Forces every LLM-drafted action into its safest, no-file-touched state before
 it is validated or ever saved into a real config as live — regardless of what
 the model's draft said (or hallucinated) for the relevant field.
 ``refacdir/llm/conversation.py``'s ``draft_action`` applies this to every
 parsed draft before validation, so nothing downstream ever sees an
-LLM-drafted action that skips confirmation or runs live. A UI (Phase 5)
+LLM-drafted action that skips confirmation or runs live. A UI
 presenting a draft for "run for real" must explicitly and separately clear
 the override; nothing in this feature does that itself.
 """
@@ -47,8 +46,8 @@ def apply_safety_defaults(action_type: ActionType, action_dict: dict) -> dict:
     """
     if action_type not in SUPPORTED_ACTION_CONSTRUCTORS:
         raise ValueError(
-            f"No safety defaults defined for {action_type.name} yet "
-            "(see docs/LLM_CONFIG_CHAT_SCOPE.md — not in Phase 1/2/4 scope)."
+            f"No safety defaults defined for {action_type.name}; it has no "
+            "entry in SUPPORTED_ACTION_CONSTRUCTORS."
         )
 
     safe_dict = dict(action_dict)

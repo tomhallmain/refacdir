@@ -171,12 +171,11 @@ class NamedSubdirCollector:
         Read-only preview of what ``run()`` would collect/move — the same
         ``_collect_work`` scan ``run()`` itself uses, without moving anything
         or clearing any source directory, regardless of ``self.test``. Used
-        by refacdir/llm/preview.py's match/affected-file preview (Phase 4,
-        docs/LLM_CONFIG_CHAT_SCOPE.md).
+        by refacdir/llm/preview.py's match/affected-file preview.
 
         Returns ``{"work_items": [(label, src_file), ...], "sources_to_clear": [...]}``.
-        A nonexistent ``root`` (a valid state for a not-yet-existing draft —
-        see docs/LLM_CONFIG_CHAT_SCOPE.md's Phase 2 entry) simply yields no
+        A nonexistent ``root`` (a valid state for a not-yet-existing draft)
+        simply yields no
         work items rather than raising, matching ``_collect_work``'s own
         os.walk-based behavior.
         """

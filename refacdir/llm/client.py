@@ -1,9 +1,8 @@
 """
 General LLM interface using Ollama.
 
-Adapted from a ported voice-assistant project (see docs/LLM_CONFIG_CHAT_SCOPE.md,
-Phase 0) for refacdir's "chat to define configs" feature. Talks to a local Ollama
-server's ``/api/generate`` endpoint; Ollama can also proxy this same endpoint to
+Adapted from a ported voice-assistant project for refacdir's "chat to define
+configs" feature. Talks to a local Ollama server's ``/api/generate`` endpoint; Ollama can also proxy this same endpoint to
 a signed-in cloud-hosted model without any client-side API key handling, so no
 separate cloud provider client is needed here.
 
@@ -161,7 +160,7 @@ class LLM:
     """Interface for interacting with the Ollama LLM API.
 
     Optional streaming and redundancy elimination — see
-    refacdir/llm/redundancy.py and docs/LLM_CONFIG_CHAT_SCOPE.md.
+    refacdir/llm/redundancy.py.
     """
     ENDPOINT = "http://localhost:11434/api/generate"
     DEFAULT_TIMEOUT = 180
@@ -257,8 +256,8 @@ class LLM:
         - ``llm_track_prompts_and_responses``
 
         ``config_obj`` is required (no default-import fallback): refacdir has
-        no dedicated LLM settings object yet (see docs/LLM_CONFIG_CHAT_SCOPE.md,
-        Phase 5), so pass whatever settings object your caller uses.
+        no dedicated LLM settings object yet, so pass whatever settings object your
+        caller uses.
         """
         raw_budget = getattr(config_obj, "llm_thinking_budget_chars", None)
         thinking_budget = int(raw_budget) if raw_budget is not None else None

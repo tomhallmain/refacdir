@@ -1,7 +1,6 @@
 """
 Tests for ``refacdir/llm/config_schema.py`` — the prompt-facing schema
-description assembled from ``BatchJob.construct_*`` docstrings (Phase 1,
-docs/LLM_CONFIG_CHAT_SCOPE.md).
+description assembled from ``BatchJob.construct_*`` docstrings.
 
 These double as a staleness tripwire: if a construct_* docstring gets gutted
 or a schema keyword renamed without updating it, the keyword-presence checks

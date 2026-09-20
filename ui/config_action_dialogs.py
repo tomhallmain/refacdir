@@ -163,8 +163,8 @@ class BaseActionDialog(SmartDialog):
         if self._action_type not in supported_action_types():
             self.ai_draft_btn.setEnabled(False)
             self.ai_draft_btn.setToolTip(
-                f"{self._action_type.value} actions aren't supported by the AI "
-                "drafting feature yet."
+                _("{0} actions aren't supported by the AI drafting feature yet.")
+                .format(self._action_type.value)
             )
         map_btns.addWidget(self.ai_draft_btn)
         left_layout.addLayout(map_btns)
@@ -316,8 +316,7 @@ class BaseActionDialog(SmartDialog):
     def _open_ai_draft_dialog(self):
         """
         Open the (non-modal, apply-without-closing) AI drafting dialog for
-        this action's type — see docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 5. Kept
-        alive as an instance attribute (same pattern as
+        this action's type. Kept alive as an instance attribute (same pattern as
         RenamerActionDialog._suggester_dialog) so a background draft can
         still find it and emit into it even if the user has moved focus
         elsewhere in this dialog.

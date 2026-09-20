@@ -1,7 +1,7 @@
 """
-Tests for the "Draft with AI..." integration added to ``BaseActionDialog``
-(Phase 5, docs/LLM_CONFIG_CHAT_SCOPE.md): opening the non-modal
-``LLMConfigChatDialog`` and applying its drafted action dict as a new mapping.
+Tests for the "Draft with AI..." integration added to ``BaseActionDialog``:
+opening the non-modal ``LLMConfigChatDialog`` and applying its drafted action
+dict as a new mapping.
 """
 
 from __future__ import annotations

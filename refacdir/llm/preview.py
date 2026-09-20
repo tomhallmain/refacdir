@@ -1,8 +1,7 @@
 """
-Match/affected-file preview for a validated LLM-drafted action dict (Phase 4,
-docs/LLM_CONFIG_CHAT_SCOPE.md).
+Match/affected-file preview for a validated LLM-drafted action dict.
 
-Builds the SAME object ``validate_action`` (Phase 2) would construct — via
+Builds the SAME object ``validate_action`` would construct — via
 the shared ``construct_for_action_type`` — then reads whatever each action
 type's own read-only scan mechanism already collects:
 
@@ -131,10 +130,9 @@ def preview_action(action_type: ActionType, action_dict: dict) -> PreviewResult:
     Raises ``ValueError`` immediately for an unsupported ``action_type`` —
     same boundary as ``validation.validate_action``. Any other failure
     (construction error, or a location pointing at a directory that doesn't
-    exist yet — a valid, allowed state for a draft, see
-    docs/LLM_CONFIG_CHAT_SCOPE.md's Phase 2 entry) is reported via
+    exist yet — a valid, allowed state for a draft) is reported via
     ``PreviewResult(available=False, reason=...)``, never raised — a caller
-    (e.g. a Phase 5 UI) can always call this on a validated draft and get
+    can always call this on a validated draft and get
     something displayable back.
     """
     try:

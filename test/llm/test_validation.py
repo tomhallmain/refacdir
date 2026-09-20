@@ -1,7 +1,7 @@
 """
 Tests for ``refacdir/llm/validation.py`` — the "dry construct" harness that
 validates an LLM-drafted action dict by running it through the real
-``BatchJob.construct_*`` method (Phase 2, docs/LLM_CONFIG_CHAT_SCOPE.md).
+``BatchJob.construct_*`` method.
 
 Covers, per supported action type: a valid draft with a NONEXISTENT path
 (confirming construction doesn't require the real world to already match —
@@ -231,7 +231,7 @@ def test_named_subdir_collector_empty_subdir_names_is_a_structural_error():
 
 # ---------------------------------------------------------------------------
 # construct_for_action_type — shared building block also used by
-# refacdir/llm/preview.py (Phase 4) to get the actual constructed object.
+# refacdir/llm/preview.py to get the actual constructed object.
 # ---------------------------------------------------------------------------
 
 def test_construct_for_action_type_returns_the_real_constructed_object():

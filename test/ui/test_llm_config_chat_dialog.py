@@ -1,5 +1,5 @@
 """
-Tests for ``LLMConfigChatDialog`` (Phase 5, docs/LLM_CONFIG_CHAT_SCOPE.md).
+Tests for ``LLMConfigChatDialog``.
 
 The draft/preview work itself (``_run_draft``) is tested directly, without any
 real threading, by monkeypatching the module-level ``draft_action``/

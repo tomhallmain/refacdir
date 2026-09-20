@@ -5,7 +5,7 @@ Used by :class:`refacdir.llm.client.LLM` to stop generation early when the model
 begins repeating itself. Adapted from a ported voice-assistant project's
 ``llm_redundancy.py`` — kept available (and off by default) since a chatty local
 model can still benefit from it, but not wired into any refacdir feature by
-default. See docs/LLM_CONFIG_CHAT_SCOPE.md.
+default.
 """
 
 from __future__ import annotations

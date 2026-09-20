@@ -126,8 +126,7 @@ class BatchRenamer:
         ``execute()``'s single-scan optimization (a real run's scan and its
         actual operation share this one pass, rather than scanning twice)
         and by ``refacdir/llm/preview.py``'s match/affected-file preview for
-        LLM-drafted RENAMER and DIRECTORY_FLATTENER actions (see
-        docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 4).
+        LLM-drafted RENAMER and DIRECTORY_FLATTENER actions.
         """
         scanned_by_location = {}
         for location in self.locations:

@@ -1,6 +1,6 @@
 """
 Tests for refacdir/llm/safety.py — forcing every LLM-drafted action into its
-safest dry-run/confirmation state (Phase 4, docs/LLM_CONFIG_CHAT_SCOPE.md).
+safest dry-run/confirmation state.
 """
 
 import pytest

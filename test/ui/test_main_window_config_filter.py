@@ -1,10 +1,9 @@
 """
 Regression tests for ``MainWindow._config_matches_filter``.
 
-Item #8 in ``docs/IMPROVEMENTS.md``: the sidebar config filter previously only
-matched at word boundaries (start of name, after a space, after an underscore),
-so typing "backup" would not match "my_backup_jobs.yaml". It should be a plain
-substring match, as users expect from a filter box.
+The sidebar config filter matches a plain substring anywhere in the name.
+A word-boundary match (start of name, after a space, after an underscore) meant
+typing "backup" did not match "my_backup_jobs.yaml".
 """
 
 from __future__ import annotations

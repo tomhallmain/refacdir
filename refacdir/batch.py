@@ -752,12 +752,14 @@ class BatchJob:
 
     def construct_image_categorizer(self, yaml_dict={}):
         """
-        NOTE: IMAGE_CATEGORIZER is not yet covered by the LLM config-chat
-        schema description (see docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 1) — it
-        has no dedicated test coverage, independent of that feature. This
-        docstring intentionally doesn't attempt a full schema description;
-        ``refacdir/llm/config_schema.py`` raises rather than returning
-        something incomplete for this action type.
+        Build an ImageCategorizer from an IMAGE_CATEGORIZER action's YAML
+        dict. Requires Weidr (``weidr_loc`` in the JSON config) for the CLIP
+        model.
+
+        This action type has no entry in
+        ``refacdir/llm/config_schema.py``'s SUPPORTED_ACTION_CONSTRUCTORS, so
+        this docstring is not consumed as an LLM-facing schema description
+        and does not attempt to be one.
         """
         name = yaml_dict["name"]
         test = Utils.get_from_dict(yaml_dict, "test", self.test)

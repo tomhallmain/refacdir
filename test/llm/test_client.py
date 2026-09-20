@@ -93,8 +93,7 @@ def test_accumulate_ollama_stream_events_skips_blank_lines():
 
 
 # ---------------------------------------------------------------------------
-# History file path resolution (see docs/LLM_CONFIG_CHAT_SCOPE.md Phase 0 —
-# must not depend on os.getcwd() at write time).
+# History file path resolution (must not depend on os.getcwd() at write time).
 # ---------------------------------------------------------------------------
 
 def test_history_file_path_respects_cache_dir_override(tmp_path, monkeypatch):

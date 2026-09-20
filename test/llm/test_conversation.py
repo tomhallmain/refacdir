@@ -1,6 +1,6 @@
 """
-Tests for refacdir/llm/conversation.py — the Phase 3 headless draft/validate/
-retry conversation loop (docs/LLM_CONFIG_CHAT_SCOPE.md).
+Tests for refacdir/llm/conversation.py — the headless draft/validate/
+retry conversation loop.
 
 Uses a FakeLLM stub (queued canned responses) rather than a real Ollama
 instance, so the retry mechanics are exercised deterministically in CI —
@@ -161,7 +161,7 @@ def test_system_prompt_mentions_language_and_schema():
 
 
 def test_draft_action_forces_safety_defaults_onto_successful_draft():
-    """Phase 4: a successful draft's action_dict must already carry the forced
+    """A successful draft's action_dict must already carry the forced
     safety field, regardless of what the model's JSON said — see
     refacdir/llm/safety.py."""
     action_dict_without_test_field = json.dumps({

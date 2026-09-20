@@ -7,12 +7,9 @@ one is far more likely to surface the other in the same review. A separate
 hand-maintained copy drifts silently, and drift here degrades LLM output
 quality rather than merely going stale.
 
-See docs/LLM_CONFIG_CHAT_SCOPE.md, Phase 1.
-
-Only covers the action types Phase 1 supports LLM-assisted generation for.
-IMAGE_CATEGORIZER is deliberately excluded — no dedicated test coverage
-exists for it, independent of this feature (see
-docs/LLM_CONFIG_CHAT_SCOPE.md's "Scope for v1").
+Covers only the action types with LLM-assisted generation support.
+IMAGE_CATEGORIZER is deliberately excluded: ``get_schema_description`` raises
+for it rather than handing the model an incomplete schema.
 """
 
 import inspect
@@ -22,7 +19,7 @@ from refacdir.batch_renamer import Location
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 
 # ActionType -> BatchJob construct_* method name. IMAGE_CATEGORIZER intentionally
-# omitted. Public (not underscore-prefixed): refacdir/llm/validation.py (Phase 2)
+# omitted. Public (not underscore-prefixed): refacdir/llm/validation.py
 # shares this registry rather than duplicating it.
 SUPPORTED_ACTION_CONSTRUCTORS = {
     ActionType.RENAMER: "construct_batch_renamer",
@@ -43,7 +40,7 @@ _SHARED_REFERENCE_SOURCES = [
 
 
 def supported_action_types() -> list:
-    """Action types Phase 1 has a schema description for (excludes IMAGE_CATEGORIZER)."""
+    """Action types with a schema description (excludes IMAGE_CATEGORIZER)."""
     return list(SUPPORTED_ACTION_CONSTRUCTORS.keys())
 
 
@@ -69,8 +66,8 @@ def get_schema_description(action_type: ActionType) -> str:
     """
     if action_type not in SUPPORTED_ACTION_CONSTRUCTORS:
         raise ValueError(
-            f"No LLM-facing schema description for {action_type.name} yet "
-            "(see docs/LLM_CONFIG_CHAT_SCOPE.md — not in Phase 1 scope)."
+            f"No LLM-facing schema description for {action_type.name}; it has "
+            "no entry in SUPPORTED_ACTION_CONSTRUCTORS."
         )
     method_name = SUPPORTED_ACTION_CONSTRUCTORS[action_type]
     method = getattr(BatchJob, method_name)

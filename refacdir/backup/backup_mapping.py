@@ -578,7 +578,7 @@ class BackupMapping:
         own beyond what ``setup()`` already performed.
 
         A best-effort approximation for preview purposes (see
-        refacdir/llm/preview.py, Phase 4 of docs/LLM_CONFIG_CHAT_SCOPE.md): unlike
+        refacdir/llm/preview.py): unlike
         the real push logic in ``_ensure_files``, this doesn't attempt the
         "reuse an existing identical file elsewhere in target" optimization —
         it may list a source file under ``to_add_or_update`` that ``backup()``
