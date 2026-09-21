@@ -13,7 +13,7 @@ import pytest
 
 from refacdir.batch import BatchArgs
 from refacdir.config import Config
-from ui.app_actions import AppActions
+from refacdir.utils.app_actions import AppActions
 
 
 @pytest.fixture

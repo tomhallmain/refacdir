@@ -65,6 +65,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     alert_signal = Signal(str, str, str)  # title, message, kind
     refresh_configs_signal = Signal()
     review_duplicates_signal = Signal(object, object)
+    mcp_call_signal = Signal(object)
     
     def __init__(self):
         # Initialize SmartMainWindow with geometry persistence using app_info_cache
@@ -86,6 +87,9 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.recurring_action_config = RecurringActionConfig()
         self._toast = ToastNotification(screen_anchor=self)
         self._config_editor_window = None
+        # Flags for runs accepted from the MCP front end, kept by run id so a
+        # queued run still carries them when the queue reaches it.
+        self._run_overrides = {}
         self._batch_history_window = None
         self.is_dark_theme = True
 
@@ -108,6 +112,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.alert_signal.connect(self._show_alert)
         self.refresh_configs_signal.connect(self._refresh_configs)
         self.review_duplicates_signal.connect(self._handle_review_duplicates_request)
+        self.mcp_call_signal.connect(self._handle_mcp_call)
         
         self.setup_ui()
         self.setup_connections()
@@ -519,24 +524,28 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
 
     def run(self):
         """Run the selected operations"""
+        run_id = JobQueue.new_run_id()
         if self.job_queue.job_running or self.progress_bar.isVisible():
             try:
-                self.job_queue.add("run")
-                logger.info("Batch run queued (already running)")
+                self.job_queue.add(run_id)
+                logger.info(f"Batch run queued (already running): {run_id}")
             except Exception as exc:
                 self.alert(_("Queue full"), str(exc), "error")
-            return
+                return run_id
+            return run_id
 
-        self._start_batch_run()
+        self._start_batch_run(run_id)
+        return run_id
 
-    def _start_batch_run(self):
+    def _start_batch_run(self, run_id: str = None):
         """Start a batch run (or continue draining the job queue)."""
-        self.job_queue.job_running = True
+        run_id = self.job_queue.begin(run_id)
+        overrides = self._run_overrides.pop(run_id, {})
 
         run_args = BatchArgs(recache_configs=False, configs=dict(self.filtered_configs))
-        run_args.test = self.test_check.isChecked()
-        run_args.skip_confirm = self.skip_confirm_check.isChecked()
-        run_args.only_observers = self.only_observers_check.isChecked()
+        run_args.test = overrides.get("test", self.test_check.isChecked())
+        run_args.skip_confirm = overrides.get("skip_confirm", self.skip_confirm_check.isChecked())
+        run_args.only_observers = overrides.get("only_observers", self.only_observers_check.isChecked())
         run_args.persist_definition_caches_across_batch_runs = (
             self.persist_definition_caches_check.isChecked()
         )
@@ -562,14 +571,86 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
 
     def _finish_batch_run(self):
         """Reset UI state after a background batch run (main thread)."""
-        self.job_queue.job_running = False
+        self.job_queue.finish()
         self.status_label.setText(_("Ready"))
         self.progress_bar.setValue(0)
         self.progress_bar.setVisible(False)
         self._inactivity_shutdown.resume()
 
-        if self.job_queue.take() is not None:
-            QTimer.singleShot(0, self._start_batch_run)
+        next_run_id = self.job_queue.take()
+        if next_run_id is not None:
+            QTimer.singleShot(0, lambda: self._start_batch_run(next_run_id))
+
+    # ------------------------------------------------------------------
+    # Entry points for the MCP front end
+    # ------------------------------------------------------------------
+    def run_on_gui_thread(self, func, timeout: float = 30.0):
+        """Run *func* on the GUI thread and return what it returned.
+
+        The MCP server answers on its own thread, and most of what a session
+        reaches here is window state. Same shape as review_duplicates: hand the
+        work over by signal and wait on an Event.
+
+        The timeout is the difference. That callback waits forever because a
+        person is expected to answer it; this one can be blocked behind a modal
+        dialog the user has open, and a client waiting on a socket deserves a
+        failure rather than a call that never returns.
+        """
+        if QThread.currentThread() is QApplication.instance().thread():
+            return func()
+
+        context = {"func": func, "event": threading.Event(), "result": None, "error": None}
+        self.mcp_call_signal.emit(context)
+        if not context["event"].wait(timeout):
+            raise TimeoutError(
+                f"the interface did not answer within {timeout:g}s; it may be "
+                "waiting on a dialog"
+            )
+        if context["error"] is not None:
+            raise context["error"]
+        return context["result"]
+
+    def _handle_mcp_call(self, context: dict):
+        """Run one marshalled call on the GUI thread."""
+        try:
+            context["result"] = context["func"]()
+        except Exception as exc:
+            context["error"] = exc
+        finally:
+            context["event"].set()
+
+    def start_mcp_run(self, test: bool, only_observers: bool) -> str:
+        """Accept a run from the MCP front end and return its id. GUI thread only.
+
+        Confirmation is forced off. An MCP-initiated run has nobody at the
+        keyboard, and the prompts the action modules would otherwise raise
+        block on stdin or on a modal dialog nobody is watching.
+        """
+        run_id = JobQueue.new_run_id()
+        self._run_overrides[run_id] = {
+            "test": bool(test),
+            "only_observers": bool(only_observers),
+            "skip_confirm": True,
+        }
+        if self.job_queue.job_running or self.progress_bar.isVisible():
+            try:
+                self.job_queue.add(run_id)
+            except Exception:
+                del self._run_overrides[run_id]
+                raise
+            logger.info(f"MCP batch run queued: {run_id}")
+            return run_id
+        self._start_batch_run(run_id)
+        return run_id
+
+    def cancel_queued_runs(self) -> dict:
+        """Drop every queued run. One already in flight finishes on its own."""
+        queued = self.job_queue.status()["queued"]
+        self.job_queue.cancel()
+        # Every remaining entry belongs to a queued run; a started one had its
+        # flags popped when it began.
+        self._run_overrides.clear()
+        return {"cancelled_queued": queued}
         
     def _on_inactivity_timeout_changed(self, minutes: int):
         """Apply idle shutdown timeout from the operation settings control."""
@@ -886,6 +967,25 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.status_label.setText(_("Ready"))
 
 
+def _start_mcp_server(window):
+    """Start the MCP server on a daemon thread, if configured.
+
+    The session is resolved fresh on every tool call rather than captured here:
+    the window can be closed while this thread is still alive, and a captured
+    reference would go on answering for something that no longer exists.
+    """
+    from extensions.mcp_server import MCPServerExtension
+    from ui.mcp_session_qt import QtMainWindowMCPSession
+
+    def resolve_session():
+        return QtMainWindowMCPSession(window) if window is not None else None
+
+    threading.Thread(
+        target=MCPServerExtension(session_resolver=resolve_session).start,
+        daemon=True, name="mcp-server",
+    ).start()
+
+
 if __name__ == "__main__":
     try:
         # Set up signal handlers for graceful shutdown
@@ -904,6 +1004,7 @@ if __name__ == "__main__":
             app.setWindowIcon(QIcon(_icon_path))
         window = MainWindow()
         window.show()
+        _start_mcp_server(window)
         exit(app.exec())
     except KeyboardInterrupt:
         pass

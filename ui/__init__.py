@@ -2,7 +2,7 @@
 UI components and styling for the RefacDir application.
 """
 
-from .app_actions import AppActions
+from refacdir.utils.app_actions import AppActions
 from .app_style import ThemeManager, ThemeColors
 from .toast_notification import ToastNotification
 from .test_results_window import TestResultsWindow

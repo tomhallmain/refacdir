@@ -1,2 +1,6 @@
 # Quantum-safe cryptography (not available on PyPI)
 git+https://github.com/open-quantum-safe/liboqs-python.git
+
+# Model Context Protocol server, for extensions/mcp_server.py (agent-driven
+# control of a running app, via app_qt.py or the headless entry point).
+mcp

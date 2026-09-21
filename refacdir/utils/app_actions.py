@@ -1,3 +1,10 @@
+"""The callback facade the Qt-free packages call back into a front end through.
+
+Lives here rather than under ``ui/`` so a caller with no display can import it:
+``ui/__init__.py`` pulls in PySide6, so any import of a module inside that
+package drags Qt in with it. ``refacdir/utils/headless_app_actions.py`` builds
+one of these with no GUI behind it.
+"""
 from typing import Callable, Dict, Any
 
 class AppActions:

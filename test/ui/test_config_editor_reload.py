@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from refacdir.batch import BatchArgs
-from ui.app_actions import AppActions
+from refacdir.utils.app_actions import AppActions
 from ui.config_editor_window import ConfigEditorWindow
 
 from test.ui.conftest import merge_preserving_refresh_configs, write_runnable_config

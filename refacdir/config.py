@@ -46,6 +46,11 @@ class Config:
         self.debug = False
         self.server_port = 6001
         self.server_password = "<PASSWORD>"
+        self.mcp_server_host = "localhost"
+        # Falsy = disabled. Loopback-only until token auth is implemented --
+        # see MCPServerExtension.refuses_to_start().
+        self.mcp_server_port = 0
+        self.mcp_server_token = ""
 
         self.config_path = config_path if config_path is not None else Config.resolve_config_path()
 
@@ -64,6 +69,12 @@ class Config:
                         "server_password")
         self.set_values(int, "server_port")
         self.set_values(bool, "debug")
+
+        # Optional, and absent from any config written before MCP support: only
+        # applied when present, so an older config.json does not log a failure
+        # for each one on every startup.
+        self.set_present_values(str, "mcp_server_host", "mcp_server_token")
+        self.set_present_values(int, "mcp_server_port")
 
         if dict_set and "weidr_loc" in self.dict:
             try:
@@ -100,6 +111,18 @@ class Config:
                 except Exception as e:
                     logger.error(str(e))
                     logger.error(f"Failed to set {name} from config.json file. Ensure the key is set.")
+
+    def set_present_values(self, type, *names):
+        """Apply only the keys the config actually defines, leaving the rest at
+        their constructor defaults without reporting a failure."""
+        for name in names:
+            if name not in self.dict:
+                continue
+            try:
+                setattr(self, name, type(self.dict[name]))
+            except Exception as e:
+                logger.error(str(e))
+                logger.error(f"Failed to set {name} from config.json file. Ensure the value is of the correct type.")
 
     def print_config_settings(self):
         logger.info("Settings active:")

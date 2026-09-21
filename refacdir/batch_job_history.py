@@ -173,6 +173,53 @@ def job_mapping_groups(job: dict[str, Any]) -> list[dict[str, Any]]:
     return sorted(groups.values(), key=lambda g: (g["config"], g["mapping_name"]))
 
 
+#: How many recorded operations ``job_detail`` returns in full. One renamer run
+#: can record thousands; the mapping-group summary carries the shape of a job,
+#: and this is a sample rather than the record.
+JOB_OPERATION_SAMPLE = 25
+
+
+def history_summaries(limit: int) -> list[dict[str, Any]]:
+    """Recorded jobs, newest first, without their operation lists.
+
+    Stored newest-first already, since records are prepended. Shared by every
+    front end that reports history, so they cannot describe a job differently.
+    """
+    return [
+        {
+            "job_id": job.get("job_id"),
+            "started_at": job.get("started_at"),
+            "finished_at": job.get("finished_at"),
+            "configs": job.get("configs") or [],
+            "cancelled": bool(job.get("cancelled")),
+            "operation_count": len(job.get("operations") or []),
+            "reversible_operation_count": job.get("reversible_operation_count", 0),
+        }
+        for job in get_batch_job_history()[:limit]
+    ]
+
+
+def job_detail(job_id: str, operation_sample: int = JOB_OPERATION_SAMPLE) -> Optional[dict[str, Any]]:
+    """One job with its mapping groups and a sample of its operations."""
+    job = find_batch_job(job_id)
+    if job is None:
+        return None
+    operations = job.get("operations") or []
+    return {
+        "job_id": job.get("job_id"),
+        "started_at": job.get("started_at"),
+        "finished_at": job.get("finished_at"),
+        "configs": job.get("configs") or [],
+        "cancelled": bool(job.get("cancelled")),
+        "action_counts": job.get("action_counts") or {},
+        "failures": job.get("failures") or [],
+        "mapping_groups": job_mapping_groups(job),
+        "operation_count": len(operations),
+        "reversible_operation_count": job.get("reversible_operation_count", 0),
+        "operation_sample": operations[:operation_sample],
+    }
+
+
 def _operation_matches_filter(
     op: dict[str, Any],
     *,
