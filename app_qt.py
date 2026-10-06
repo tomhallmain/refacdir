@@ -1,6 +1,7 @@
 from copy import deepcopy
 import os
 import signal
+import sys
 import threading
 import traceback
 
@@ -20,6 +21,7 @@ from refacdir.job_queue import JobQueue
 from refacdir.lib.multi_display import SmartMainWindow
 from refacdir.running_tasks_registry import start_thread, periodic, RecurringActionConfig
 from refacdir.utils.app_info_cache import app_info_cache
+from refacdir.utils.app_paths import resource_path
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
@@ -1015,7 +1017,69 @@ def _start_mcp_server(window):
     ).start()
 
 
+def _smoke_test() -> int:
+    """Check that a build can start, without opening a window. Returns an exit code.
+
+    Run by build_exe.py against the built executable, with
+    ``QT_QPA_PLATFORM=offscreen`` and ``REFACDIR_APP_DATA_DIR`` pointing at a
+    scratch directory. Getting here already proves the app's imports resolved.
+    """
+    import keyring
+    import keyring.backends.fail
+    from refacdir.utils.translations import I18N
+
+    failures = []
+
+    def check(name, ok, detail=""):
+        logger.info(f"smoke test: {name}: {'ok' if ok else 'FAILED'} {detail}".rstrip())
+        if not ok:
+            failures.append(name)
+
+    check("config", os.path.isfile(_config.config_path), _config.config_path)
+    check("locale", os.path.isdir(I18N.localedir), I18N.localedir)
+    check("example configs", os.path.isfile(resource_path("examples", "config_example.yaml")))
+    try:
+        BatchArgs.discover_configs_from_disk()
+        check("config discovery", True)
+    except Exception as e:
+        check("config discovery", False, str(e))
+
+    backend = keyring.get_keyring()
+    check(
+        "keyring backend",
+        not isinstance(backend, keyring.backends.fail.Keyring),
+        type(backend).__module__ + "." + type(backend).__name__,
+    )
+
+    # The in-app test runner needs pytest, pytest-qt and the test tree.
+    try:
+        import pytest  # noqa: F401
+        import pytestqt  # noqa: F401
+        check("pytest", True)
+    except ImportError as e:
+        check("pytest", False, str(e))
+    check("test tree", os.path.isfile(resource_path("test", "conftest.py")))
+    check("pytest.ini", os.path.isfile(resource_path("pytest.ini")))
+
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtGui import QImageReader
+
+    qt_app = QApplication([])
+    reader = QImageReader(resource_path("ui", "assets", "refacdir_icon.svg"))
+    can_read = reader.canRead()
+    check("window icon (SVG image plugin)", can_read, "" if can_read else reader.errorString())
+    qt_app.quit()
+
+    if failures:
+        logger.error(f"smoke test failed: {', '.join(failures)}")
+        return 1
+    logger.info("smoke test passed")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--smoke-test" in sys.argv[1:]:
+        sys.exit(_smoke_test())
     try:
         # Set up signal handlers for graceful shutdown
         def graceful_shutdown(signum, frame):
@@ -1028,7 +1092,7 @@ if __name__ == "__main__":
         
         # Create and run application
         app = QApplication([])
-        _icon_path = os.path.join(os.path.dirname(__file__), "ui", "assets", "refacdir_icon.svg")
+        _icon_path = resource_path("ui", "assets", "refacdir_icon.svg")
         if os.path.exists(_icon_path):
             app.setWindowIcon(QIcon(_icon_path))
         window = MainWindow()

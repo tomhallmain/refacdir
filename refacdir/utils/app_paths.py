@@ -1,10 +1,13 @@
-"""Per-user data locations under one app data dir, outside the source tree.
+"""Where the app's files live: per-user data outside the source tree, and the
+read-only files it ships with.
 
 ``%LOCALAPPDATA%\\refacdir`` on Windows, ``~/.local/share/refacdir`` elsewhere,
-holding ``configs/`` (user YAML configs, config.json, master_config.yaml),
-``cache/`` and ``logs/``. ``configs/`` sits directly under it so the
+holds ``configs/`` (user YAML configs, config.json, master_config.yaml),
+``cache/`` (app info cache, filename pattern cache, LLM history, backup failure
+log) and ``logs/``. ``configs/`` sits directly under it so the
 ``configs/<name>.yaml`` keys ``BatchJob`` joins onto ``BASE_DIR`` reach the same
-files ``Config.configs_dir()`` lists.
+files ``Config.configs_dir()`` lists. Bundled files (locale, icons, examples,
+tests) resolve through ``resource_path``.
 
 User files that earlier versions wrote inside the repo are moved here the first
 time each directory is resolved; an existing file here is never overwritten.
@@ -19,19 +22,32 @@ import shutil
 
 APP_DIR_NAME = "refacdir"
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# The repo checkout, or the folder a compiled build runs from; the build
+# places bundled files at the same relative paths.
+RESOURCE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Where earlier versions wrote user files. Nothing is found there in a build.
+REPO_ROOT = RESOURCE_ROOT
 # Tracked templates for config.json and the YAML action configs.
-EXAMPLES_DIR = os.path.join(REPO_ROOT, "examples")
+EXAMPLES_DIR = os.path.join(RESOURCE_ROOT, "examples")
 # Where earlier versions kept user configs.
 LEGACY_REPO_CONFIGS_DIR = os.path.join(REPO_ROOT, "configs")
 
 # Locations earlier versions wrote cache files to, relative to REPO_ROOT.
 _LEGACY_CACHE_PATTERNS = (
+    os.path.join("refacdir", "app_info_cache.enc"),
+    os.path.join("refacdir", "app_info_cache.enc.bak*"),
+    os.path.join("refacdir", "app_info_cache.json"),
     os.path.join("refacdir", "filename_pattern_cache.enc"),
     os.path.join("refacdir", "llm_prompt_response_history_*.json"),
+    os.path.join("refacdir", "backup", "backup_failures.json"),
 )
 
 _migrated = set()
+
+
+def resource_path(*parts: str) -> str:
+    """Absolute path of a bundled, read-only file: locale, icons, examples, tests."""
+    return os.path.join(RESOURCE_ROOT, *parts)
 
 
 def app_data_dir() -> str:

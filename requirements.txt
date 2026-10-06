@@ -1,5 +1,5 @@
 PySide6
-pywin32
+pywin32; sys_platform == "win32"
 pytest>=7.0.0
 pytest-qt>=4.4.0
 send2trash>=1.8.0 

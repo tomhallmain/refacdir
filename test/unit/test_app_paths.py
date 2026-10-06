@@ -39,8 +39,10 @@ def test_configs_move_and_empty_legacy_dir_is_removed(fake_layout):
 def test_cache_files_move_from_package_dir(fake_layout):
     repo, data = fake_layout
     for rel in ("refacdir/app_info_cache.enc", "refacdir/app_info_cache.enc.bak2",
+                "refacdir/app_info_cache.json",
                 "refacdir/filename_pattern_cache.enc",
                 "refacdir/llm_prompt_response_history_x.json",
+                "refacdir/backup/backup_failures.json",
                 "refacdir/unrelated.json"):
         (repo / rel).write_text(rel)
 
@@ -48,12 +50,13 @@ def test_cache_files_move_from_package_dir(fake_layout):
 
     moved = sorted(p.name for p in (data / "cache").iterdir())
     assert moved == [
+        "app_info_cache.enc",
+        "app_info_cache.enc.bak2",
+        "app_info_cache.json",
+        "backup_failures.json",
         "filename_pattern_cache.enc",
         "llm_prompt_response_history_x.json",
     ]
-    # AppInfoCache keeps its files in the package dir.
-    assert (repo / "refacdir" / "app_info_cache.enc").exists()
-    assert (repo / "refacdir" / "app_info_cache.enc.bak2").exists()
     assert (repo / "refacdir" / "unrelated.json").exists()
 
 
@@ -157,3 +160,14 @@ def test_app_data_dir_env_override_disables_move(tmp_path, monkeypatch):
 
     assert app_paths.user_configs_dir() == str(tmp_path / "appdata" / "configs")
     assert (repo / "configs" / "mine.yaml").exists()
+
+
+def test_resource_path_resolves_under_resource_root():
+    assert app_paths.resource_path("locale") == os.path.join(app_paths.RESOURCE_ROOT, "locale")
+    assert app_paths.resource_path() == os.path.join(app_paths.RESOURCE_ROOT)
+
+
+def test_shipped_resources_exist():
+    for parts in (("locale",), ("ui", "assets", "refacdir_icon.svg"),
+                  ("examples", "config_example.json"), ("test",), ("pytest.ini",)):
+        assert os.path.exists(app_paths.resource_path(*parts)), parts

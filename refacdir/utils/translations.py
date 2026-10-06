@@ -5,6 +5,7 @@ from refacdir.utils.logger import setup_logger
 # Set up logger for translations
 logger = setup_logger('translations')
 
+from refacdir.utils.app_paths import resource_path
 from refacdir.utils.utils import Utils
 
 _locale = os.environ['LANG'] if "LANG" in os.environ else None
@@ -14,7 +15,7 @@ elif _locale is not None and "_" in _locale:
     _locale = _locale[:_locale.index("_")]
 
 class I18N:
-    localedir = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(os.path.dirname(__file__)))), 'locale')
+    localedir = resource_path('locale')
     locale = _locale
     translate = gettext.translation('base', localedir, languages=[_locale])
 

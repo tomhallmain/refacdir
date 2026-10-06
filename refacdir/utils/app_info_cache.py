@@ -5,6 +5,7 @@ import tempfile
 import threading
 
 from refacdir.lib.position_data import PositionData
+from refacdir.utils.cache_paths import refacdir_cache_dir
 from refacdir.utils.constants import AppInfo
 from refacdir.utils.encryptor import encrypt_data_to_file, decrypt_data_from_file
 from refacdir.utils.logger import setup_logger
@@ -16,8 +17,6 @@ class AppInfoCache:
     META_INFO_KEY = "info"
     DIRECTORIES_KEY = "directories"
     NUM_BACKUPS = 4  # Number of backup files to maintain
-    # The refacdir package dir. REFACDIR_CACHE_DIR overrides it.
-    DEFAULT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     def __init__(self):
         self._lock = threading.RLock()
@@ -31,7 +30,7 @@ class AppInfoCache:
         # next successful encrypted store removes it; load() prefers the JSON
         # file, so leaving it would let older data win.
         self._plaintext_pending_removal = False
-        cache_dir = os.environ.get("REFACDIR_CACHE_DIR") or AppInfoCache.DEFAULT_DIR
+        cache_dir = refacdir_cache_dir()
         self._cache_loc = os.path.join(cache_dir, "app_info_cache.enc")
         self._json_loc = os.path.join(cache_dir, "app_info_cache.json")
         self.load()

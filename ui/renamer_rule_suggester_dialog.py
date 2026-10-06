@@ -99,7 +99,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             self.preset_list.addItem(f"{preset['name']} — {preset['search_patterns']}")
 
     def _browse_directory(self):
-        start_dir = self.directory_edit.text().strip() or os.getcwd()
+        start_dir = self.directory_edit.text().strip() or os.path.expanduser("~")
         selected = QFileDialog.getExistingDirectory(self, _("Select Directory"), start_dir)
         if selected:
             self.directory_edit.setText(selected)

@@ -8,6 +8,7 @@ from .backup_source_data import BackupSourceData
 from .backup_state import BackupState
 from .hash_manager import HashManager
 from .safe_file_ops import SafeFileOps
+from refacdir.utils.cache_paths import refacdir_cache_dir
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for backup mapping
@@ -17,7 +18,8 @@ logger = setup_logger('backup_mapping')
 _HASH_PROGRESS_LOG_EVERY = 5000
 _HASH_PROGRESS_UI_EVERY = 400
 
-_FAILURE_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backup_failures.json")
+# None means backup_failures.json in the cache dir, resolved at write time.
+_FAILURE_LOG = None
 
 try:
     from send2trash import send2trash
@@ -638,9 +640,10 @@ class BackupMapping:
                 if isinstance(row, (list, tuple)):
                     return [str(row[0]), row[1], row[2], row[3]] if len(row) >= 4 else [str(x) for x in row]
                 return row
-            with open(_FAILURE_LOG, "w", encoding="utf-8") as out:
+            failure_log = _FAILURE_LOG or os.path.join(refacdir_cache_dir(), "backup_failures.json")
+            with open(failure_log, "w", encoding="utf-8") as out:
                 json.dump([_serialize(x) for x in self.failures], out, indent=2)
-            logger.info(f"Saved failure data to {_FAILURE_LOG}")
+            logger.info(f"Saved failure data to {failure_log}")
         except OSError as e:
             logger.warning(f"Could not write failure log: {e}")
 

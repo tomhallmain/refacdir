@@ -22,6 +22,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
 from PySide6.QtCore import Signal, QObject, Qt
+
+from refacdir.utils.app_paths import resource_path
 from refacdir.lib.multi_display import SmartWindow
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.translations import _
@@ -118,7 +120,7 @@ class TestResultsWindow(SmartWindow):
         filter_layout.setContentsMargins(0, 0, 0, 0)
         filter_layout.addWidget(QLabel(_("Suite directory")))
         self.suite_filter_combo = QComboBox()
-        _base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        _base = resource_path()
         for name in _discover_test_suite_dirs(_base):
             self.suite_filter_combo.addItem(name, name)
         self.suite_filter_combo.addItem(_("All suites"), "__all__")
@@ -220,14 +222,18 @@ class TestResultsWindow(SmartWindow):
         def run_tests_thread():
             try:
                 logger.info("Starting test suite execution")
-                # Store original stdout and cwd to restore later
+                # Store original stdout, cwd and environment to restore later.
+                # test/conftest.py sets REFACDIR_* variables at import; left in
+                # place they would point this app's own configs, cache and logs
+                # at test directories and disable cache saving until restart.
                 original_stdout = sys.stdout
                 original_cwd = os.getcwd()
+                original_environ = dict(os.environ)
                 captured_output = StringIO()
                 sys.stdout = captured_output
                 
                 # Run tests - use normalized paths
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                base_dir = resource_path()
                 
                 # Change to base directory and update Python path
                 os.chdir(base_dir)
@@ -467,6 +473,9 @@ class TestResultsWindow(SmartWindow):
                         os.chdir(original_cwd)
                     except OSError:
                         pass
+                if 'original_environ' in locals():
+                    os.environ.clear()
+                    os.environ.update(original_environ)
         
         # Run tests in separate thread
         threading.Thread(target=run_tests_thread, daemon=True).start()

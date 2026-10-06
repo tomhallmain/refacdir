@@ -18,9 +18,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QPoint, Signal, QSize, QRect, QEvent, QObject
 from PySide6.QtGui import QMouseEvent, QCursor, QIcon
+from refacdir.utils.app_paths import resource_path
 from refacdir.utils.translations import _
 
-_ICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "refacdir_icon.svg")
+_ICON_PATH = resource_path("ui", "assets", "refacdir_icon.svg")
 
 
 class TitleBarButton(QPushButton):

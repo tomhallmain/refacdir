@@ -688,7 +688,7 @@ class RenamerActionDialog(BaseActionDialog):
     def _resolve_initial_suggester_directory(self) -> str:
         lines = [line.strip() for line in self.locations_editor.toPlainText().splitlines() if line.strip()]
         if not lines:
-            return os.getcwd()
+            return os.path.expanduser("~")
         root = lines[0]
         root = root.replace("{{USER_HOME}}", os.path.expanduser("~"))
         return root

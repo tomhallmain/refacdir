@@ -24,3 +24,8 @@ coverage.xml
 htmlcov/
 # duplicate_remover may write this under a source dir if run manually
 **/duplicates_report.txt
+
+# build_exe.py
+.venv-build/
+build/
+dist/

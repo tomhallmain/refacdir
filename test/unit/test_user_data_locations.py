@@ -7,7 +7,6 @@ import os
 
 import yaml
 
-import refacdir
 import refacdir.config as config_module
 from refacdir.batch import BatchJob
 from refacdir.config import Config
@@ -72,11 +71,18 @@ def test_batch_job_base_dir_is_app_data_dir():
     assert _IMPORT_TIME_BASE_DIR == app_paths.app_data_dir()
 
 
-def test_app_info_cache_defaults_to_package_dir(monkeypatch):
+def test_app_info_cache_defaults_to_app_data_cache_dir(tmp_path, monkeypatch):
     monkeypatch.delenv("REFACDIR_CACHE_DIR", raising=False)
+    monkeypatch.setenv("REFACDIR_APP_DATA_DIR", str(tmp_path))
     cache = AppInfoCache()  # load is a no-op under the test-wide disable flag
-    package_dir = os.path.dirname(os.path.abspath(refacdir.__file__))
-    assert cache._cache_loc == os.path.join(package_dir, "app_info_cache.enc")
+    assert cache._cache_loc == str(tmp_path / "cache" / "app_info_cache.enc")
+    assert cache._json_loc == str(tmp_path / "cache" / "app_info_cache.json")
+
+
+def test_translations_read_the_shipped_locale_dir():
+    from refacdir.utils.translations import I18N
+
+    assert I18N.localedir == app_paths.resource_path("locale")
 
 
 def test_app_info_cache_files_live_in_cache_dir(tmp_path, monkeypatch):

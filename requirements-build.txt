@@ -1,0 +1,7 @@
+# Everything build_exe.py needs: Nuitka, plus every package the built app
+# imports. pytest and pytest-qt are runtime dependencies there, because the
+# app's Run tests window runs the bundled test suite.
+-r requirements.txt
+nuitka
+# Compresses the onefile payload.
+zstandard
