@@ -162,25 +162,39 @@ class TestRuns:
         assert started[1].test is False
         assert started[1].only_observers is True
 
-    def test_cancel_drops_queued_runs_only(self, session, monkeypatch):
-        release = threading.Event()
+    def test_cancel_drops_queued_runs_and_signals_the_running_one(self, session, monkeypatch):
         started = []
 
-        def blocking_execute(args):
+        def execute_until_cancelled(args):
             started.append(args)
-            release.wait(5)
+            args.cancel_event.wait(5)
 
-        monkeypatch.setattr("app_headless._execute_batch", blocking_execute)
+        monkeypatch.setattr("app_headless._execute_batch", execute_until_cancelled)
         adapter, _ = session
 
         first = adapter.run_batch(test=True, only_observers=False)
         assert _wait_for(lambda: len(started) == 1)
         adapter.run_batch(test=True, only_observers=False)
 
-        assert adapter.cancel_batch() == {"cancelled_queued": 1}
-        assert adapter.run_status(first)["run_state"] == "running"
-        release.set()
+        assert adapter.cancel_batch() == {"cancelled_queued": 1, "cancelled_running": first}
+        assert started[0].cancel_event.is_set()
         assert _wait_for(lambda: adapter.run_status(first)["run_state"] == "unknown")
+        assert len(started) == 1  # the queued run never started
+
+    def test_cancel_with_nothing_running(self, session):
+        adapter, _ = session
+        assert adapter.cancel_batch() == {"cancelled_queued": 0, "cancelled_running": None}
+
+    def test_cancel_does_not_carry_over_to_the_next_run(self, session, monkeypatch):
+        started = []
+        monkeypatch.setattr("app_headless._execute_batch", lambda args: started.append(args))
+        adapter, _ = session
+
+        adapter.cancel_batch()
+        run_id = adapter.run_batch(test=True, only_observers=False)
+
+        assert _wait_for(lambda: adapter.run_status(run_id)["run_state"] == "unknown")
+        assert not started[0].cancel_event.is_set()
 
 
 class TestDomainActions:

@@ -90,6 +90,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         # Flags for runs accepted from the MCP front end, kept by run id so a
         # queued run still carries them when the queue reaches it.
         self._run_overrides = {}
+        # BatchArgs of the run in flight, so a cancel can set its cancel_event.
+        self._running_batch_args = None
         self._batch_history_window = None
         self.is_dark_theme = True
 
@@ -556,6 +558,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.persist_definition_caches_check.isChecked()
         )
         run_args.app_actions = self.app_actions
+        self._running_batch_args = run_args
 
         # Show progress bar
         self.progress_bar.setVisible(True)
@@ -577,6 +580,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
 
     def _finish_batch_run(self):
         """Reset UI state after a background batch run (main thread)."""
+        self._running_batch_args = None
         self.job_queue.finish()
         self.status_label.setText(_("Ready"))
         self.progress_bar.setValue(0)
@@ -649,14 +653,23 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self._start_batch_run(run_id)
         return run_id
 
-    def cancel_queued_runs(self) -> dict:
-        """Drop every queued run. One already in flight finishes on its own."""
-        queued = self.job_queue.status()["queued"]
+    def cancel_batch_runs(self) -> dict:
+        """Drop every queued run and ask the one in flight to stop. GUI thread only.
+
+        The running batch stops at its next config, action or mapping; the
+        mapping in progress finishes first.
+        """
+        status = self.job_queue.status()
         self.job_queue.cancel()
         # Every remaining entry belongs to a queued run; a started one had its
         # flags popped when it began.
         self._run_overrides.clear()
-        return {"cancelled_queued": queued}
+        cancelled_running = None
+        if self._running_batch_args is not None:
+            self._running_batch_args.cancel_event.set()
+            cancelled_running = status["running_id"]
+            logger.info(f"Cancellation requested for batch run {cancelled_running}")
+        return {"cancelled_queued": status["queued"], "cancelled_running": cancelled_running}
         
     def _on_inactivity_timeout_changed(self, minutes: int):
         """Apply idle shutdown timeout from the operation settings control."""

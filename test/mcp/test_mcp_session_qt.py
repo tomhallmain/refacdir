@@ -60,9 +60,9 @@ class FakeWindow:
         self.mcp_runs.append((test, only_observers))
         return "run-id-1"
 
-    def cancel_queued_runs(self):
+    def cancel_batch_runs(self):
         self.cancelled += 1
-        return {"cancelled_queued": 0}
+        return {"cancelled_queued": 0, "cancelled_running": None}
 
 
 @pytest.fixture
@@ -177,7 +177,7 @@ class TestRuns:
 
     def test_cancel_batch_delegates_and_is_marshalled(self, session):
         adapter, window = session
-        assert adapter.cancel_batch() == {"cancelled_queued": 0}
+        assert adapter.cancel_batch() == {"cancelled_queued": 0, "cancelled_running": None}
         assert window.cancelled == 1
         assert window.gui_calls == 1
 

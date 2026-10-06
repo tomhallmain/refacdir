@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import threading
 from typing import Optional
 
 import yaml
@@ -70,6 +71,11 @@ class HeadlessMCPSession:
         self._queue = JobQueue()
         self._runner = ThreadedTaskRunner()
         self._overrides: dict = {}
+        # BatchArgs of the run in flight, so cancel_batch can set its
+        # cancel_event. The lock spans the handoff to the next queued run, which
+        # happens on the worker thread while cancel_batch runs on the server's.
+        self._running_args: Optional[BatchArgs] = None
+        self._run_lock = threading.RLock()
         self._app_actions = build_headless_app_actions({
             "get_batch_args": lambda: self._batch_args,
             "refresh_configs": self.refresh_configs,
@@ -139,6 +145,10 @@ class HeadlessMCPSession:
         return run_id
 
     def _start(self, run_id: str) -> None:
+        with self._run_lock:
+            self._start_locked(run_id)
+
+    def _start_locked(self, run_id: str) -> None:
         self._queue.begin(run_id)
         overrides = self._overrides.pop(run_id, {})
 
@@ -149,6 +159,7 @@ class HeadlessMCPSession:
         # and nothing is attached to it.
         args.skip_confirm = True
         args.app_actions = self._app_actions
+        self._running_args = args
 
         logger.info(f"Batch run started: {run_id} (test={args.test})")
         self._runner.start(
@@ -165,16 +176,29 @@ class HeadlessMCPSession:
         The runner reports itself idle before calling this, so starting the
         next queued run from here does not hit its already-running guard.
         """
-        self._queue.finish()
-        next_run_id = self._queue.take()
-        if next_run_id is not None:
-            self._start(next_run_id)
+        with self._run_lock:
+            self._running_args = None
+            self._queue.finish()
+            next_run_id = self._queue.take()
+            if next_run_id is not None:
+                self._start_locked(next_run_id)
 
     def cancel_batch(self) -> dict:
-        queued = self._queue.status()["queued"]
-        self._queue.cancel()
-        self._overrides.clear()
-        return {"cancelled_queued": queued}
+        """Drop every queued run and ask the one in flight to stop.
+
+        The running batch stops at its next config, action or mapping; the
+        mapping in progress finishes first.
+        """
+        with self._run_lock:
+            status = self._queue.status()
+            self._queue.cancel()
+            self._overrides.clear()
+            cancelled_running = None
+            if self._running_args is not None:
+                self._running_args.cancel_event.set()
+                cancelled_running = status["running_id"]
+                logger.info(f"Cancellation requested for batch run {cancelled_running}")
+        return {"cancelled_queued": status["queued"], "cancelled_running": cancelled_running}
 
     def run_status(self, run_id: str) -> dict:
         return self._queue.status(run_id)

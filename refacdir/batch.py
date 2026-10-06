@@ -1,5 +1,6 @@
 from enum import Enum
 import os
+import threading
 import yaml
 
 from refacdir.archive_extractor import ArchiveExtractor
@@ -21,6 +22,11 @@ from refacdir.utils.logger import setup_logger
 # Set up logger for batch operations
 logger = setup_logger('batch')
 
+
+class BatchCancelled(Exception):
+    """Raised at a checkpoint in ``BatchJob`` once cancellation is requested."""
+
+
 class BatchArgs:
     def __init__(self, recache_configs=False, configs=None):
         self.verbose = False
@@ -38,6 +44,10 @@ class BatchArgs:
         self.backup_warn_duplicates = False
         self.backup_mapping_will_run_default = True
         self.renamer_mapping_will_run_default = True
+        # Set from another thread to stop a run in flight. BatchJob checks it
+        # before each config, action and mapping, so the mapping in progress
+        # finishes first.
+        self.cancel_event = threading.Event()
         if configs is not None:
             self.configs = dict(configs)
         else:
@@ -225,6 +235,11 @@ class BatchJob:
             del self.configurations[temp_full_path_example]
 
 
+    def _check_cancelled(self) -> None:
+        cancel_event = getattr(self.args, "cancel_event", None)
+        if cancel_event is not None and cancel_event.is_set():
+            raise BatchCancelled()
+
     def run(self):
         from refacdir.batch_job_history import begin_batch_job, finish_batch_job
 
@@ -264,6 +279,7 @@ class BatchJob:
             for config, will_run in self.configurations.items():
                 if will_run == False:
                     continue
+                self._check_cancelled()
                 os.chdir(self.cwd)
                 self.current_config_index += 1
                 logger.info(f"Processing config {self.current_config_index}/{self.total_configs}: {config}")
@@ -280,9 +296,12 @@ class BatchJob:
                     self.app_actions.progress_text(_("Batch operations completed"))
                 self.app_actions.progress_bar_reset()
                 
-        except KeyboardInterrupt:
-            logger.warning("Batch job interrupted by user")
-            print("Exiting prematurely at user request...")
+        except (KeyboardInterrupt, BatchCancelled) as e:
+            if isinstance(e, BatchCancelled):
+                logger.warning("Batch job cancelled")
+            else:
+                logger.warning("Batch job interrupted by user")
+                print("Exiting prematurely at user request...")
             self.cancelled = True
             if self.app_actions:
                 self.app_actions.progress_text(_("Operations cancelled by user"))
@@ -328,6 +347,7 @@ class BatchJob:
 
             total_actions_in_config = len(config_wrapper["actions"])
             for i in range(len(config_wrapper["actions"])):
+                self._check_cancelled()
                 action = config_wrapper["actions"][i]
                 if not self.run_action(config, action, i):
                     # If action fails, count remaining actions as skipped
@@ -396,6 +416,8 @@ class BatchJob:
                 return self.run_renamers(config, action["mappings"])
             else:
                 return self.run_multi_action(config, action_type, action["mappings"])
+        except BatchCancelled:
+            raise
         except KeyError as e:
             error_msg = f"Invalid action configuration in {config} index {idx}: {e}"
             logger.error(error_msg)
@@ -411,6 +433,7 @@ class BatchJob:
         constructor_func_name = f"construct_{action_type.get_varname()}"
         total_actions = len(actions)
         for action_index, _action in enumerate(actions):
+            self._check_cancelled()
             self.counts_map[action_type] += 1
             try:
                 constructor_func = getattr(self, constructor_func_name)
@@ -461,6 +484,7 @@ class BatchJob:
     def run_renamers(self, config, renamers):
         total_renamers = len(renamers)
         for renamer_index, _renamer in enumerate(renamers):
+            self._check_cancelled()
             will_run = Utils.get_from_dict(_renamer, "will_run", self.renamer_mapping_will_run_default)
             if not will_run:
                 name = _renamer.get("name", renamer_index)

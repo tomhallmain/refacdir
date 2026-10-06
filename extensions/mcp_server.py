@@ -14,7 +14,7 @@ answer:
     read_config(path)                  -> the parsed YAML, as a dict
     set_config_enabled(path, enabled)  -> the new will_run state
     run_batch(test, only_observers)    -> the run id the client should keep
-    cancel_batch()                     -> {"cancelled_queued": int}
+    cancel_batch()                     -> {"cancelled_queued": int, "cancelled_running": run_id | None}
     run_status(run_id)                 -> {"running", "running_id", "queued", ...}
     job_history(limit)                 -> recorded jobs, newest first
     describe_job(job_id)               -> one job with its mapping groups, or None
@@ -164,7 +164,14 @@ def tool_descriptors() -> list:
         },
         {
             "name": "cancel_batch",
-            "description": "Drop every queued run. A run already in flight finishes on its own.",
+            "description": (
+                "Drop every queued run and stop the one in flight. The running "
+                "batch stops before its next config, action or mapping; the "
+                "mapping in progress finishes first, so files it already moved "
+                "stay moved. Returns cancelled_queued and the cancelled_running "
+                "run_id (null if nothing was running). A cancelled live run is "
+                "recorded in job_history as cancelled."
+            ),
         },
         {
             "name": "run_status",
@@ -193,7 +200,10 @@ def tool_descriptors() -> list:
         },
         {
             "name": "health_check",
-            "description": "Whether a session is reachable and what it is currently browsing.",
+            "description": (
+                "Whether the server can reach a session -- a RefacDir window or the "
+                "headless process. Fails with an error when there is none."
+            ),
         },
     ]
 

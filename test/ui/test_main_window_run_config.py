@@ -119,3 +119,30 @@ def test_enter_with_single_filter_match_runs_that_config(run_window):
 
     assert run_window.started_args[0].configs == {"configs/beta.yaml": True}
     assert run_window.alerts == []
+
+
+def test_cancel_signals_the_running_batch_and_drops_the_queue(run_window):
+    # The fixture runs batches synchronously and never processes the finish
+    # timer, so the first run is still in flight here.
+    run_window.run()
+    running_id = run_window.job_queue.running_id
+    run_window.run_config("configs/beta.yaml")  # queued behind it
+
+    result = run_window.cancel_batch_runs()
+
+    assert result == {"cancelled_queued": 1, "cancelled_running": running_id}
+    assert run_window.started_args[0].cancel_event.is_set()
+    assert run_window._run_overrides == {}
+    assert run_window.job_queue.take() is None
+
+
+def test_cancel_with_nothing_running(run_window):
+    assert run_window.cancel_batch_runs() == {"cancelled_queued": 0, "cancelled_running": None}
+
+
+def test_finished_run_is_no_longer_cancellable(run_window):
+    run_window.run()
+    run_window._finish_batch_run()
+
+    assert run_window.cancel_batch_runs()["cancelled_running"] is None
+    assert not run_window.started_args[0].cancel_event.is_set()

@@ -99,7 +99,7 @@ class QtMainWindowMCPSession:
         )
 
     def cancel_batch(self) -> dict:
-        return self._window.run_on_gui_thread(self._window.cancel_queued_runs)
+        return self._window.run_on_gui_thread(self._window.cancel_batch_runs)
 
     def run_status(self, run_id: str) -> dict:
         """JobQueue guards its own state, so this answers without the GUI thread
