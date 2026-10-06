@@ -8,15 +8,14 @@ Unit tests for ``PersistentPatternCache`` / ``persistent_cache`` — cross-sessi
 to exercise real persistence explicitly unset it, same convention as AppInfoCache.
 
 The passphrase behind the encryption is normally keyring-backed (same as
-AppInfoCache's keys). No test in this suite exercises the real OS keyring — that
-convention already holds for AppInfoCache itself (nothing here unsets the disable
-flag without also stubbing ``PassphraseManager.get_passphrase``), since keyring
-availability varies across dev/CI machines. The real ``SymmetricEncryptor``
-encrypt/decrypt round trip is still exercised for real, just with a fixed
-test-only passphrase instead of one fetched from the OS keyring.
+AppInfoCache's keys). The autouse ``isolated_keyring`` fixture in
+``test/conftest.py`` replaces the OS keyring and the passphrase lookup for every
+test; ``enable_real_persistence`` stubs the passphrase as well. The real
+``SymmetricEncryptor`` encrypt/decrypt round trip is still exercised, with a
+fixed test-only passphrase.
 
-Note: the module-level ``persistent_pattern_cache`` singleton is constructed once
-at import time, before any per-test ``REFACDIR_CACHE_DIR`` override takes effect.
+Note: ``isolated_app_singletons`` builds the per-test ``persistent_pattern_cache``
+singleton before ``enable_real_persistence`` changes ``REFACDIR_CACHE_DIR``.
 Tests that simulate a session restart explicitly swap in a fresh, freshly-pathed
 instance via monkeypatch rather than relying on that singleton directly.
 """

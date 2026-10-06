@@ -30,14 +30,6 @@ from refacdir.utils.logger import setup_logger
 logger = setup_logger("persistent_pattern_cache")
 
 _CACHE_FILE = "filename_pattern_cache.enc"
-# Absolute, cwd-independent default location — sibling to AppInfoCache.CACHE_LOC.
-# NOT resolve_cache_file()'s bare-filename fallback: FileRenamer chdirs into a
-# renamer's root directory during scans and doesn't always restore it, so a
-# relative path here could scatter this file into whatever user directory the
-# last renamer touched instead of one stable, findable location.
-_DEFAULT_CACHE_LOC = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), _CACHE_FILE
-)
 MAX_ENTRIES = 50000
 _EVICT_BATCH = max(1, int(MAX_ENTRIES * 0.1))
 
@@ -47,12 +39,7 @@ class PersistentPatternCache:
         self._lock = threading.RLock()
         self._cache: dict = {}
         self._dirty = False
-        _override = refacdir_cache_dir()
-        if _override:
-            os.makedirs(_override, exist_ok=True)
-            self._path = os.path.join(_override, _CACHE_FILE)
-        else:
-            self._path = _DEFAULT_CACHE_LOC
+        self._path = os.path.join(refacdir_cache_dir(), _CACHE_FILE)
         self._passphrase = None
         self._load()
 

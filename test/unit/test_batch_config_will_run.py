@@ -130,3 +130,29 @@ def test_batch_job_snapshots_configs_from_args():
     job = BatchJob(args)
     args.configs["configs/a.yaml"] = False
     assert job.configurations["configs/a.yaml"] is True
+
+
+def _write_master_config(name: str, entries: list) -> None:
+    with open(os.path.join(Config.configs_dir(), name), "w", encoding="utf-8") as handle:
+        yaml.safe_dump({"configs": entries}, handle)
+
+
+def test_master_config_overrides_listed_will_run():
+    _write_config("listed.yaml", will_run=True)
+    _write_config("unlisted.yaml", will_run=True)
+    _write_master_config("master_config.yaml", [{"config_file": "listed.yaml", "will_run": False}])
+
+    configs = BatchArgs.discover_configs_from_disk()
+
+    assert configs == {"configs/listed.yaml": False, "configs/unlisted.yaml": True}
+
+
+def test_master_config_example_is_not_a_fallback():
+    _write_config("listed.yaml", will_run=True)
+    _write_master_config(
+        "master_config_example.yaml", [{"config_file": "listed.yaml", "will_run": False}]
+    )
+
+    configs = BatchArgs.discover_configs_from_disk()
+
+    assert configs == {"configs/listed.yaml": True}

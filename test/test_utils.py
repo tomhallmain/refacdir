@@ -2,13 +2,15 @@
 Shared helpers for pytest modules under ``test/``.
 
 **YAML batch configs:** ``BatchJob.run_config_file`` resolves paths with
-``os.path.join(BatchJob.BASE_DIR, config)``. Tests must patch ``BatchJob.BASE_DIR``
-to a ``tmp_path`` and write config files there — never the repo ``configs/`` tree.
+``os.path.join(BatchJob.BASE_DIR, config)``. The autouse ``isolated_app_singletons``
+already points ``BASE_DIR`` at ``tmp_path`` (parent of the per-test configs dir); a
+test that writes configs elsewhere patches it to that directory instead.
 
 Use :func:`patch_batch_job_base_dir` with :func:`posix_path` for location strings in YAML.
 
 **App cache / crypto / singletons:** root ``test/conftest.py`` sets ``REFACDIR_CONFIGS_DIR`` /
-``REFACDIR_CACHE_DIR`` to ``test/fixtures/`` before any ``refacdir`` import, then
+``REFACDIR_CACHE_DIR`` to ``test/fixtures/`` and ``REFACDIR_APP_DATA_DIR`` to a
+session temp dir before any ``refacdir`` import, then
 ``isolated_app_singletons`` repoints each test at ``tmp_path`` (``restore_batch_configs``,
 ``restore_batch_registries``, ``restore_filename_mapping_registry``).
 

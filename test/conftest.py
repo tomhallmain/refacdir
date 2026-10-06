@@ -5,14 +5,17 @@ Pytest-wide isolation: keep tests off the user's persisted cache and config tree
 ``AppInfoCache.store`` no-ops so tests do not read or write ``app_info_cache.enc``.
 It must be set before ``encryptor`` is imported (see that module's oqs gate).
 
+``REFACDIR_APP_DATA_DIR`` points the whole app data tree (logs included) at a
+session temp dir, which also disables the move of legacy repo files.
+
 Per-test ``isolated_app_singletons`` sets ``REFACDIR_CACHE_DIR`` and
-``REFACDIR_CONFIGS_DIR`` under ``tmp_path`` and patches module-level singletons
-so imports bound at load time still see isolated instances.
+``REFACDIR_CONFIGS_DIR`` under ``tmp_path``, points ``BatchJob.BASE_DIR`` and the
+backup failure log there, and patches module-level singletons so imports bound
+at load time still see isolated instances.
 
 **Conftest load order:** this file is loaded before nested ``test/*/conftest.py`` files.
-``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD``, ``REFACDIR_CONFIGS_DIR``, and ``REFACDIR_CACHE_DIR``
-are set at the top of this module **before any** ``refacdir`` imports so collection never
-reads the repo ``configs/`` tree or user cache.
+The environment variables above are set at the top of this module **before any**
+``refacdir`` imports, so collection never reads the user's configs, cache or logs.
 
 Unset ``REFACDIR_DISABLE_APP_INFO_CACHE_LOAD`` in a test if you need to exercise
 real cache persistence (with ``REFACDIR_CACHE_DIR`` pointing at ``tmp_path``).
@@ -26,9 +29,12 @@ should request ``qtbot``; other suites are unaffected.
 module binding ``app_info_cache`` or ``config`` at import time is isolated without being
 named anywhere here.
 """
+import atexit
 import json
 import os
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -37,9 +43,19 @@ _TEST_ROOT = Path(__file__).resolve().parent
 _FIXTURE_CONFIGS = _TEST_ROOT / "fixtures" / "configs"
 _FIXTURE_CACHE = _TEST_ROOT / "fixtures" / "cache"
 
-os.environ.setdefault("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD", "1")
+# Forced, not defaulted: an empty value in the shell would enable real persistence.
+os.environ["REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"] = "1"
 os.environ.setdefault("REFACDIR_CONFIGS_DIR", str(_FIXTURE_CONFIGS))
 os.environ.setdefault("REFACDIR_CACHE_DIR", str(_FIXTURE_CACHE))
+# Logs, BatchJob.BASE_DIR and any default config/cache path resolve under this,
+# and the move of legacy repo files is disabled while it is set.
+_SESSION_APP_DATA = tempfile.mkdtemp(prefix="refacdir-test-appdata-")
+os.environ["REFACDIR_APP_DATA_DIR"] = _SESSION_APP_DATA
+atexit.register(shutil.rmtree, _SESSION_APP_DATA, ignore_errors=True)
+
+import keyring
+import keyring.backend
+import keyring.errors
 
 from refacdir.batch import BatchArgs
 from refacdir.filename_ops import FiletypesDefinition, FilenameMappingDefinition
@@ -81,9 +97,52 @@ _MINIMAL_TEST_CONFIG_JSON = {
 
 
 def pytest_configure(config):
-    os.environ.setdefault("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD", "1")
+    os.environ["REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"] = "1"
     if sys.platform != "win32":
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+
+class InMemoryKeyring(keyring.backend.KeyringBackend):
+    """Keyring backend holding secrets in a dict for the length of one test."""
+
+    priority = 1
+
+    def __init__(self):
+        super().__init__()
+        self.secrets = {}
+
+    def get_password(self, service, username):
+        return self.secrets.get((service, username))
+
+    def set_password(self, service, username, password):
+        self.secrets[(service, username)] = password
+
+    def delete_password(self, service, username):
+        if self.secrets.pop((service, username), None) is None:
+            raise keyring.errors.PasswordDeleteError(username)
+
+
+@pytest.fixture(autouse=True)
+def isolated_keyring(monkeypatch):
+    """Keep every test off the OS keyring, even one that unsets the disable flag.
+
+    Keys go to a per-test in-memory backend. The passphrase lookup is stubbed
+    too: its platform branches reach past ``keyring`` (``win32cred`` on Windows,
+    a ``~/.config`` file on unknown platforms).
+    """
+    import refacdir.utils.encryptor as encryptor_module
+
+    backend = InMemoryKeyring()
+    # Not restored afterwards: reading the current backend would initialize the
+    # OS one, and every test installs its own.
+    keyring.set_keyring(backend)
+    monkeypatch.setattr(
+        encryptor_module.PassphraseManager,
+        "get_passphrase",
+        staticmethod(lambda *args, **kwargs: "test-only-passphrase"),
+    )
+    monkeypatch.setattr(encryptor_module, "ENCRYPTOR_CLASSES", {})
+    return backend
 
 
 @pytest.fixture
@@ -118,9 +177,17 @@ def restore_batch_registries():
 
 @pytest.fixture(autouse=True)
 def isolated_app_singletons(tmp_path, monkeypatch):
-    """Point cache/config singletons at a fresh per-test temp directory."""
+    """Point cache/config singletons and file locations at a per-test temp dir.
+
+    ``BatchJob.BASE_DIR`` becomes ``tmp_path``, the parent of the per-test
+    configs dir, so ``configs/<name>.yaml`` keys resolve the same way through
+    ``BatchArgs`` and ``BatchJob``.
+    """
+    import refacdir.backup.backup_mapping as backup_mapping_module
     import refacdir.config as config_module
     import refacdir.utils.app_info_cache as cache_module
+    import refacdir.utils.persistent_pattern_cache as pattern_cache_module
+    from refacdir.batch import BatchJob
 
     cache_dir = tmp_path / "cache"
     configs_dir = tmp_path / "configs"
@@ -134,12 +201,24 @@ def isolated_app_singletons(tmp_path, monkeypatch):
 
     monkeypatch.setenv("REFACDIR_CACHE_DIR", str(cache_dir))
     monkeypatch.setenv("REFACDIR_CONFIGS_DIR", str(configs_dir))
+    monkeypatch.setattr(BatchJob, "BASE_DIR", str(tmp_path))
+    monkeypatch.setattr(
+        backup_mapping_module, "_FAILURE_LOG", str(tmp_path / "backup_failures.json")
+    )
 
     # Each sweep repoints the source module itself plus every imported module
     # holding a module-level binding of that singleton.
     old_cache = cache_module.app_info_cache
     repoint_singleton_bindings(
         monkeypatch, "app_info_cache", old_cache, cache_module.AppInfoCache()
+    )
+
+    old_pattern_cache = pattern_cache_module.persistent_pattern_cache
+    repoint_singleton_bindings(
+        monkeypatch,
+        "persistent_pattern_cache",
+        old_pattern_cache,
+        pattern_cache_module.PersistentPatternCache(),
     )
 
     old_config = config_module.config

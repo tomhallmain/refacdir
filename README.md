@@ -1,7 +1,14 @@
 # refacdir
 This is a small collection of scripts for file management scripting.
 
-Modify the config_example.yaml file to set a configuration to perform various file management actions.
+Copy `examples/config_example.yaml` into your user configs directory under a new name and edit it to set up file management actions.
+
+User configs, caches and logs live outside the repo, in a per-user app data directory:
+
+- Windows: `%LOCALAPPDATA%\refacdir\` (`configs\`, `cache\`, `logs\`)
+- Linux/macOS: `~/.local/share/refacdir/` (`configs/`, `cache/`, `logs/`)
+
+Configs and cache files left in the repo by older versions are moved there automatically on first start.
 
 Available batch actions include:
 - Duplicate removal
@@ -29,12 +36,12 @@ Once all configurations are defined, run `run.py` to perform the actions. The ac
 
 # UI
 
-Start the UI by running `app.py`.
+Start the UI by running `app_qt.py`.
 
 The UI exits automatically after a period without keyboard or mouse activity (default 30 minutes; configurable under Operation Settings).
 
 # Server
 
-Set configuration options in config_example.json for a server port to make use of the server while the UI is running. Calls to the server made with Python's multiprocessing client will update the UI as specified, but leave anything unspecified as already set in the UI. This can be helpful to use in conjunction with other applications that involve images. For an example, see [this class](https://github.com/tomhallmain/Weidr/blob/master/extensions/refacdir_client.py).
+Set configuration options in `config.json` in your user configs directory (copy from `examples/config_example.json`) for a server port to make use of the server while the UI is running. Calls to the server made with Python's multiprocessing client will update the UI as specified, but leave anything unspecified as already set in the UI. This can be helpful to use in conjunction with other applications that involve images. For an example, see [this class](https://github.com/tomhallmain/Weidr/blob/master/extensions/refacdir_client.py).
 
 

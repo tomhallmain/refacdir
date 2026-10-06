@@ -1,24 +1,25 @@
 import json
 import os
+from refacdir.utils.app_paths import EXAMPLES_DIR, user_configs_dir
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for config
 logger = setup_logger('config')
 
 class Config:
-    CONFIGS_DIR_LOC = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "configs")
+    EXAMPLE_CONFIG_JSON = os.path.join(EXAMPLES_DIR, "config_example.json")
 
     @staticmethod
     def configs_dir():
-        """Active configs directory (overridable via REFACDIR_CONFIGS_DIR for tests)."""
-        return os.environ.get("REFACDIR_CONFIGS_DIR") or Config.CONFIGS_DIR_LOC
+        """Active user configs directory (overridable via REFACDIR_CONFIGS_DIR for tests)."""
+        return os.environ.get("REFACDIR_CONFIGS_DIR") or user_configs_dir()
 
     @staticmethod
     def resolve_config_path():
         """Resolve the active server config JSON path, preferring config.json."""
         configs_dir = Config.configs_dir()
         if not os.path.isdir(configs_dir):
-            return os.path.join(Config.CONFIGS_DIR_LOC, "config_example.json")
+            return Config.EXAMPLE_CONFIG_JSON
 
         configs = [
             f.path for f in os.scandir(configs_dir)
@@ -34,7 +35,7 @@ class Config:
                 config_path = candidate
 
         if config_path is None:
-            config_path = os.path.join(configs_dir, "config_example.json")
+            config_path = Config.EXAMPLE_CONFIG_JSON
         return config_path
 
     def __init__(self, config_path=None):
@@ -61,7 +62,7 @@ class Config:
             dict_set = True
         except Exception as e:
             logger.error(str(e))
-            logger.error("Unable to load config. Ensure config.json file is located in the configs directory of simple-image-comare.")
+            logger.error(f"Unable to load config. Ensure config.json is located in the configs directory: {Config.configs_dir()}")
 
         self.set_values(str,
                         "foreground_color",

@@ -13,6 +13,7 @@ from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
 from refacdir.named_subdir_collector import NamedSubdirCollector
+from refacdir.utils.app_paths import app_data_dir
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
@@ -145,15 +146,7 @@ class BatchArgs:
         # master_config is now a defaults layer only — it can override will_run for
         # known configs but cannot prevent discovery of files not listed in it.
         master_config_file = os.path.join(configs_dir, "master_config.yaml")
-        if not os.path.exists(master_config_file):
-            alt = os.path.join(configs_dir, "master_config_example.yaml")
-            if os.path.exists(alt):
-                master_config_file = alt
-                logger.info("master_config.yaml not found, using master_config_example.yaml for defaults.")
-            else:
-                master_config_file = None
-
-        if master_config_file:
+        if os.path.exists(master_config_file):
             try:
                 master_config_yaml = yaml.load(open(master_config_file), Loader=yaml.FullLoader)
                 logger.info(f"Applying defaults from master config: {master_config_file}")
@@ -189,7 +182,9 @@ class ActionType(Enum):
 
 
 class BatchJob:
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    # Config keys are ``configs/<name>.yaml``, so they resolve under the app data
+    # dir, which is the parent of the default user configs dir.
+    BASE_DIR = app_data_dir()
 
     def __init__(self, args=BatchArgs()):
         logger.info("Initializing new batch job")

@@ -5,37 +5,8 @@ from __future__ import annotations
 import pytest
 
 import app_qt
-from app_qt import MainWindow
 
 pytestmark = pytest.mark.ui
-
-
-class _InactivityShutdownStub:
-    def __init__(self, _window):
-        pass
-
-    def set_timeout_minutes(self, _minutes):
-        pass
-
-    def pause(self):
-        pass
-
-    def resume(self):
-        pass
-
-
-@pytest.fixture
-def main_window(qtbot, monkeypatch):
-    """MainWindow with network/server and restore paths stubbed out."""
-    monkeypatch.setattr(app_qt.MainWindow, "setup_server", lambda self: None)
-    monkeypatch.setattr(app_qt.MainWindow, "load_configs", lambda self: None)
-    monkeypatch.setattr(app_qt.MainWindow, "restore_ui_settings", lambda self: None)
-    monkeypatch.setattr(app_qt.MainWindow, "restore_window_geometry", lambda self: None)
-    monkeypatch.setattr(app_qt, "InactivityShutdown", _InactivityShutdownStub)
-
-    window = MainWindow()
-    qtbot.addWidget(window)
-    return window
 
 
 def test_schedule_store_ui_settings_debounces_disk_writes(qtbot, main_window, monkeypatch):

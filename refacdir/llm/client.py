@@ -221,20 +221,12 @@ class LLM:
     @staticmethod
     def _resolve_history_file_path(state_suffix: str) -> str:
         """
-        Stable, cwd-independent location for the optional prompt/response
-        history file, honoring ``REFACDIR_CACHE_DIR`` when set. Renamer/backup
-        actions can chdir during a batch run, so resolving this relative to
-        ``os.getcwd()`` (the ported original's behavior) risked scattering the
-        file into whatever directory happened to be current at write time.
+        Location of the optional prompt/response history file, in the cache
+        dir. Renamer/backup actions can chdir during a batch run, so this must
+        not depend on ``os.getcwd()``.
         """
         filename = f"llm_prompt_response_history_{state_suffix}.json"
-        override = refacdir_cache_dir()
-        if override:
-            os.makedirs(override, exist_ok=True)
-            return os.path.join(override, filename)
-        return os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), filename
-        )
+        return os.path.join(refacdir_cache_dir(), filename)
 
     @classmethod
     def from_config(

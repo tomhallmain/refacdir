@@ -219,7 +219,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         
         self.run_btn = QPushButton(_("Run Operations"))
         self.run_btn.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-        self.run_btn.clicked.connect(self.run)
+        self.run_btn.clicked.connect(lambda: self.run())
         actions_layout.addWidget(self.run_btn)
 
         self.config_editor_btn = QPushButton(_("Edit Configs"))
@@ -522,14 +522,17 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             logger.info(f"Config {config} set to {will_run}")
             self.schedule_store_ui_settings()
 
-    def run(self):
-        """Run the selected operations"""
+    def run(self, configs: dict = None):
+        """Run the selected operations, or only *configs* when given."""
         run_id = JobQueue.new_run_id()
+        if configs is not None:
+            self._run_overrides[run_id] = {"configs": dict(configs)}
         if self.job_queue.job_running or self.progress_bar.isVisible():
             try:
                 self.job_queue.add(run_id)
                 logger.info(f"Batch run queued (already running): {run_id}")
             except Exception as exc:
+                self._run_overrides.pop(run_id, None)
                 self.alert(_("Queue full"), str(exc), "error")
                 return run_id
             return run_id
@@ -542,7 +545,10 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         run_id = self.job_queue.begin(run_id)
         overrides = self._run_overrides.pop(run_id, {})
 
-        run_args = BatchArgs(recache_configs=False, configs=dict(self.filtered_configs))
+        run_args = BatchArgs(
+            recache_configs=False,
+            configs=dict(overrides.get("configs", self.filtered_configs)),
+        )
         run_args.test = overrides.get("test", self.test_check.isChecked())
         run_args.skip_confirm = overrides.get("skip_confirm", self.skip_confirm_check.isChecked())
         run_args.only_observers = overrides.get("only_observers", self.only_observers_check.isChecked())
@@ -758,13 +764,23 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         return run_duplicate_review_dialog(self, payload)
         
     def run_config(self, config: str):
-        """Run operations for a specific config"""
-        if not os.path.isdir(config):
-            self.alert("Error", _("Failed to set target directory to receive marked files."), "error")
+        """Run one config, leaving the filtered selection unchanged.
+
+        Returns the run id, or None if nothing was started.
+        """
+        if config not in self.batch_args.configs:
+            self.alert(_("Error"), _("Config not found: {0}").format(config), "error")
             return
-            
-        self.filtered_configs = {config: True}
-        self.run()
+        # run_config_file skips a YAML that says will_run: false, so an
+        # unchecked config would be a silent no-op.
+        if not self.batch_args.configs[config]:
+            self.alert(
+                _("Config not enabled"),
+                _("Check {0} to run it.").format(self._config_display_name(config)),
+                "warning",
+            )
+            return
+        return self.run(configs={config: True})
 
     def toast(self, message: str):
         """Show a toast notification"""

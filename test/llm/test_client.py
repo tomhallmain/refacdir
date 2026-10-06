@@ -8,7 +8,6 @@ Ollama server is required, and none of these should ever depend on one.
 from __future__ import annotations
 
 import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -102,11 +101,15 @@ def test_history_file_path_respects_cache_dir_override(tmp_path, monkeypatch):
     assert llm.prompt_response_history_file == str(tmp_path / "llm_prompt_response_history_unit-test.json")
 
 
-def test_history_file_path_falls_back_to_stable_absolute_default(monkeypatch):
+def test_history_file_path_falls_back_to_app_data_cache_dir(monkeypatch, tmp_path):
+    from refacdir.utils import app_paths
+
     monkeypatch.delenv("REFACDIR_CACHE_DIR", raising=False)
+    monkeypatch.setattr(app_paths, "app_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(app_paths, "_legacy_cache_files", lambda: [])
     llm = LLM(state_key="unit-test")
-    assert os.path.isabs(llm.prompt_response_history_file)
-    assert "unit-test" in llm.prompt_response_history_file
+    expected = tmp_path / "cache" / "llm_prompt_response_history_unit-test.json"
+    assert llm.prompt_response_history_file == str(expected)
 
 
 def test_history_file_path_sanitizes_state_key(monkeypatch, tmp_path):

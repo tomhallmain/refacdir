@@ -13,8 +13,6 @@ logger = setup_logger('app_info_cache')
 
 
 class AppInfoCache:
-    CACHE_LOC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app_info_cache.enc")
-    JSON_LOC = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), "app_info_cache.json")
     META_INFO_KEY = "info"
     DIRECTORIES_KEY = "directories"
     NUM_BACKUPS = 4  # Number of backup files to maintain
@@ -22,13 +20,9 @@ class AppInfoCache:
     def __init__(self):
         self._lock = threading.RLock()
         self._cache = {AppInfoCache.META_INFO_KEY: {}, AppInfoCache.DIRECTORIES_KEY: {}}
-        _override = refacdir_cache_dir()
-        self._cache_loc = (
-            os.path.join(_override, "app_info_cache.enc") if _override else self.CACHE_LOC
-        )
-        self._json_loc = (
-            os.path.join(_override, "app_info_cache.json") if _override else self.JSON_LOC
-        )
+        cache_dir = refacdir_cache_dir()
+        self._cache_loc = os.path.join(cache_dir, "app_info_cache.enc")
+        self._json_loc = os.path.join(cache_dir, "app_info_cache.json")
         self.load()
         self.validate()
 

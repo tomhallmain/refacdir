@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 
 from refacdir.utils.utils import Utils
@@ -218,21 +217,3 @@ class DirectoryObserver:
                 return
 
         logger.warning(f"No matching directory found for exclude directory {exclude_dir}")
-
-
-
-if __name__ == "__main__":
-    logger.info("Starting directory observation from command line")
-    observed_dirs_json = json.load(open("observed_directories.json"))
-    sortable_dirs = observed_dirs_json["sortable_dirs"]
-    extra_dirs = observed_dirs_json["extra_dirs"]
-    file_types = observed_dirs_json["file_types"] if "file_types" in observed_dirs_json else media_file_types
-    state_observer = DirectoryObserver(
-        name="StateObserver",
-        sortable_dirs=sortable_dirs,
-        extra_dirs=extra_dirs,
-        file_types=file_types
-    )
-    state_observer.observe()
-    state_observer.log()
-

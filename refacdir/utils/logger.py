@@ -2,10 +2,11 @@ import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-import platform
 import glob
 from datetime import datetime, timedelta
 from typing import List
+
+from refacdir.utils.app_paths import user_logs_dir
 
 # Global variable to track if the root logger has been configured
 _root_logger_configured = False
@@ -48,22 +49,8 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 def get_log_directory():
-    """Get the appropriate log directory based on the operating system."""
-    system = platform.system().lower()
-    
-    if system == 'windows':
-        # Use AppData\Local for Windows
-        appdata = os.getenv('LOCALAPPDATA')
-        if not appdata:
-            appdata = os.path.expanduser('~\\AppData\\Local')
-        log_dir = Path(appdata) / 'refacdir' / 'logs'
-    else:
-        # Use ~/.local/share for Linux/Mac
-        log_dir = Path.home() / '.local' / 'share' / 'refacdir' / 'logs'
-    
-    # Create directory if it doesn't exist
-    log_dir.mkdir(parents=True, exist_ok=True)
-    return log_dir
+    """Get the log directory under the per-user app data directory."""
+    return Path(user_logs_dir())
 
 def _cleanup_old_logs(log_dir: Path, logger: logging.Logger) -> None:
     """

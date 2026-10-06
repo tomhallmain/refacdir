@@ -5,13 +5,11 @@ __pycache__/
 *.pyc
 
 refacdir/backup/backup_failures.json
-configs/*
-!configs/config_example.json
-!configs/config_example.yaml
+# Legacy user configs location; the app moves its contents to the app data dir.
+configs/
 temp*
 test/backup/source
 do_refacdir.bat
-observed_directories.json
 app_info_cache*
 !app_info_cache.py
 

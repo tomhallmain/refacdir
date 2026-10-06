@@ -59,6 +59,36 @@ def noop_app_actions(session_batch_args):
     )
 
 
+class _InactivityShutdownStub:
+    def __init__(self, _window):
+        pass
+
+    def set_timeout_minutes(self, _minutes):
+        pass
+
+    def pause(self):
+        pass
+
+    def resume(self):
+        pass
+
+
+@pytest.fixture
+def main_window(qtbot, monkeypatch):
+    """MainWindow with network/server and restore paths stubbed out."""
+    import app_qt
+
+    monkeypatch.setattr(app_qt.MainWindow, "setup_server", lambda self: None)
+    monkeypatch.setattr(app_qt.MainWindow, "load_configs", lambda self: None)
+    monkeypatch.setattr(app_qt.MainWindow, "restore_ui_settings", lambda self: None)
+    monkeypatch.setattr(app_qt.MainWindow, "restore_window_geometry", lambda self: None)
+    monkeypatch.setattr(app_qt, "InactivityShutdown", _InactivityShutdownStub)
+
+    window = app_qt.MainWindow()
+    qtbot.addWidget(window)
+    return window
+
+
 def write_runnable_config(name: str, *, will_run: bool = True) -> str:
     """Write a minimal runnable YAML config under the isolated configs directory."""
     rel_path = f"configs/{name}"
