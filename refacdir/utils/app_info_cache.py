@@ -1,10 +1,10 @@
 import json
 import os
 import shutil
+import tempfile
 import threading
 
 from refacdir.lib.position_data import PositionData
-from refacdir.utils.cache_paths import refacdir_cache_dir
 from refacdir.utils.constants import AppInfo
 from refacdir.utils.encryptor import encrypt_data_to_file, decrypt_data_from_file
 from refacdir.utils.logger import setup_logger
@@ -16,59 +16,126 @@ class AppInfoCache:
     META_INFO_KEY = "info"
     DIRECTORIES_KEY = "directories"
     NUM_BACKUPS = 4  # Number of backup files to maintain
+    # The refacdir package dir. REFACDIR_CACHE_DIR overrides it.
+    DEFAULT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     def __init__(self):
         self._lock = threading.RLock()
-        self._cache = {AppInfoCache.META_INFO_KEY: {}, AppInfoCache.DIRECTORIES_KEY: {}}
-        cache_dir = refacdir_cache_dir()
+        self._cache = self._empty_cache()
+        # Set when cache files exist but none could be read. Storing would then
+        # replace the user's data with an empty cache, so store() refuses for
+        # the rest of the session and the files stay as they are.
+        self._store_blocked = False
+        # Set while the plaintext JSON cache on disk holds data not yet in the
+        # encrypted file (read by load() or written by store()'s fallback). The
+        # next successful encrypted store removes it; load() prefers the JSON
+        # file, so leaving it would let older data win.
+        self._plaintext_pending_removal = False
+        cache_dir = os.environ.get("REFACDIR_CACHE_DIR") or AppInfoCache.DEFAULT_DIR
         self._cache_loc = os.path.join(cache_dir, "app_info_cache.enc")
         self._json_loc = os.path.join(cache_dir, "app_info_cache.json")
         self.load()
         self.validate()
 
-    def store(self):
+    @staticmethod
+    def _empty_cache() -> dict:
+        return {AppInfoCache.META_INFO_KEY: {}, AppInfoCache.DIRECTORIES_KEY: {}}
+
+    def _encrypt_to_path_atomically(self, cache_data: bytes, destination: str) -> None:
+        """Encrypt to a temp file beside *destination*, then rename it into place.
+
+        Writing the destination directly truncates it first, so a crash
+        mid-write would leave an unreadable cache. The temp file shares the
+        destination's directory so the rename stays on one filesystem.
         """
-        Store the cache to disk with encryption.
-        Handles credential manager errors gracefully (e.g., on first run when keys don't exist yet).
+        destination_dir = os.path.dirname(destination) or "."
+        os.makedirs(destination_dir, exist_ok=True)
+        fd, temp_path = tempfile.mkstemp(
+            prefix=".app_info_cache_", suffix=".tmp", dir=destination_dir
+        )
+        os.close(fd)
+        try:
+            encrypt_data_to_file(
+                cache_data,
+                AppInfo.SERVICE_NAME,
+                AppInfo.APP_IDENTIFIER,
+                temp_path,
+            )
+            os.replace(temp_path, destination)
+        except Exception:
+            try:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            except OSError:
+                pass
+            raise
+
+    def _write_plaintext_atomically(self, destination: str) -> None:
+        """Write the cache as plain JSON via a temp file and rename."""
+        destination_dir = os.path.dirname(destination) or "."
+        os.makedirs(destination_dir, exist_ok=True)
+        fd, temp_path = tempfile.mkstemp(
+            prefix=".app_info_cache_", suffix=".tmp", dir=destination_dir
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(self._cache, f)
+            os.replace(temp_path, destination)
+        except Exception:
+            try:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            except OSError:
+                pass
+            raise
+
+    def store(self) -> bool:
+        """Persist the cache. Returns True if it was written encrypted.
+
+        If encryption fails, the cache is written as plain JSON instead so no
+        data is lost, and False is returned; the next successful encrypted
+        store removes the JSON file. Raises if that fallback fails too.
+
+        Returns False without writing when persistence is disabled or when
+        this session's load failed (see ``_store_blocked``).
         """
         with self._lock:
             if os.environ.get("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"):
                 logger.debug(
                     "Skipping persisted app info cache store (REFACDIR_DISABLE_APP_INFO_CACHE_LOAD is set)"
                 )
-                return
+                return False
+            if self._store_blocked:
+                logger.warning(
+                    f"Not storing app info cache: it failed to load this session and "
+                    f"writing would replace {self._cache_loc}"
+                )
+                return False
             try:
                 cache_data = json.dumps(self._cache).encode('utf-8')
-                encrypt_data_to_file(
-                    cache_data,
-                    AppInfo.SERVICE_NAME,
-                    AppInfo.APP_IDENTIFIER,
-                    self._cache_loc,
-                )
             except Exception as e:
-                # Check if it's a Windows Credential Manager error (credential not found)
-                # This can happen on first run when keys haven't been generated yet
-                # Error format: (1168, 'CredRead', 'Element not found.')
-                error_str = str(e)
-                error_repr = repr(e)
-                
-                # Check for Windows Credential Manager errors
-                is_cred_error = (
-                    'CredRead' in error_str or 
-                    'CredRead' in error_repr or
-                    'Element not found' in error_str or 
-                    '1168' in error_str or
-                    (isinstance(e, tuple) and len(e) >= 2 and 'CredRead' in str(e[1]))
-                )
-                
-                if is_cred_error:
-                    logger.debug(f"Credential manager error (likely first run): {e}. Keys will be generated on next access.")
-                    # Don't raise - this is expected on first run
-                    return
-                else:
-                    logger.error(f"Error storing cache: {e}")
-                    # Only raise for unexpected errors
-                    raise e
+                raise Exception("Error compiling app info cache") from e
+
+            try:
+                self._encrypt_to_path_atomically(cache_data, self._cache_loc)
+                if self._plaintext_pending_removal:
+                    self._plaintext_pending_removal = False
+                    if os.path.exists(self._json_loc):
+                        os.remove(self._json_loc)
+                        logger.info(f"Removed plaintext cache file: {self._json_loc}")
+                return True
+            except Exception as e:
+                # A Windows Credential Manager "not found" error (1168, 'CredRead')
+                # can occur the first time keys are created; the next store works.
+                logger.error(f"Error encrypting app info cache: {e}")
+
+            logger.warning(f"Falling back to plaintext app info cache: {self._json_loc}")
+            try:
+                self._write_plaintext_atomically(self._json_loc)
+            except Exception as e:
+                raise Exception("Error storing app info cache") from e
+            self._plaintext_pending_removal = True
+            return False
 
     def _try_load_cache_from_file(self, path):
         """Attempt to load and decrypt the cache from the given file path. Raises on failure."""
@@ -80,6 +147,12 @@ class AppInfoCache:
         return json.loads(encrypted_data.decode('utf-8'))
 
     def load(self):
+        """Load the cache, or start empty if there is none or it cannot be read.
+
+        Never raises: the singleton loads at import time, so an exception here
+        would stop the app from starting. An unreadable cache blocks ``store``
+        for the session instead.
+        """
         with self._lock:
             # Pytest sets REFACDIR_DISABLE_APP_INFO_CACHE_LOAD via test/conftest.py so imports
             # like ``batch`` → ``duplicate_remover`` do not read/write encrypted cache or touch
@@ -91,12 +164,15 @@ class AppInfoCache:
                 return
             try:
                 if os.path.exists(self._json_loc):
-                    logger.info(f"Removing old cache file: {self._json_loc}")
-                    # Get the old data first
+                    logger.info(f"Migrating plaintext cache file to encrypted store: {self._json_loc}")
                     with open(self._json_loc, "r", encoding="utf-8") as f:
                         self._cache = json.load(f)
-                    self.store() # store encrypted cache
-                    os.remove(self._json_loc)
+                    self._plaintext_pending_removal = True
+                    if not self.store():
+                        logger.warning(
+                            f"Encrypted store failed; keeping plaintext cache file until the "
+                            f"next successful encrypted store: {self._json_loc}"
+                        )
                     return
 
                 # Try encrypted cache and backups in order
@@ -126,8 +202,12 @@ class AppInfoCache:
                 # If we get here, all attempts failed (but at least one file existed)
                 raise Exception(f"Failed to load cache from all locations: {cache_paths}")
             except Exception as e:
-                logger.error(f"Error loading cache: {e}")
-                raise e
+                logger.error(
+                    f"Error loading cache, starting with an empty one and not saving "
+                    f"this session: {e}"
+                )
+                self._cache = self._empty_cache()
+                self._store_blocked = True
 
     def validate(self):
         with self._lock:

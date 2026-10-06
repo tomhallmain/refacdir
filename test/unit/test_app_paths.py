@@ -48,11 +48,12 @@ def test_cache_files_move_from_package_dir(fake_layout):
 
     moved = sorted(p.name for p in (data / "cache").iterdir())
     assert moved == [
-        "app_info_cache.enc",
-        "app_info_cache.enc.bak2",
         "filename_pattern_cache.enc",
         "llm_prompt_response_history_x.json",
     ]
+    # AppInfoCache keeps its files in the package dir.
+    assert (repo / "refacdir" / "app_info_cache.enc").exists()
+    assert (repo / "refacdir" / "app_info_cache.enc.bak2").exists()
     assert (repo / "refacdir" / "unrelated.json").exists()
 
 
@@ -133,11 +134,11 @@ def test_cache_dir_defaults_to_app_data_cache_and_migrates(fake_layout, monkeypa
     from refacdir.utils.cache_paths import refacdir_cache_dir, resolve_cache_file
 
     repo, data = fake_layout
-    (repo / "refacdir" / "app_info_cache.enc").write_text("x")
+    (repo / "refacdir" / "filename_pattern_cache.enc").write_text("x")
     monkeypatch.delenv("REFACDIR_CACHE_DIR", raising=False)
 
     assert refacdir_cache_dir() == str(data / "cache")
-    assert (data / "cache" / "app_info_cache.enc").exists()
+    assert (data / "cache" / "filename_pattern_cache.enc").exists()
     assert resolve_cache_file("f.json") == str(data / "cache" / "f.json")
 
 

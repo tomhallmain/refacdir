@@ -27,9 +27,6 @@ LEGACY_REPO_CONFIGS_DIR = os.path.join(REPO_ROOT, "configs")
 
 # Locations earlier versions wrote cache files to, relative to REPO_ROOT.
 _LEGACY_CACHE_PATTERNS = (
-    os.path.join("refacdir", "app_info_cache.enc"),
-    os.path.join("refacdir", "app_info_cache.enc.bak*"),
-    os.path.join("refacdir", "app_info_cache.json"),
     os.path.join("refacdir", "filename_pattern_cache.enc"),
     os.path.join("refacdir", "llm_prompt_response_history_*.json"),
 )
