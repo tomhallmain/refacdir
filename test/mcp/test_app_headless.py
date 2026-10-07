@@ -141,6 +141,16 @@ class TestRuns:
         release.set()
         assert _wait_for(lambda: len(started) == 2)
 
+    def test_duplicate_policy_reaches_the_run(self, session):
+        adapter, started = session
+        run_id = adapter.run_batch(test=False, only_observers=False, duplicate_policy="remove_all")
+        assert _wait_for(lambda: adapter.run_status(run_id)["run_state"] == "unknown")
+        assert started[0].duplicate_policy == "remove_all"
+
+        run_id = adapter.run_batch(test=False, only_observers=False)
+        assert _wait_for(lambda: adapter.run_status(run_id)["run_state"] == "unknown")
+        assert started[1].duplicate_policy == "cancel"
+
     def test_a_queued_run_keeps_its_own_flags(self, session, monkeypatch):
         """The queued run's test flag must not be taken from whatever ran first."""
         release = threading.Event()

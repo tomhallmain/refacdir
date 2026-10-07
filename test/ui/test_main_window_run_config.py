@@ -146,3 +146,22 @@ def test_finished_run_is_no_longer_cancellable(run_window):
 
     assert run_window.cancel_batch_runs()["cancelled_running"] is None
     assert not run_window.started_args[0].cancel_event.is_set()
+
+
+def test_mcp_run_declines_confirmation_without_a_dialog(run_window, monkeypatch):
+    monkeypatch.setattr(
+        run_window, "_show_confirm_dialog", lambda request: pytest.fail("dialog shown for an MCP run")
+    )
+    run_window.start_mcp_run(test=False, only_observers=False, duplicate_policy="remove_all")
+
+    args = run_window.started_args[0]
+    assert args.duplicate_policy == "remove_all"
+    assert args.app_actions.confirm("Confirm backup", "Run it?") is False
+
+
+def test_gui_run_confirms_through_the_window(run_window):
+    run_window.run()
+
+    args = run_window.started_args[0]
+    assert args.app_actions is run_window.app_actions
+    assert args.duplicate_policy is None

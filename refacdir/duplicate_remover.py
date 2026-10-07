@@ -10,6 +10,7 @@ from typing import Iterable
 
 from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.utils import Utils
+from refacdir.utils.confirm import confirm_action
 from refacdir.utils.translations import _
 from refacdir.utils.logger import setup_logger
 
@@ -200,20 +201,18 @@ class DuplicateRemover:
                 return
 
             self.handle_duplicates(testing=True)
-            confirm = input(_("Confirm all duplicates removal (Y/n): "))
-            if confirm.lower().strip() == "y":
+            title = _("Confirm duplicate removal")
+            if confirm_action(self.app_actions, title, _("Remove all duplicates listed above?")):
                 logger.info("User confirmed removal of all duplicates")
                 self.handle_duplicates(testing=False)
                 return
             logger.info("No change made.")
-            confirm = input(_("Remove duplicates with confirmation one by one? (Y/n): "))
-            if confirm.lower().strip() == "y":
+            if confirm_action(self.app_actions, title, _("Remove duplicates with confirmation one by one?")):
                 logger.info("User chose to remove duplicates with individual confirmation")
                 self.handle_duplicates(testing=False, skip_confirm=False)
                 return
             logger.info("No change made.")
-            confirm_report = input(_("Save duplicates report? (Y/n): "))
-            if confirm_report.lower() == "y":
+            if confirm_action(self.app_actions, title, _("Save duplicates report?")):
                 logger.info("User chose to save duplicates report")
                 self.save_report()
         else:
@@ -355,8 +354,14 @@ class DuplicateRemover:
                 if not skip_confirm:
                     logger.info("Keeping file:               " + best_duplicate)
                     logger.info("Removing duplicate files: " + str(duplicates_to_remove))
-                    confirm = input(_("OK to remove? (Y/n): "))
-                    if confirm.lower() != "y":
+                    if not confirm_action(
+                        self.app_actions,
+                        _("Confirm duplicate removal"),
+                        _("Keep {0} and remove {1} duplicate(s)?").format(
+                            best_duplicate, len(duplicates_to_remove)
+                        ),
+                        details="\n".join(duplicates_to_remove),
+                    ):
                         logger.info("User skipped removal of duplicates")
                         continue
                 self.remove_files(duplicates_to_remove)

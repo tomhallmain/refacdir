@@ -4,14 +4,14 @@ Most of AppActions is a presentation port: the batch layer calls it to tell the
 user something or to move a progress bar. Those have no meaning without a GUI,
 so here they become logging or no-ops.
 
-The rest is not presentation. ``review_duplicates`` asks a question and waits
-for the answer; ``get_batch_args`` and ``refresh_configs`` read and reshape real
-state. Stubbing those silently would let a caller believe work happened when it
+The rest is not presentation. ``review_duplicates`` and ``confirm`` ask a
+question and wait for the answer; ``get_batch_args`` and ``refresh_configs``
+read and reshape real state. Stubbing those silently would let a caller believe work happened when it
 did not, so each is handled explicitly:
 
-- ``review_duplicates`` returns the declining answer, the same value the Qt
-  dialog yields when it is dismissed. A caller that would otherwise block on a
-  person gets "no" rather than a wait that never ends.
+- ``review_duplicates`` and ``confirm`` return the declining answer, the same
+  value the Qt dialog yields when it is dismissed. A caller that would
+  otherwise block on a person gets "no" rather than a wait that never ends.
 - The domain actions must be supplied by the caller. An unsupplied one raises
   when called, naming itself, rather than returning a plausible None.
 
@@ -47,6 +47,7 @@ NOOP_ACTIONS = ("progress_bar_update", "progress_bar_reset")
 # duplicate scan still runs and reports, and removes nothing.
 NEUTRAL_RETURN_ACTIONS: Dict[str, Any] = {
     "review_duplicates": {"action": "cancel", "files": []},
+    "confirm": False,
 }
 
 # Not presentation: these read or reshape real state and must come from the
@@ -76,8 +77,12 @@ def _noop_stub(name: str) -> Callable[..., Any]:
 
 
 def _neutral_stub(name: str, value: Any) -> Callable[..., Any]:
-    def _neutral(*_args, **_kwargs):
-        logger.debug("neutral return for %s: %r", name, value)
+    def _neutral(*args, **kwargs):
+        if name == "confirm":
+            title = args[0] if args else kwargs.get("title", "")
+            logger.info('Declined confirmation "%s": nobody to ask', title)
+        else:
+            logger.debug("neutral return for %s: %r", name, value)
         # A fresh copy per call: the stored value is mutable, and a caller that
         # edited what it got back would change every later answer.
         return copy.deepcopy(value)

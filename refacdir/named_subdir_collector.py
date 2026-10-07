@@ -17,6 +17,7 @@ from pathlib import Path
 
 from refacdir.file_renamer import FileRenamer
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.confirm import confirm_action
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 
@@ -120,6 +121,7 @@ class NamedSubdirCollector:
         skip_confirm: bool = False,
         clear_sources: bool = True,
         subdir_depth: int = 1,
+        app_actions=None,
     ):
         """
         :param test: If True, dry-run only (no moves, no mkdir beyond reads, no clearing sources).
@@ -138,6 +140,7 @@ class NamedSubdirCollector:
         self.skip_confirm = skip_confirm
         self.clear_sources = clear_sources
         self.subdir_depth = subdir_depth
+        self.app_actions = app_actions
 
     def _collect_work(self) -> tuple[list[tuple[str, str]], set[str]]:
         """
@@ -222,11 +225,15 @@ class NamedSubdirCollector:
         logger.info(
             f"{self.name}: collecting {len(work_items)} file(s) into bucket folders at {self.root}"
         )
-        if not self.skip_confirm:
-            confirm = input(_("Confirm named subdir collection (y/n): "))
-            if confirm.lower() != "y":
-                logger.info("Operation cancelled by user")
-                return
+        if not self.skip_confirm and not confirm_action(
+            self.app_actions,
+            _("Confirm named subdir collection"),
+            _('"{0}": move {1} file(s) into folders {2} under {3}?').format(
+                self.name, len(work_items), ", ".join(self.subdir_names), self.root
+            ),
+        ):
+            logger.info("Operation cancelled by user")
+            return
 
         for label in self.subdir_names:
             os.makedirs(os.path.join(self.root, label), exist_ok=True)

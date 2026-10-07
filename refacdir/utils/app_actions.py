@@ -16,6 +16,7 @@ class AppActions:
         "progress_bar_reset",
         "refresh_configs",
         "review_duplicates",
+        "confirm",
         "get_batch_args",
     }
     

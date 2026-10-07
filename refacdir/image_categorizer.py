@@ -2,6 +2,7 @@ import os
 import sys
 
 from refacdir.config import config
+from refacdir.utils.confirm import confirm_action
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
@@ -31,10 +32,11 @@ class ImageCategorizer:
     '''
     def __init__(self, name="Image Categorizer", test=False, skip_confirm=False, source_dir=".", exclude_dirs=[],
                  file_types=[".png", ".jpg", ".jpeg"], categories=["art", "photograph"],
-                 recursive=True):
+                 recursive=True, app_actions=None):
         self.name = name
         self.test = test
         self.skip_confirm = skip_confirm
+        self.app_actions = app_actions
         self.source_dir = source_dir
         self.file_types = file_types
         self.categories = categories
@@ -97,15 +99,15 @@ class ImageCategorizer:
             return
 
         logger.info(f"{self.name}: categorizing {len(planned)} image(s) under {self.source_dir}")
-        if not self.skip_confirm:
-            confirm = input(
-                _("Confirm categorization of {0} image(s) into {1} categories (y/n): ").format(
-                    len(planned), len(self.categories)
-                )
-            )
-            if confirm.lower() != "y":
-                logger.info("Operation cancelled by user")
-                return
+        if not self.skip_confirm and not confirm_action(
+            self.app_actions,
+            _("Confirm image categorization"),
+            _('"{0}": move {1} image(s) under {2} into categories {3}?').format(
+                self.name, len(planned), self.source_dir, ", ".join(self.categories)
+            ),
+        ):
+            logger.info("Operation cancelled by user")
+            return
 
         for category in self.categories:
             os.makedirs(os.path.join(self.source_dir, category), exist_ok=True)

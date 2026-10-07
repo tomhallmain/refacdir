@@ -13,7 +13,8 @@ answer:
     list_configs()                     -> [{"path", "basename", "will_run"}]
     read_config(path)                  -> the parsed YAML, as a dict
     set_config_enabled(path, enabled)  -> the new will_run state
-    run_batch(test, only_observers)    -> the run id the client should keep
+    run_batch(test, only_observers, duplicate_policy)
+                                       -> the run id the client should keep
     cancel_batch()                     -> {"cancelled_queued": int, "cancelled_running": run_id | None}
     run_status(run_id)                 -> {"running", "running_id", "queued", ...}
     job_history(limit)                 -> recorded jobs, newest first
@@ -23,10 +24,13 @@ The session is resolved fresh on every call, never cached. The window it
 belongs to can be closed while this server's thread is still alive, and a
 captured reference would go on answering for something that no longer exists.
 
-Whatever supplies a session is responsible for making it answer safely: an
-MCP-initiated run must never reach a modal dialog or a stdin prompt, so the
-session sets ``skip_confirm`` and supplies a ``review_duplicates`` that
-declines rather than waits. This module does no thread-marshaling of its own.
+A live run is approved once, here, before it starts: ``run_batch`` asks the
+client through MCP elicitation, and a client that cannot be asked gets the run
+without the question. Whatever supplies a session is responsible for the rest:
+an MCP-initiated run must never reach a stdin prompt or a dialog in a window,
+so the session sets ``skip_confirm`` and supplies ``confirm`` and
+``review_duplicates`` that decline rather than wait. This module does no
+thread-marshaling of its own.
 
 Three tools need no session at all -- describing, validating and previewing an
 action are pure functions over the action's own schema -- so they answer even
@@ -68,6 +72,14 @@ HISTORY_LIMIT = 20
 #: renamer run can record thousands; the mapping-group summary carries the
 #: shape of the job, and this is a sample rather than the record.
 JOB_OPERATION_SAMPLE = 25
+
+#: ``run_batch``'s ``duplicate_policy`` values, for a live run: keep the
+#: duplicates the remover finds, or remove them.
+DUPLICATE_POLICIES = ("cancel", "remove_all")
+
+#: Answers to the live-run approval question. A client without elicitation
+#: support is not asked, and its live run proceeds.
+APPROVED, DECLINED, CANNOT_ASK = "accept", "decline", "unsupported"
 
 #: Tools answerable without a session, because they only read an action type's
 #: own schema. Kept as data so ``dispatch`` resolves a session for everything
@@ -159,7 +171,11 @@ def tool_descriptors() -> list:
                 "is accepted, not when it has finished -- poll run_status with "
                 "the run_id this returns. Defaults to a dry run that reports "
                 "what would happen and changes nothing; pass test=false to act "
-                "for real, which can move and delete files."
+                "for real, which can move and delete files. A live run is first "
+                "put to the user for approval when the client supports asking; "
+                "declined, nothing starts. duplicate_policy applies to live "
+                "runs: cancel (default) finds duplicates and keeps them, "
+                "remove_all removes them."
             ),
         },
         {
@@ -348,7 +364,14 @@ class MCPServerExtension:
             test = arguments.get("test")
             test = True if test is None else bool(test)
             only_observers = bool(arguments.get("only_observers", False))
-            run_id = session.run_batch(test=test, only_observers=only_observers)
+            duplicate_policy = arguments.get("duplicate_policy") or "cancel"
+            if duplicate_policy not in DUPLICATE_POLICIES:
+                raise MCPToolError(
+                    f"duplicate_policy must be one of {', '.join(DUPLICATE_POLICIES)}"
+                )
+            run_id = session.run_batch(
+                test=test, only_observers=only_observers, duplicate_policy=duplicate_policy
+            )
             return {"run_id": run_id, "status": "accepted", "test": test}
         if tool_name == "cancel_batch":
             return session.cancel_batch()
@@ -455,6 +478,63 @@ class MCPServerExtension:
             return default
         return value if value > 0 else default
 
+    def run_batch_approval_message(self, duplicate_policy: str = "cancel") -> str:
+        """What a live run would do, for the client to put to the user."""
+        session = self._resolve_session()
+        lines = ["Run these configs live? Files may be moved, renamed or deleted."]
+        for entry in session.list_configs():
+            if not entry.get("selected_for_run", entry.get("will_run")):
+                continue
+            lines.append(f"- {entry['basename']}")
+            try:
+                actions = (session.read_config(entry["path"]) or {}).get("actions") or []
+            except Exception as e:
+                lines.append(f"    (could not read: {e})")
+                continue
+            for action in actions:
+                names = [
+                    str(m.get("name", "?")) for m in action.get("mappings") or [] if isinstance(m, dict)
+                ]
+                lines.append(f"    {action.get('type', '?')}: {', '.join(names)}")
+        lines.append(f"Duplicate policy: {duplicate_policy}")
+        return "\n".join(lines)
+
+    def apply_run_approval(self, arguments: dict, answer: str) -> dict:
+        """Start the live run *arguments* describe, given the client's *answer*."""
+        if answer == CANNOT_ASK:
+            logger.info("MCP client cannot be asked to approve; starting the live run")
+        elif answer != APPROVED:
+            raise MCPToolError("The live run was declined; nothing was started.")
+        return self.dispatch("run_batch", arguments)
+
+    @staticmethod
+    def _client_supports_elicitation(ctx) -> bool:
+        params = getattr(getattr(ctx, "session", None), "client_params", None)
+        capabilities = getattr(params, "capabilities", None)
+        return getattr(capabilities, "elicitation", None) is not None
+
+    async def _ask_to_approve(self, ctx, message: str) -> str:
+        """Put *message* to the user through the client. Returns an approval answer.
+
+        A failed elicitation from a client that advertised support counts as a
+        decline, not as a client that cannot be asked.
+        """
+        if not self._client_supports_elicitation(ctx):
+            return CANNOT_ASK
+        from pydantic import BaseModel, Field
+
+        class Approval(BaseModel):
+            approve: bool = Field(description="Run this batch for real")
+
+        try:
+            result = await ctx.elicit(message=message, schema=Approval)
+        except Exception as e:
+            logger.warning(f"Live run approval failed: {e}")
+            return DECLINED
+        if result.action == "accept" and getattr(result.data, "approve", False):
+            return APPROVED
+        return DECLINED
+
     def read_resource(self, name: str) -> dict:
         """Read one resource by name. The counterpart to ``dispatch``.
 
@@ -543,6 +623,8 @@ class MCPServerExtension:
         would have no way to call it properly. Descriptions come from
         ``tool_descriptors`` so the catalogue stays the one place they are said.
         """
+        from mcp.server import Context
+
         described = {d["name"]: d["description"] for d in tool_descriptors()}
 
         @server.tool(name="list_configs", description=described["list_configs"])
@@ -578,10 +660,22 @@ class MCPServerExtension:
             )
 
         @server.tool(name="run_batch", description=described["run_batch"])
-        def run_batch(test: bool = True, only_observers: bool = False) -> dict:
-            return self.dispatch(
-                "run_batch", {"test": test, "only_observers": only_observers}
-            )
+        async def run_batch(
+            ctx: Context,
+            test: bool = True,
+            only_observers: bool = False,
+            duplicate_policy: str = "cancel",
+        ) -> dict:
+            arguments = {
+                "test": test,
+                "only_observers": only_observers,
+                "duplicate_policy": duplicate_policy,
+            }
+            if test:
+                return self.dispatch("run_batch", arguments)
+            message = self.run_batch_approval_message(duplicate_policy)
+            answer = await self._ask_to_approve(ctx, message)
+            return self.apply_run_approval(arguments, answer)
 
         @server.tool(name="cancel_batch", description=described["cancel_batch"])
         def cancel_batch() -> dict:

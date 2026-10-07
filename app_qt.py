@@ -67,6 +67,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     alert_signal = Signal(str, str, str)  # title, message, kind
     refresh_configs_signal = Signal()
     review_duplicates_signal = Signal(object, object)
+    confirm_signal = Signal(object, object)
     mcp_call_signal = Signal(object)
     
     def __init__(self):
@@ -105,9 +106,13 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             "progress_bar_reset": self.progress_bar_reset,
             "refresh_configs": self.refresh_configs,
             "review_duplicates": self.review_duplicates,
+            "confirm": self.confirm,
             "get_batch_args": lambda: self.batch_args,
         }
         self.app_actions = AppActions(app_actions)
+        # Runs started over MCP never ask in the window: they were approved, or
+        # not, by the MCP client before starting.
+        self._mcp_run_app_actions = AppActions(app_actions | {"confirm": self._decline_for_mcp_run})
         
         # Connect signals to slots
         self.progress_text_signal.connect(self._progress_text)
@@ -116,6 +121,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.alert_signal.connect(self._show_alert)
         self.refresh_configs_signal.connect(self._refresh_configs)
         self.review_duplicates_signal.connect(self._handle_review_duplicates_request)
+        self.confirm_signal.connect(self._handle_confirm_request)
         self.mcp_call_signal.connect(self._handle_mcp_call)
         
         self.setup_ui()
@@ -560,7 +566,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         run_args.persist_definition_caches_across_batch_runs = (
             self.persist_definition_caches_check.isChecked()
         )
-        run_args.app_actions = self.app_actions
+        run_args.duplicate_policy = overrides.get("duplicate_policy")
+        run_args.app_actions = self._mcp_run_app_actions if overrides.get("mcp") else self.app_actions
         self._running_batch_args = run_args
 
         # Show progress bar
@@ -632,18 +639,20 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         finally:
             context["event"].set()
 
-    def start_mcp_run(self, test: bool, only_observers: bool) -> str:
+    def start_mcp_run(self, test: bool, only_observers: bool, duplicate_policy: str = "cancel") -> str:
         """Accept a run from the MCP front end and return its id. GUI thread only.
 
-        Confirmation is forced off. An MCP-initiated run has nobody at the
-        keyboard, and the prompts the action modules would otherwise raise
-        block on stdin or on a modal dialog nobody is watching.
+        Confirmation is forced off: the MCP client approved the run before
+        starting it. An action whose YAML insists on confirming is declined
+        rather than asked about in the window.
         """
         run_id = JobQueue.new_run_id()
         self._run_overrides[run_id] = {
             "test": bool(test),
             "only_observers": bool(only_observers),
             "skip_confirm": True,
+            "duplicate_policy": duplicate_policy,
+            "mcp": True,
         }
         if self.job_queue.job_running or self.progress_bar.isVisible():
             try:
@@ -773,6 +782,59 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             context["result"] = {"action": "cancel", "files": []}
         finally:
             context["event"].set()
+
+    def confirm(self, title: str, message: str, details=None, acknowledgement=None) -> bool:
+        """Ask the person to confirm an action. Thread-safe: from the batch
+        worker thread it marshals to the GUI thread and waits for the answer."""
+        request = {
+            "title": title,
+            "message": message,
+            "details": details,
+            "acknowledgement": acknowledgement,
+        }
+        if QThread.currentThread() is QApplication.instance().thread():
+            return self._show_confirm_dialog(request)
+
+        self.progress_text(_("Waiting for confirmation: {0}").format(title))
+        context = {"event": threading.Event(), "result": False}
+        self.confirm_signal.emit(request, context)
+        context["event"].wait()
+        return context["result"]
+
+    def _handle_confirm_request(self, request: dict, context: dict):
+        """Show a confirmation requested from the worker thread (GUI thread)."""
+        try:
+            context["result"] = self._show_confirm_dialog(request)
+        except Exception as exc:
+            logger.error(f"Confirmation dialog failed: {exc}")
+            context["result"] = False
+        finally:
+            context["event"].set()
+
+    def _show_confirm_dialog(self, request: dict) -> bool:
+        """Yes/No, defaulting to No; closing the dialog answers No. With an
+        acknowledgement, Yes stays disabled until its checkbox is ticked."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle(request["title"])
+        box.setText(request["message"])
+        if request["details"]:
+            box.setDetailedText(request["details"])
+        box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        box.setDefaultButton(QMessageBox.No)
+        box.setEscapeButton(QMessageBox.No)
+        if request["acknowledgement"]:
+            yes_button = box.button(QMessageBox.Yes)
+            yes_button.setEnabled(False)
+            checkbox = QCheckBox(request["acknowledgement"])
+            checkbox.toggled.connect(yes_button.setEnabled)
+            box.setCheckBox(checkbox)
+        box.exec()
+        return box.clickedButton() is box.button(QMessageBox.Yes)
+
+    def _decline_for_mcp_run(self, title: str, message: str, details=None, acknowledgement=None) -> bool:
+        logger.info(f'Declined confirmation "{title}" for an MCP run: MCP runs do not ask in the window')
+        return False
 
     def _show_duplicate_review(self, payload: dict) -> dict:
         if payload.get("total_duplicate_files", 0) == 0:

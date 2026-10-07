@@ -39,6 +39,7 @@ import zipfile
 
 from refacdir.backup.backup_mapping import remove_file
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.confirm import confirm_action
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 
@@ -143,6 +144,7 @@ class ArchiveExtractor:
         delete_sources: bool = False,
         test: bool = False,
         skip_confirm: bool = False,
+        app_actions=None,
     ):
         """
         :param pattern: fnmatch pattern tested against each archive's filename.
@@ -161,6 +163,7 @@ class ArchiveExtractor:
         self.delete_sources = delete_sources
         self.test = test
         self.skip_confirm = skip_confirm
+        self.app_actions = app_actions
 
     def find_archives(self) -> list:
         """ZIP paths under ``search_dir`` matching ``pattern``, with the target tree skipped."""
@@ -295,15 +298,18 @@ class ArchiveExtractor:
             f"{self.name}: extracting {len(planned)} file(s) from {archive_count} archive(s) "
             f"into {self.target_dir}"
         )
-        if not self.skip_confirm:
-            confirm = input(
-                _("Confirm extraction of {0} file(s) from {1} archive(s) into {2} (y/n): ").format(
-                    len(planned), archive_count, self.target_dir
-                )
-            )
-            if confirm.lower() != "y":
-                logger.info("Operation cancelled by user")
-                return
+        if not self.skip_confirm and not confirm_action(
+            self.app_actions,
+            _("Confirm archive extraction"),
+            _('"{0}": extract {1} file(s) from {2} archive(s) into {3}?').format(
+                self.name, len(planned), archive_count, self.target_dir
+            ),
+            details=(
+                _("Source archives will be deleted afterwards.") if self.delete_sources else None
+            ),
+        ):
+            logger.info("Operation cancelled by user")
+            return
 
         os.makedirs(self.target_dir, exist_ok=True)
         extracted = 0

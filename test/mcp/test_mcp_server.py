@@ -10,6 +10,9 @@ this is the rest.
 import pytest
 
 from extensions.mcp_server import (
+    APPROVED,
+    CANNOT_ASK,
+    DECLINED,
     HISTORY_LIMIT,
     SESSIONLESS_TOOLS,
     MCPServerExtension,
@@ -25,6 +28,7 @@ class Recorder:
 
     def __init__(self):
         self.calls = []
+        self.duplicate_policies = []
 
     def list_configs(self):
         self.calls.append(("list_configs",))
@@ -42,8 +46,9 @@ class Recorder:
             raise FileNotFoundError(path)
         return enabled
 
-    def run_batch(self, test, only_observers):
+    def run_batch(self, test, only_observers, duplicate_policy):
         self.calls.append(("run_batch", test, only_observers))
+        self.duplicate_policies.append(duplicate_policy)
         return "run-id-1"
 
     def cancel_batch(self):
@@ -373,3 +378,113 @@ class TestLifecycle:
         server, _ = make_server()
         server.stop()
         assert server.is_running() is False
+
+
+class TestDuplicatePolicy:
+    def test_defaults_to_cancel(self):
+        server, recorder = make_server()
+        server.dispatch("run_batch", {"test": False})
+        assert recorder.duplicate_policies == ["cancel"]
+
+    def test_remove_all_passes_through(self):
+        server, recorder = make_server()
+        server.dispatch("run_batch", {"test": False, "duplicate_policy": "remove_all"})
+        assert recorder.duplicate_policies == ["remove_all"]
+
+    def test_unknown_policy_is_refused(self):
+        server, recorder = make_server()
+        with pytest.raises(MCPToolError, match="duplicate_policy"):
+            server.dispatch("run_batch", {"test": False, "duplicate_policy": "keep_newest"})
+        assert recorder.duplicate_policies == []
+
+
+class SessionWithActions(Recorder):
+    def list_configs(self):
+        return [
+            {"path": "configs/a.yaml", "basename": "a.yaml", "will_run": True, "selected_for_run": True},
+            {"path": "configs/b.yaml", "basename": "b.yaml", "will_run": True, "selected_for_run": False},
+        ]
+
+    def read_config(self, path):
+        return {"actions": [{"type": "BACKUP", "mappings": [{"name": "photos"}, {"name": "docs"}]}]}
+
+
+class TestLiveRunApproval:
+    def test_approved_run_starts(self):
+        server, recorder = make_server()
+        result = server.apply_run_approval({"test": False}, APPROVED)
+        assert result["status"] == "accepted"
+        assert ("run_batch", False, False) in recorder.calls
+
+    def test_declined_run_does_not_start(self):
+        server, recorder = make_server()
+        with pytest.raises(MCPToolError, match="declined"):
+            server.apply_run_approval({"test": False}, DECLINED)
+        assert not any(call[0] == "run_batch" for call in recorder.calls)
+
+    def test_client_that_cannot_be_asked_gets_the_run(self):
+        server, recorder = make_server()
+        result = server.apply_run_approval({"test": False}, CANNOT_ASK)
+        assert result["status"] == "accepted"
+
+    def test_message_lists_selected_configs_actions_and_mappings(self):
+        server, _ = make_server(session=SessionWithActions())
+        message = server.run_batch_approval_message("remove_all")
+        assert "a.yaml" in message
+        assert "b.yaml" not in message
+        assert "BACKUP: photos, docs" in message
+        assert "remove_all" in message
+
+
+class _FakeElicitResult:
+    def __init__(self, action, approve):
+        self.action = action
+        self.data = type("Data", (), {"approve": approve})()
+
+
+class _FakeContext:
+    """Stands in for the SDK's Context: capabilities plus an elicit coroutine."""
+
+    def __init__(self, supports=True, action="accept", approve=True, raises=None):
+        capabilities = type("Caps", (), {"elicitation": object() if supports else None})()
+        params = type("Params", (), {"capabilities": capabilities})()
+        self.session = type("Session", (), {"client_params": params})()
+        self._result = _FakeElicitResult(action, approve)
+        self._raises = raises
+        self.messages = []
+
+    async def elicit(self, message, schema):
+        self.messages.append(message)
+        if self._raises:
+            raise self._raises
+        return self._result
+
+
+class TestAskToApprove:
+    @pytest.fixture(autouse=True)
+    def _needs_pydantic(self):
+        pytest.importorskip("pydantic")
+
+    def _ask(self, ctx):
+        import asyncio
+
+        server, _ = make_server()
+        return asyncio.run(server._ask_to_approve(ctx, "Run it?"))
+
+    def test_client_without_elicitation_is_not_asked(self):
+        ctx = _FakeContext(supports=False)
+        assert self._ask(ctx) == CANNOT_ASK
+        assert ctx.messages == []
+
+    def test_accepted_with_approve_is_approved(self):
+        assert self._ask(_FakeContext()) == APPROVED
+
+    def test_accepted_without_approve_is_declined(self):
+        assert self._ask(_FakeContext(approve=False)) == DECLINED
+
+    @pytest.mark.parametrize("action", ["decline", "cancel"])
+    def test_decline_and_cancel_are_declined(self, action):
+        assert self._ask(_FakeContext(action=action)) == DECLINED
+
+    def test_failed_elicitation_is_declined(self):
+        assert self._ask(_FakeContext(raises=RuntimeError("transport closed"))) == DECLINED

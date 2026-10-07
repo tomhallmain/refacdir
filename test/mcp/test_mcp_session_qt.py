@@ -50,14 +50,16 @@ class FakeWindow:
         self.job_queue = JobQueue()
         self.gui_calls = 0
         self.mcp_runs = []
+        self.duplicate_policies = []
         self.cancelled = 0
 
     def run_on_gui_thread(self, func, timeout=30.0):
         self.gui_calls += 1
         return func()
 
-    def start_mcp_run(self, test, only_observers):
+    def start_mcp_run(self, test, only_observers, duplicate_policy):
         self.mcp_runs.append((test, only_observers))
+        self.duplicate_policies.append(duplicate_policy)
         return "run-id-1"
 
     def cancel_batch_runs(self):
@@ -169,6 +171,12 @@ class TestRuns:
         adapter, window = session
         assert adapter.run_batch(test=False, only_observers=True) == "run-id-1"
         assert window.mcp_runs == [(False, True)]
+
+    def test_run_batch_passes_the_duplicate_policy(self, session):
+        adapter, window = session
+        adapter.run_batch(test=False, only_observers=False, duplicate_policy="remove_all")
+        adapter.run_batch(test=False, only_observers=False)
+        assert window.duplicate_policies == ["remove_all", "cancel"]
 
     def test_run_batch_is_marshalled(self, session):
         adapter, window = session

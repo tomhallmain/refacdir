@@ -54,6 +54,7 @@ def noop_app_actions(session_batch_args):
             "progress_bar_reset": _noop,
             "refresh_configs": _noop,
             "review_duplicates": lambda _payload: {"action": "cancel", "files": []},
+            "confirm": lambda *_args, **_kwargs: False,
             "get_batch_args": lambda: session_batch_args,
         }
     )

@@ -67,3 +67,24 @@ def test_construct_duplicate_remover_takes_test_from_the_batch():
         {"name": "direct", "source_dirs": ["C:/tmp/a"], "test": False}
     )
     assert live.test is False
+
+
+def _remover_for_policy(policy):
+    from refacdir.batch import BatchJob, BatchArgs
+
+    args = BatchArgs()
+    args.test = False
+    args.duplicate_policy = policy
+    job = BatchJob(args)
+    return job.construct_duplicate_remover(
+        {"name": "direct", "source_dirs": ["C:/tmp/a"], "skip_confirm": True}
+    )
+
+
+def test_duplicate_policy_cancel_keeps_duplicates_on_a_live_run():
+    assert _remover_for_policy("cancel").test is True
+
+
+def test_duplicate_policy_remove_all_and_none_leave_a_live_run_live():
+    assert _remover_for_policy("remove_all").test is False
+    assert _remover_for_policy(None).test is False

@@ -1,4 +1,5 @@
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.confirm import confirm_action
 from refacdir.utils.translations import _
 
 # Set up logger for backup manager
@@ -65,8 +66,10 @@ class BackupManager:
             self._job_progress(1.0)
             return
 
-        if not self.skip_confirm:
-            self.confirm_backups()
+        if not self.skip_confirm and not self.confirm_backups(runnable):
+            logger.info("Backup cancelled by user; no change made.")
+            self._job_progress(1.0)
+            return
 
         for i, mapping in enumerate(runnable):
 
@@ -106,13 +109,19 @@ class BackupManager:
             self._job_progress(self._mapping_job_fraction(i, m, 1.0))
             mapping.report_failures()
 
-    def confirm_backups(self):
-        confirm = input(_("\nCONFIRM BACKUP (y/n): "))
-        if not confirm.lower() == "y":
-            logger.info("No change made.")
-            exit()
-        confirm = input(_("\nCONFIRM BACKUP AGAIN (y/n): "))
-        if not confirm.lower() == "y":
-            logger.info("No change made.")
-            exit()
-        logger.info("\nConfirmations received, running full backups.")
+    def confirm_backups(self, mappings) -> bool:
+        """Ask once, listing *mappings*; dry runs ask too. True to proceed."""
+        if self.test:
+            message = _('"{0}": dry run of {1} backup mapping(s)?')
+        else:
+            message = _('"{0}": run {1} backup mapping(s)? Files will be copied, moved or removed.')
+        confirmed = confirm_action(
+            self.app_actions,
+            _("Confirm backup"),
+            message.format(self.name, len(mappings)),
+            details="\n".join(str(mapping) for mapping in mappings),
+            acknowledgement=_("I have checked these mappings"),
+        )
+        if confirmed:
+            logger.info("Confirmation received, running backups.")
+        return confirmed

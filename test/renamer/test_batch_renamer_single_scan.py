@@ -11,6 +11,8 @@ which are wrapped into a callable matcher) that meant a matcher already known
 to be expensive could run twice over the same file.
 """
 
+import pytest
+
 from refacdir.batch_renamer import BatchRenamer, Location
 from refacdir.filename_ops import FilenameMappingDefinition
 
@@ -100,13 +102,16 @@ def test_no_files_found_scans_once_and_does_not_prompt(tmp_path):
     mappings = FilenameMappingDefinition.construct_mappings(
         [{"search_patterns": matcher, "rename_tag": "seen_"}]
     )
+    class _NeverAsked:
+        def confirm(self, *args, **kwargs):
+            pytest.fail("execute() reached the confirmation prompt")
+
     br = BatchRenamer(
         "unit", mappings, [Location(str(tmp_path))],
-        test=False, skip_confirm=False, recursive=False,
+        test=False, skip_confirm=False, recursive=False, app_actions=_NeverAsked(),
     )
-    # skip_confirm=False would block on input() if execute() reached the
-    # confirmation prompt; returning from this call at all (no hang, no
-    # exception) confirms the "no files found" path returned before prompting.
+    # With skip_confirm=False, reaching the prompt calls _NeverAsked.confirm;
+    # the "no files found" path must return before that.
     br.rename_by_ctime()
 
     assert len(matcher.calls) == 1

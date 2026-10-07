@@ -44,6 +44,10 @@ class BatchArgs:
         self.backup_warn_duplicates = False
         self.backup_mapping_will_run_default = True
         self.renamer_mapping_will_run_default = True
+        # MCP's duplicate_policy for a live run: "cancel" keeps duplicates (the
+        # remover only finds and logs them), "remove_all" removes them. None
+        # leaves the remover's own confirmation and skip_confirm in charge.
+        self.duplicate_policy = None
         # Set from another thread to stop a run in flight. BatchJob checks it
         # before each config, action and mapping, so the mapping in progress
         # finishes first.
@@ -210,6 +214,7 @@ class BatchJob:
         self.failures = []
         self.test = args.test
         self.skip_confirm = args.skip_confirm
+        self.duplicate_policy = getattr(args, "duplicate_policy", None)
         self.backup_overwrite = args.backup_overwrite
         self.backup_warn_duplicates = args.backup_warn_duplicates
         self.backup_mapping_will_run_default = args.backup_mapping_will_run_default
@@ -564,6 +569,9 @@ class BatchJob:
         use_hash_cache = Utils.get_from_dict(yaml_dict, "use_hash_cache", True)
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        if not test and self.duplicate_policy == "cancel":
+            logger.info(f"Duplicate remover {name}: duplicate_policy is cancel, keeping duplicates")
+            test = True
         logger.info(f"Constructing duplicate remover: {name} with {len(source_dirs)} source directories")
         return DuplicateRemover(
             name,
@@ -627,6 +635,7 @@ class BatchJob:
             recursive=recursive,
             make_dirs=make_dirs,
             find_unused_filenames=find_unused_filenames,
+            app_actions=self.app_actions,
         )
         return renamer, renamer_function
 
@@ -659,7 +668,9 @@ class BatchJob:
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         logger.info(f"Constructing directory flattener: {name} with {len(search_patterns)} search patterns")
-        return DirectoryFlattener(name, location, search_patterns, test=test, skip_confirm=skip_confirm)
+        return DirectoryFlattener(
+            name, location, search_patterns, test=test, skip_confirm=skip_confirm, app_actions=self.app_actions
+        )
 
     def construct_backup(self, yaml_dict={}):
         """
@@ -802,6 +813,7 @@ class BatchJob:
             categories=categories,
             skip_confirm=skip_confirm,
             recursive=recursive,
+            app_actions=self.app_actions,
         )
 
     def construct_named_subdir_collector(self, yaml_dict={}):
@@ -849,6 +861,7 @@ class BatchJob:
             skip_confirm=skip_confirm,
             clear_sources=clear_sources,
             subdir_depth=subdir_depth,
+            app_actions=self.app_actions,
         )
 
     def construct_archive_extractor(self, yaml_dict={}):
@@ -910,6 +923,7 @@ class BatchJob:
             delete_sources=delete_sources,
             test=test,
             skip_confirm=skip_confirm,
+            app_actions=self.app_actions,
         )
 
 

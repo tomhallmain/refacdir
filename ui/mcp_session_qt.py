@@ -93,9 +93,11 @@ class QtMainWindowMCPSession:
     # ------------------------------------------------------------------
     # Runs
     # ------------------------------------------------------------------
-    def run_batch(self, test: bool, only_observers: bool) -> str:
+    def run_batch(self, test: bool, only_observers: bool, duplicate_policy: str = "cancel") -> str:
         return self._window.run_on_gui_thread(
-            lambda: self._window.start_mcp_run(test=test, only_observers=only_observers)
+            lambda: self._window.start_mcp_run(
+                test=test, only_observers=only_observers, duplicate_policy=duplicate_policy
+            )
         )
 
     def cancel_batch(self) -> dict:

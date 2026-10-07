@@ -47,7 +47,8 @@ def main():
     try:
         # manager.run_backup()
         # manager.clean()
-        manager.confirm_backups()
+        if not manager.confirm_backups(manager.backup_mappings):
+            return
         manager.set_test(False)
         manager.run()
     except KeyboardInterrupt:

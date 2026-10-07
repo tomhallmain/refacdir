@@ -126,12 +126,13 @@ class HeadlessMCPSession:
     # ------------------------------------------------------------------
     # Runs
     # ------------------------------------------------------------------
-    def run_batch(self, test: bool, only_observers: bool) -> str:
+    def run_batch(self, test: bool, only_observers: bool, duplicate_policy: str = "cancel") -> str:
         """Accept a run and return its id, queueing it if one is in flight."""
         run_id = JobQueue.new_run_id()
         self._overrides[run_id] = {
             "test": bool(test),
             "only_observers": bool(only_observers),
+            "duplicate_policy": duplicate_policy,
         }
         if self._queue.job_running:
             try:
@@ -155,6 +156,7 @@ class HeadlessMCPSession:
         args = BatchArgs(recache_configs=False, configs=dict(self._batch_args.configs))
         args.test = overrides.get("test", True)
         args.only_observers = overrides.get("only_observers", False)
+        args.duplicate_policy = overrides.get("duplicate_policy", "cancel")
         # Never negotiable here: the prompts this suppresses read from stdin,
         # and nothing is attached to it.
         args.skip_confirm = True

@@ -3,6 +3,7 @@ import os
 from refacdir.file_renamer import FileRenamer
 from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.utils import Utils
+from refacdir.utils.confirm import confirm_action
 from refacdir.utils.translations import _
 from refacdir.utils.logger import setup_logger
 
@@ -47,7 +48,7 @@ class DirectoryFlattener:
     """
     Take all files in recursive directories and flatten them into the base directory.
     """
-    def __init__(self, name, location, search_patterns=[], test=True, skip_confirm=False):
+    def __init__(self, name, location, search_patterns=[], test=True, skip_confirm=False, app_actions=None):
         logger.info(f"Initializing directory flattener: {name}")
         self.name = name
         self.location = Location.construct(location)
@@ -56,8 +57,9 @@ class DirectoryFlattener:
         else:
             mappings_list = [{"search_patterns": search_patterns, "rename_tag": self.location.root}]
         mappings = FilenameMappingDefinition.construct_mappings(mappings_list)
-        self.batch_renamer = BatchRenamer("DirectoryFlattener", mappings, [self.location], test=test,
-                                          skip_confirm=skip_confirm, recursive=True, make_dirs=False, find_unused_filenames=True)
+        self.batch_renamer = BatchRenamer(name, mappings, [self.location], test=test,
+                                          skip_confirm=skip_confirm, recursive=True, make_dirs=False,
+                                          find_unused_filenames=True, app_actions=app_actions)
 
     def run(self):
         logger.info(f"Running directory flattener: {self.name}")
@@ -76,7 +78,7 @@ class BatchRenamer:
     }
 
     def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True,
-                 preserve_alpha=False, make_dirs=False, find_unused_filenames=False):
+                 preserve_alpha=False, make_dirs=False, find_unused_filenames=False, app_actions=None):
         logger.info(f"Initializing batch renamer: {name} with {len(mappings)} mappings and {len(locations)} locations")
         self.name = name
         self.mappings = mappings
@@ -87,6 +89,7 @@ class BatchRenamer:
         self.preserve_alpha = preserve_alpha
         self.make_dirs = make_dirs
         self.find_unused_filenames = find_unused_filenames
+        self.app_actions = app_actions
 
     def _get_renamer(self, location):
         if isinstance(location, Location):
@@ -202,12 +205,24 @@ class BatchRenamer:
         logger.info(f"About to {_desc} locations: {Utils.stringify_list(self.locations, do_print=False)}")
         logger.info(f"With mapping patterns: {Utils.stringify_dict(self.mappings, do_print=False)}")
 
-        if not self.test:
-            if not self.skip_confirm:
-                confirm = input(_("Confirm (y/n) "))
-                if confirm.lower() != "y":
-                    logger.info("Operation cancelled by user")
-                    return
+        if not self.test and not self.skip_confirm:
+            found = sum(
+                len(filenames)
+                for scanned in scanned_by_location.values()
+                for filenames in scanned.values()
+            )
+            locations = "\n".join(
+                location.root if isinstance(location, Location) else str(location)
+                for location in self.locations
+            )
+            if not confirm_action(
+                self.app_actions,
+                _("Confirm renaming"),
+                _('Run "{0}" on {1} file(s) found?').format(self.name, found),
+                details=_("Locations:") + "\n" + locations,
+            ):
+                logger.info("Operation cancelled by user")
+                return
 
         for location in self.locations:
             logger.info(f"Processing location: {location}")

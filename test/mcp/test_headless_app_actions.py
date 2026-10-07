@@ -105,3 +105,8 @@ def test_module_imports_no_qt():
 
     assert "PySide6" not in roots
     assert "ui" not in roots
+
+
+def test_confirm_declines_instead_of_blocking():
+    actions = build_headless_app_actions()
+    assert actions.confirm("Confirm backup", "Run it?", details="x", acknowledgement="y") is False
