@@ -45,3 +45,42 @@ def test_batch_yaml_duplicate_remover_runs(
 
     assert not job.failures, job.failures
     assert len(list(d.glob("*.bin"))) == 1
+
+
+def test_batch_dry_run_duplicate_remover_removes_nothing(
+    tmp_path, monkeypatch, restore_batch_configs
+):
+    """A dry run must not remove files even when the YAML skips confirmation."""
+    d = tmp_path / "dups"
+    d.mkdir()
+    (d / "a.bin").write_bytes(b"x")
+    (d / "b.bin").write_bytes(b"x")
+
+    patch_batch_job_base_dir(monkeypatch, str(tmp_path), BatchJob)
+
+    cfg = tmp_path / "dup_config.yaml"
+    cfg.write_text(
+        textwrap.dedent(
+            f"""
+            will_run: true
+            actions:
+              - type: "DUPLICATE_REMOVER"
+                mappings:
+                  - name: YAML duplicate remover
+                    source_dirs:
+                      - "{posix_path(str(d))}"
+                    skip_confirm: true
+                    use_hash_cache: false
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    args = BatchArgs(configs={"dup_config.yaml": True})
+    args.test = True
+    args.skip_confirm = True
+    job = BatchJob(args)
+    job.run_config_file("dup_config.yaml")
+
+    assert not job.failures, job.failures
+    assert len(list(d.glob("*.bin"))) == 2

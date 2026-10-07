@@ -33,12 +33,12 @@ def test_forces_test_true_when_absent_from_draft(action_type):
     assert result["test"] is True
 
 
-def test_duplicate_remover_forces_skip_confirm_false():
+def test_duplicate_remover_forces_dry_run_and_confirmation():
     result = apply_safety_defaults(
-        ActionType.DUPLICATE_REMOVER, {"name": "x", "skip_confirm": True}
+        ActionType.DUPLICATE_REMOVER, {"name": "x", "skip_confirm": True, "test": False}
     )
     assert result["skip_confirm"] is False
-    assert "test" not in result
+    assert result["test"] is True
 
 
 def test_directory_observer_is_returned_unchanged():

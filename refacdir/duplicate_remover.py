@@ -122,7 +122,7 @@ class DuplicateRemover:
 
     def __init__(self, name, source_folders, select_for_folder_depth=False, match_dir=False,
                  recursive=True, exclude_dirs=[], preferred_delete_dirs=[], skip_confirm=False,
-                 app_actions=None, use_hash_cache=True):
+                 app_actions=None, use_hash_cache=True, test=False):
         logger.info(f"Initializing duplicate remover: {name}")
         self.name = name
         self.source_folders = []
@@ -135,6 +135,7 @@ class DuplicateRemover:
         self.dir_separator_char = "\\" if sys.platform.startswith("win") else "/"
         self.exclude_dirs = []
         self.preferred_delete_dirs = []
+        self.test = test
         self.skip_confirm = skip_confirm
         self.app_actions = app_actions
         self.use_hash_cache = use_hash_cache
@@ -171,6 +172,11 @@ class DuplicateRemover:
     def run(self):
         logger.info(f"Running duplicate removal for: {self.source_folders}")
         if self.find_duplicates():
+            if self.test:
+                logger.info(f"TEST {self.name}: logging duplicates, removing nothing")
+                self.handle_duplicates(testing=True)
+                return
+
             if self.skip_confirm:
                 logger.info("skip_confirm set. Removing all duplicates without prompt.")
                 self.handle_duplicates(testing=False, skip_confirm=True)

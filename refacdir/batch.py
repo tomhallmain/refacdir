@@ -551,6 +551,8 @@ class BatchJob:
             other(s).
           - ``use_hash_cache`` (bool, default True): cache content hashes
             across runs to avoid re-hashing unchanged files.
+          - ``test`` (bool): defaults to the batch-level setting. When true,
+            duplicates are found and logged, and nothing is removed.
           - ``skip_confirm`` (bool): defaults to the batch-level setting.
         """
         name = yaml_dict["name"]
@@ -560,6 +562,7 @@ class BatchJob:
         exclude_dirs = Utils.get_from_dict(yaml_dict, "exclude_dirs", [])
         preferred_delete_dirs = Utils.get_from_dict(yaml_dict, "preferred_delete_dirs", [])
         use_hash_cache = Utils.get_from_dict(yaml_dict, "use_hash_cache", True)
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         logger.info(f"Constructing duplicate remover: {name} with {len(source_dirs)} source directories")
         return DuplicateRemover(
@@ -569,6 +572,7 @@ class BatchJob:
             recursive=recursive,
             exclude_dirs=exclude_dirs,
             preferred_delete_dirs=preferred_delete_dirs,
+            test=test,
             skip_confirm=skip_confirm,
             use_hash_cache=use_hash_cache,
             app_actions=self.app_actions,

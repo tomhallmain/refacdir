@@ -138,7 +138,7 @@ def _nuitka_args(extra_args) -> list:
         "--include-package=pytest",
         "--include-package=pytestqt",
         "--include-module=PySide6.QtTest",
-        # Test modules import these by name; nothing in the app does.
+        # Test modules import it; the app itself never does.
         "--include-module=app_headless",
     ]
     args += [f"--include-data-dir={d}={d}" for d in DATA_DIRS]

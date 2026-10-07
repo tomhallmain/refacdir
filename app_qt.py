@@ -223,6 +223,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         
         self.run_btn = QPushButton(_("Run Operations"))
         self.run_btn.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        # clicked passes a checked bool, which run() would take as its configs argument.
         self.run_btn.clicked.connect(lambda: self.run())
         actions_layout.addWidget(self.run_btn)
 

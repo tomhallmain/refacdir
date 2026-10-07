@@ -1,18 +1,13 @@
-"""Where the app's files live: per-user data outside the source tree, and the
-read-only files it ships with.
+"""Where the app's files live.
 
-``%LOCALAPPDATA%\\refacdir`` on Windows, ``~/.local/share/refacdir`` elsewhere,
-holds ``configs/`` (user YAML configs, config.json, master_config.yaml),
-``cache/`` (app info cache, filename pattern cache, LLM history, backup failure
-log) and ``logs/``. ``configs/`` sits directly under it so the
-``configs/<name>.yaml`` keys ``BatchJob`` joins onto ``BASE_DIR`` reach the same
-files ``Config.configs_dir()`` lists. Bundled files (locale, icons, examples,
-tests) resolve through ``resource_path``.
-
-User files that earlier versions wrote inside the repo are moved here the first
-time each directory is resolved; an existing file here is never overwritten.
-``REFACDIR_APP_DATA_DIR`` relocates the whole tree and disables that move.
-No ``refacdir`` imports at load time: the logger resolves its directory here.
+Per-user data sits in one app data dir, ``%LOCALAPPDATA%\\refacdir`` on Windows
+and ``~/.local/share/refacdir`` elsewhere (``REFACDIR_APP_DATA_DIR`` overrides
+it), holding ``configs/``, ``cache/`` and ``logs/``. ``configs/`` sits directly
+under it so ``configs/<name>.yaml`` keys joined onto ``BatchJob.BASE_DIR`` reach
+``Config.configs_dir()``. Bundled read-only files resolve through ``resource_path``.
+Files at the legacy repo locations move in when each dir is first resolved,
+never overwriting, and not under the override. No ``refacdir`` imports at load
+time: the logger resolves its directory here.
 """
 
 import glob
