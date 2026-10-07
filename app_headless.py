@@ -230,6 +230,23 @@ def _parse_configs(raw: Optional[str]) -> Optional[dict]:
     return {path: True for path in paths}
 
 
+def _smoke_test(expect_oqs: bool = False) -> int:
+    """Check that a headless build can serve: the shared checks, the MCP SDK,
+    and that nothing pulled in Qt. Returns an exit code."""
+    from refacdir.utils.smoke_test import SmokeTest
+
+    smoke = SmokeTest()
+    smoke.check_common(expect_oqs=expect_oqs)
+    try:
+        from mcp.server import Context, MCPServer  # noqa: F401  (what _serve uses)
+        smoke.check("MCP SDK", True)
+    except ImportError as e:
+        smoke.check("MCP SDK", False, str(e))
+    smoke.check_import("uvicorn (MCP HTTP transport)", "uvicorn")
+    smoke.check("no Qt imported", "PySide6" not in sys.modules)
+    return smoke.result()
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -246,7 +263,17 @@ def main(argv=None) -> int:
     parser.add_argument("--host", default=None, help="default: config.mcp_server_host")
     parser.add_argument("--port", type=int, default=None, help="default: config.mcp_server_port")
     parser.add_argument("--token", default=None, help="default: config.mcp_server_token")
+    parser.add_argument(
+        "--smoke-test", action="store_true",
+        help="Check that this build can serve, then exit without serving.",
+    )
+    parser.add_argument(
+        "--expect-oqs", action="store_true",
+        help="With --smoke-test: fail if OQS key encapsulation is unavailable.",
+    )
     args = parser.parse_args(argv)
+    if args.smoke_test:
+        return _smoke_test(expect_oqs=args.expect_oqs)
 
     session = HeadlessMCPSession(_parse_configs(args.configs))
     logger.info(f"Headless session ready: {len(session.list_configs())} config(s)")

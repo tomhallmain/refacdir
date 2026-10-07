@@ -63,7 +63,7 @@ if __name__ == "__main__":
         # basic options
         if o in ("-h", "--help"):
             print(help_text)
-            exit()
+            sys.exit()
         elif o in ("-v", "--verbose"):
             batch_args.verbose = True
         elif o in ("-t", "--test"):

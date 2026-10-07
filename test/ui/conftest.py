@@ -73,6 +73,9 @@ class _InactivityShutdownStub:
     def resume(self):
         pass
 
+    def stop(self):
+        pass
+
 
 @pytest.fixture
 def main_window(qtbot, monkeypatch):

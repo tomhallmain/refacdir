@@ -13,16 +13,27 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import keyring
 
+from refacdir.utils.app_paths import resource_path
+
 # Same flag as AppInfoCache: pytest sets it so imports (e.g. batch → duplicate_remover)
 # do not load liboqs or touch persisted cache. Unset in the environment for full crypto.
 if os.environ.get("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD"):
     KeyEncapsulation = None
 else:
+    # A build made with ``build_exe.py --with-oqs`` ships the liboqs shared
+    # library under <resource root>/liboqs, in the bin/ or lib/ layout
+    # liboqs-python searches under OQS_INSTALL_PATH.
+    _bundled_liboqs = resource_path("liboqs")
+    if os.path.isdir(_bundled_liboqs):
+        os.environ.setdefault("OQS_INSTALL_PATH", _bundled_liboqs)
     try:
         from oqs import KeyEncapsulation
         print("oqs library found. OQS key encapsulation will be available.")
-    except ImportError:
-        print("Warning: oqs library not found. OQS key encapsulation will not be available.")
+    except Exception as e:
+        # ImportError without liboqs-python; liboqs-python itself raises other
+        # errors when it cannot find or build the liboqs shared library.
+        print(f"Warning: oqs library not available ({type(e).__name__}: {e}). "
+              "OQS key encapsulation will not be available.")
         KeyEncapsulation = None
 
 
@@ -1391,7 +1402,7 @@ if __name__ == "__main__":
         confirm = input(f"File {input_file} already exists. Overwrite? (y/n): ")
         if len(confirm) == 0 or confirm.strip().lower() != "y":
             print("Exiting...")
-            exit()
+            sys.exit()
 
     # Write test data to a file
     with open(input_file, "w", encoding="utf-8") as f:

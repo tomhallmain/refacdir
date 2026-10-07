@@ -45,3 +45,26 @@ The UI exits automatically after a period without keyboard or mouse activity (de
 Set configuration options in `config.json` in your user configs directory (copy from `examples/config_example.json`) for a server port to make use of the server while the UI is running. Calls to the server made with Python's multiprocessing client will update the UI as specified, but leave anything unspecified as already set in the UI. This can be helpful to use in conjunction with other applications that involve images. For an example, see [this class](https://github.com/tomhallmain/Weidr/blob/master/extensions/refacdir_client.py).
 
 
+
+# Build
+
+`python build_exe.py` builds the UI into a single executable with [Nuitka](https://nuitka.net): `dist/RefacDir.exe` on Windows, `dist/RefacDir` on macOS and Linux. Build on each operating system you want an executable for; Nuitka does not cross-compile.
+
+Prerequisites:
+
+- Python with `venv` and `pip`. The script creates `.venv-build` from `requirements-build.txt` so nothing else in your environment is bundled; `--current-env` builds with the running interpreter instead.
+- A C compiler: Visual Studio Build Tools on Windows (or let Nuitka download MinGW), Xcode Command Line Tools on macOS, `gcc` on Linux.
+
+The build checks itself with `RefacDir --smoke-test` before finishing. Extra arguments are passed to Nuitka, e.g. `python build_exe.py --jobs=4`.
+
+`python build_exe.py --headless` builds `dist/RefacDirHeadless(.exe)` instead: the MCP server with no window (`app_headless.py`), with the `mcp` package included.
+
+`--with-oqs` (for either build) adds quantum-safe key encapsulation from [liboqs](https://github.com/open-quantum-safe/liboqs-python): the build installs liboqs-python and bundles the liboqs library it loads. If liboqs is not installed yet, liboqs-python builds it on first import, which needs git, CMake and a C compiler; or set `OQS_INSTALL_PATH` to an existing install. A build without OQS cannot read a settings cache that was encrypted with OQS keys (one written by a source checkout that has liboqs): it starts with empty settings and leaves the cache file untouched. Build with `--with-oqs` if your existing cache uses OQS keys.
+
+What the executable includes and leaves out:
+
+- The test suite and pytest are included, so the Run tests window works.
+- Not included: the MCP server in the UI build (use the headless build), liboqs unless built `--with-oqs`, and image categorization (it needs Weidr and its models). 7-Zip stays an external program.
+- User data is not stored next to the executable. Configs, caches and logs live in `%LOCALAPPDATA%\refacdir\` on Windows and `~/.local/share/refacdir/` elsewhere, shared with a source checkout on the same machine and account.
+- The first start unpacks the executable to a folder under your user cache directory (`refacdir\unpacked\refacdir-<build time>`; on Windows that is inside `%LOCALAPPDATA%\refacdir\`). Folders left by older builds can be deleted.
+- Started from a terminal on Windows, the executable prints its log there, but the terminal does not wait for it: the prompt is drawn at launch, so after you close the app the terminal looks stuck until you press Enter. Use `start /wait dist\RefacDir.exe` to make it wait.

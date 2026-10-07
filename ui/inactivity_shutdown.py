@@ -62,6 +62,19 @@ class InactivityShutdown(QObject):
         self._paused = False
         self.reset_timer()
 
+    def stop(self):
+        """Stop the timer and remove the application-wide event filter, for good.
+
+        Called when the window closes. Left installed, the filter would still
+        receive the events Qt sends while tearing down the window and the
+        application, calling into Python as the interpreter shuts down.
+        """
+        self._paused = True
+        self._timer.stop()
+        app = QApplication.instance()
+        if app is not None:
+            app.removeEventFilter(self)
+
     def set_timeout_minutes(self, minutes: int):
         """Update the idle timeout and restart the timer if active."""
         if minutes < 1:

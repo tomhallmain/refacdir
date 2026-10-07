@@ -69,6 +69,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     review_duplicates_signal = Signal(object, object)
     confirm_signal = Signal(object, object)
     mcp_call_signal = Signal(object)
+    # Emitted once the window has accepted its close; __main__ quits the app on it.
+    closed_signal = Signal()
     
     def __init__(self):
         # Initialize SmartMainWindow with geometry persistence using app_info_cache
@@ -991,6 +993,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     
     def closeEvent(self, event):
         """Handle window close event"""
+        self._inactivity_shutdown.stop()
         self.flush_store_ui_settings()
         
         if self.server is not None:
@@ -1001,6 +1004,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 logger.error(f"Error stopping server: {e}")
         # Call parent closeEvent to save window geometry
         super().closeEvent(event)
+        if event.isAccepted():
+            self.closed_signal.emit()
 
     def keyPressEvent(self, event):
         """Handle keyboard events"""
@@ -1080,76 +1085,56 @@ def _start_mcp_server(window):
     ).start()
 
 
-def _smoke_test() -> int:
-    """Check that a build can start, without opening a window. Returns an exit code.
+def _smoke_test(expect_oqs: bool = False) -> int:
+    """Check that a build can start, without opening a window. Returns an exit code."""
+    from PySide6.QtGui import QImageReader
+    from refacdir.utils.smoke_test import SmokeTest
 
-    Run by build_exe.py against the built executable, with
-    ``QT_QPA_PLATFORM=offscreen`` and ``REFACDIR_APP_DATA_DIR`` pointing at a
-    scratch directory. Getting here already proves the app's imports resolved.
-    """
-    import keyring
-    import keyring.backends.fail
-    from refacdir.utils.translations import I18N
-
-    failures = []
-
-    def check(name, ok, detail=""):
-        logger.info(f"smoke test: {name}: {'ok' if ok else 'FAILED'} {detail}".rstrip())
-        if not ok:
-            failures.append(name)
-
-    check("config", os.path.isfile(_config.config_path), _config.config_path)
-    check("locale", os.path.isdir(I18N.localedir), I18N.localedir)
-    check("example configs", os.path.isfile(resource_path("examples", "config_example.yaml")))
-    try:
-        BatchArgs.discover_configs_from_disk()
-        check("config discovery", True)
-    except Exception as e:
-        check("config discovery", False, str(e))
-
-    backend = keyring.get_keyring()
-    check(
-        "keyring backend",
-        not isinstance(backend, keyring.backends.fail.Keyring),
-        type(backend).__module__ + "." + type(backend).__name__,
-    )
+    smoke = SmokeTest()
+    smoke.check_common(expect_oqs=expect_oqs)
 
     # The in-app test runner needs pytest, pytest-qt and the test tree.
-    try:
-        import pytest  # noqa: F401
-        import pytestqt  # noqa: F401
-        check("pytest", True)
-    except ImportError as e:
-        check("pytest", False, str(e))
-    check("test tree", os.path.isfile(resource_path("test", "conftest.py")))
-    check("pytest.ini", os.path.isfile(resource_path("pytest.ini")))
+    smoke.check_import("pytest", "pytest")
+    smoke.check_import("pytest-qt", "pytestqt")
+    smoke.check("test tree", os.path.isfile(resource_path("test", "conftest.py")))
+    smoke.check("pytest.ini", os.path.isfile(resource_path("pytest.ini")))
 
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtGui import QImageReader
-
     qt_app = QApplication([])
     reader = QImageReader(resource_path("ui", "assets", "refacdir_icon.svg"))
     can_read = reader.canRead()
-    check("window icon (SVG image plugin)", can_read, "" if can_read else reader.errorString())
+    smoke.check("window icon (SVG image plugin)", can_read, "" if can_read else reader.errorString())
     qt_app.quit()
+    return smoke.result()
 
-    if failures:
-        logger.error(f"smoke test failed: {', '.join(failures)}")
-        return 1
-    logger.info("smoke test passed")
-    return 0
+
+def _exit_process(exit_code: int) -> None:
+    """Exit once the event loop has finished, after flushing the filename
+    pattern cache. The window's close has already stored the UI settings, and
+    each batch stores its history when it finishes."""
+    from refacdir.utils.persistent_pattern_cache import persistent_pattern_cache
+
+    try:
+        persistent_pattern_cache.flush()
+    except Exception as e:
+        logger.error(f"Could not flush the filename pattern cache on exit: {e}")
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
     if "--smoke-test" in sys.argv[1:]:
-        sys.exit(_smoke_test())
+        sys.exit(_smoke_test(expect_oqs="--expect-oqs" in sys.argv[1:]))
+    window = None
     try:
         # Set up signal handlers for graceful shutdown
         def graceful_shutdown(signum, frame):
             logger.info("Caught signal, shutting down gracefully...")
-            app.close()
-            exit(0)
-            
+            # Closing the window saves settings and quits the event loop.
+            if window is not None:
+                window.close()
+            else:
+                QApplication.quit()
+
         signal.signal(signal.SIGINT, graceful_shutdown)
         signal.signal(signal.SIGTERM, graceful_shutdown)
         
@@ -1159,9 +1144,14 @@ if __name__ == "__main__":
         if os.path.exists(_icon_path):
             app.setWindowIcon(QIcon(_icon_path))
         window = MainWindow()
+        # Closing the main window ends the app, even if another top-level
+        # window (config editor, batch history) would keep the loop alive.
+        window.closed_signal.connect(app.quit)
         window.show()
         _start_mcp_server(window)
-        exit(app.exec())
+        exit_code = app.exec()
+        logger.info("Event loop finished; exiting")
+        _exit_process(exit_code)
     except KeyboardInterrupt:
         pass
     except Exception:

@@ -262,11 +262,11 @@ class TaggedFiles:
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
 		logger.error("Must provide root directory as first argument.")
-		exit(1)
+		sys.exit(1)
 	root_directory = sys.argv[1]
 	if not os.path.isdir(root_directory):
 		logger.error("First argument must be a valid directory.")
-		exit(1)
+		sys.exit(1)
 	min_tag_sparsity = 2
 	if len(sys.argv) > 2:
 		min_tag_sparsity = int(sys.argv[2])

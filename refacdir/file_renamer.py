@@ -370,7 +370,7 @@ def main():
     glob_exp = sys.argv[1] if len(sys.argv) > 1 else "*.*"
     
     if (glob_exp == "-h" or glob_exp == "--help") and len(sys.argv) == 2:
-        exit(0)
+        sys.exit(0)
     
     glob_exp = "*.*" if glob_exp == "" or glob_exp == "*" or glob_exp == ".*" else glob_exp
     wd = sys.argv[2] if len(sys.argv) > 2 else os.getcwd()
@@ -387,7 +387,7 @@ def main():
 
     if confirm.lower() != "y":
         logger.info("No action taken.")
-        exit(0)
+        sys.exit(0)
 
     renamer = FileRenamer(wd)
     renamer.rename_by_ctime(glob_exp, rename_base, recursive)
@@ -395,7 +395,7 @@ def main():
 
 if __name__ == "__main__":
     if True:
-        exit()
+        sys.exit()
 
 
 

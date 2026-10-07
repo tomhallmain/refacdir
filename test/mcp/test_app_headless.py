@@ -251,3 +251,16 @@ class TestEntryPoint:
     def test_a_configured_token_is_refused(self, monkeypatch):
         monkeypatch.setattr("app_headless._execute_batch", lambda args: None)
         assert main(["--port", "6200", "--token", "hunter2"]) == 2
+
+
+def test_smoke_test_flag_runs_the_checks_without_serving(monkeypatch):
+    import app_headless
+
+    calls = []
+    monkeypatch.setattr(app_headless, "_smoke_test", lambda expect_oqs: calls.append(expect_oqs) or 0)
+    monkeypatch.setattr(
+        app_headless, "MCPServerExtension", lambda **kwargs: pytest.fail("server built")
+    )
+    assert main(["--smoke-test"]) == 0
+    assert main(["--smoke-test", "--expect-oqs"]) == 0
+    assert calls == [False, True]
