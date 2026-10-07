@@ -68,7 +68,7 @@ def test_multiple_inline_groups_in_one_pattern():
 
 # ---------------------------------------------------------------------------
 # Regression: plain (no ":") names are unaffected, still resolved via
-# NAMED_FUNCTIONS / custom_file_name_search_funcs as before.
+# NAMED_FUNCTIONS / user and built-in search functions as before.
 # ---------------------------------------------------------------------------
 
 def test_plain_named_function_without_colon_still_works():

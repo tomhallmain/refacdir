@@ -4,7 +4,7 @@ import os
 import re
 from refacdir.utils.logger import setup_logger
 
-import custom_file_name_search_funcs
+from refacdir import user_search_funcs
 
 # Set up logger for filename operations
 logger = setup_logger('filename_ops')
@@ -172,11 +172,17 @@ class FilenameMappingDefinition:
         else:
             if not func_name or func_name.strip() == "":
                 raise Exception("Not enough arguments provided to generate subpattern")
-            try:
-                # If the function is not defined in the config then it may be in custom file name search functions.
-                return getattr(custom_file_name_search_funcs, func_name)
-            except Exception as e:
-                raise Exception(f"Function {func_name} not found in config filename_mapping_functions or in custom_file_name_search_funcs.py: {e}")
+            # Not defined in the config: the user's own file, then the built-ins.
+            func = user_search_funcs.find(func_name) or user_search_funcs.builtin(func_name)
+            if func is None:
+                message = (
+                    f"Function {func_name} not found in config filename_mapping_functions, "
+                    f"in {user_search_funcs.user_file_path()}, or among the built-in search functions"
+                )
+                if user_search_funcs.load_error():
+                    message += f" (the user file failed to load: {user_search_funcs.load_error()})"
+                raise Exception(message)
+            return func
         return FilenameMappingDefinition.call_from_cache(function_call)
 
     @staticmethod
@@ -447,11 +453,12 @@ class FilenameMappingDefinition:
             Args are parsed as int when numeric, bool for "true"/"false",
             None for "mixed"/"any" (alnum's mixed-case option), else a
             literal string.
-          - A reference to a custom Python function by name, resolved from
-            ``custom_file_name_search_funcs.py`` when not found as a named
-            function above — e.g. "{{is_id_filename}}",
-            "{{is_short_integer_filename}}", "{{any_file}}",
-            "{{random_selection}}". These are matcher FUNCTIONS, not string
+          - A reference to a Python function by name, when not found as a
+            named function above: first the user's own
+            ``custom_file_name_search_funcs.py`` in their configs folder, then
+            the built-ins "{{is_id_filename}}", "{{is_id}}",
+            "{{is_short_integer_filename}}", "{{is_short_alpha_filename}}",
+            "{{any_file}}", "{{random_selection}}". These are matcher FUNCTIONS, not string
             templates: use one as the entire search_patterns value (or one
             list entry), not embedded inside a larger pattern string.
 

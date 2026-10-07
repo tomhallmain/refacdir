@@ -1,8 +1,8 @@
-"""Unit tests for ``is_id`` and ``is_id_filename`` in custom_file_name_search_funcs."""
+"""Unit tests for ``is_id`` and ``is_id_filename`` in refacdir.search_funcs."""
 
 import pytest
 
-from custom_file_name_search_funcs import is_id, is_id_filename
+from refacdir.search_funcs import is_id, is_id_filename
 
 
 # ---------------------------------------------------------------------------

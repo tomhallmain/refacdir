@@ -1,3 +1,11 @@
+"""Built-in filename search functions.
+
+A YAML config names one in a search pattern, e.g.
+``search_patterns: "{{is_id_filename}}"``. They ship with the app; a user's own
+functions live in their own file, loaded by ``refacdir.user_search_funcs``, and
+take precedence over these by name.
+"""
+
 import math
 import os
 import random
@@ -5,9 +13,6 @@ import re
 from collections import Counter
 
 from refacdir.utils.persistent_pattern_cache import persistent_cache
-
-
-# Add any custom filename search functions here to gather files for the BatchRenamers as set in the config YAML.
 
 
 _VOWELS = frozenset('aeiouAEIOU')

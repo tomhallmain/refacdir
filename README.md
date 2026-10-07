@@ -28,7 +28,7 @@ Available batch actions include:
 - Observe directory state by counts of file types
 - Image categorization using CLIP (requires [Weidr](https://github.com/tomhallmain/Weidr))
 
-Define custom named functions and sets of file types in the config YAML `filename_mapping_functions` and `filetype_definitions` headers to be referenced in the other parts of the config. Similarly, define custom functions in `custom_file_name_search_funcs.py` and add the function name refs to the config YAML to add custom search logic for gathering files to rename or move.
+Define custom named functions and sets of file types in the config YAML `filename_mapping_functions` and `filetype_definitions` headers to be referenced in the other parts of the config. Similarly, define your own Python search functions in `custom_file_name_search_funcs.py` in your user configs directory (created from a template on first use; edits apply on the next run) and reference them by name in the config YAML to add custom search logic for gathering files to rename or move.
 
 For the built-in `REP`/`DIGITS`/`HEX`/`ALNUM` pattern primitives, you don't need to declare a named `filename_mapping_functions` entry for every value — an inline `{{type:arg1:arg2}}` form works directly in a pattern, e.g. `{{digits:4}}` (four digits), `{{hex:64}}` (64 uppercase hex chars), or `{{alnum:8:true:_}}` (8 lowercase alphanumeric chars plus underscore). This is purely additive: existing named `filename_mapping_functions` declarations keep working unchanged.
 

@@ -1,8 +1,8 @@
-"""Unit tests for ``is_short_integer_filename`` in custom_file_name_search_funcs."""
+"""Unit tests for ``is_short_integer_filename`` in refacdir.search_funcs."""
 
 import pytest
 
-from custom_file_name_search_funcs import is_short_integer_filename
+from refacdir.search_funcs import is_short_integer_filename
 
 
 @pytest.mark.parametrize(

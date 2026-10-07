@@ -1,0 +1,35 @@
+# Your own filename search functions for RefacDir.
+#
+# RefacDir loads this file at the start of every batch run, so edits apply on
+# the next run without a restart. If it fails to load, the run uses only the
+# built-in functions and RefacDir reports the error.
+#
+# A search function takes a filename and returns True for files to include.
+# Name it in a config YAML as a whole search pattern:
+#
+#     search_patterns: "{{is_draft_filename}}"
+#
+# A function defined here overrides a built-in one of the same name
+# (any_file, random_selection, is_short_integer_filename,
+# is_short_alpha_filename, is_id_filename, is_id). Names starting with "_"
+# are ignored, so use them for helpers.
+#
+# Modules always available, in a compiled build too: re, os, datetime,
+# fnmatch, string, math, random, collections, hashlib, pathlib. Others may be
+# missing from a compiled build.
+#
+# Results of an expensive check can be remembered across runs:
+#
+#     from refacdir.utils.persistent_pattern_cache import persistent_cache
+#
+#     @persistent_cache
+#     def is_expensive_match(filename):
+#         ...
+#
+# Example:
+#
+# import os
+#
+# def is_draft_filename(filename):
+#     """True for files whose name, without extension, ends in "_draft"."""
+#     return os.path.splitext(os.path.basename(filename))[0].endswith("_draft")

@@ -159,7 +159,7 @@ def test_persistent_cache_decorator_survives_a_simulated_restart(enable_real_per
 
 def test_is_id_result_persists_across_a_simulated_restart(enable_real_persistence, monkeypatch):
     """Integration check with the actual production consumer of this cache."""
-    import custom_file_name_search_funcs as funcs
+    import refacdir.search_funcs as funcs
 
     monkeypatch.setattr(pattern_cache_module, "persistent_pattern_cache", PersistentPatternCache())
 

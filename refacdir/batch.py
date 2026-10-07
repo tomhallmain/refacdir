@@ -14,6 +14,7 @@ from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
 from refacdir.named_subdir_collector import NamedSubdirCollector
+from refacdir import user_search_funcs
 from refacdir.utils.app_paths import app_data_dir
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
@@ -258,6 +259,7 @@ class BatchJob:
                 logger.info(
                     "Cleared filename_mapping_functions / filetype_definitions registries for this batch run"
                 )
+            user_search_funcs.reload(self.app_actions)
             # Count total actions across all configs
             self.total_actions = 0
             for config, will_run in self.configurations.items():
