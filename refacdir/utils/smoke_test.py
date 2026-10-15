@@ -29,15 +29,48 @@ class SmokeTest:
         except ImportError as e:
             self.check(name, False, str(e))
 
+    def check_version(self) -> None:
+        """VERSION is bundled and, in a build, build_info.json names the same version."""
+        from refacdir.utils.app_paths import IS_BUILD
+        from refacdir.utils.version import BUILD_INFO_FILE, VERSION_FILE, app_version, build_info, describe
+
+        logger.info(f"smoke test: {describe()}")
+        try:
+            version = app_version()
+            self.check("version", bool(version), version)
+        except OSError as e:
+            self.check("version", False, str(e))
+            return
+        if IS_BUILD:
+            try:
+                built = build_info().get("version")
+            except (OSError, ValueError) as e:
+                built = f"unreadable: {e}"
+            self.check(
+                "build info", built == version,
+                f"{BUILD_INFO_FILE} names {built!r}, {VERSION_FILE} holds {version!r}",
+            )
+
+    def check_mcp(self) -> None:
+        """The MCP SDK and the HTTP transport the server runs on."""
+        try:
+            from mcp.server import Context, MCPServer  # noqa: F401  (what extensions/mcp_server.py uses)
+            self.check("MCP SDK", True)
+        except ImportError as e:
+            self.check("MCP SDK", False, str(e))
+        self.check_import("uvicorn (MCP HTTP transport)", "uvicorn")
+
     def check_common(self, expect_oqs: bool = False) -> None:
-        """Config, translations, example configs, config discovery, keyring
-        backend, and OQS: required with *expect_oqs*, otherwise only reported."""
+        """Version, config, translations, example configs, config discovery,
+        keyring backend, and OQS: required with *expect_oqs*, otherwise only
+        reported."""
         import keyring
         import keyring.backends.fail
         from refacdir.batch import BatchArgs
         from refacdir.config import config
         from refacdir.utils.translations import I18N
 
+        self.check_version()
         self.check("config", os.path.isfile(config.config_path), config.config_path)
         self.check("locale", os.path.isdir(I18N.localedir), I18N.localedir)
         self.check("example configs", os.path.isfile(resource_path("examples", "config_example.yaml")))

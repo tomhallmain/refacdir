@@ -17,6 +17,9 @@ import shutil
 
 APP_DIR_NAME = "refacdir"
 
+# Nuitka defines __compiled__ in every module it compiles.
+IS_BUILD = "__compiled__" in globals()
+
 # The repo checkout, or the folder a compiled build runs from; the build
 # places bundled files at the same relative paths.
 RESOURCE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -41,6 +41,7 @@ from refacdir.job_queue import JobQueue
 from refacdir.utils.background_runner import ThreadedTaskRunner
 from refacdir.utils.headless_app_actions import build_headless_app_actions
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.version import describe
 
 logger = setup_logger("app_headless")
 
@@ -237,12 +238,7 @@ def _smoke_test(expect_oqs: bool = False) -> int:
 
     smoke = SmokeTest()
     smoke.check_common(expect_oqs=expect_oqs)
-    try:
-        from mcp.server import Context, MCPServer  # noqa: F401  (what _serve uses)
-        smoke.check("MCP SDK", True)
-    except ImportError as e:
-        smoke.check("MCP SDK", False, str(e))
-    smoke.check_import("uvicorn (MCP HTTP transport)", "uvicorn")
+    smoke.check_mcp()
     smoke.check("no Qt imported", "PySide6" not in sys.modules)
     return smoke.result()
 
@@ -275,6 +271,7 @@ def main(argv=None) -> int:
     if args.smoke_test:
         return _smoke_test(expect_oqs=args.expect_oqs)
 
+    logger.info(describe())
     session = HeadlessMCPSession(_parse_configs(args.configs))
     logger.info(f"Headless session ready: {len(session.list_configs())} config(s)")
 

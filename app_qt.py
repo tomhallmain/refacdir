@@ -25,6 +25,7 @@ from refacdir.utils.app_paths import resource_path
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
+from refacdir.utils.version import describe
 from ui import (
     AppActions,
     ThemeManager,
@@ -1092,6 +1093,8 @@ def _smoke_test(expect_oqs: bool = False) -> int:
 
     smoke = SmokeTest()
     smoke.check_common(expect_oqs=expect_oqs)
+    # _start_mcp_server serves from the window when mcp_server_port is set.
+    smoke.check_mcp()
 
     # The in-app test runner needs pytest, pytest-qt and the test tree.
     smoke.check_import("pytest", "pytest")
@@ -1124,6 +1127,7 @@ def _exit_process(exit_code: int) -> None:
 if __name__ == "__main__":
     if "--smoke-test" in sys.argv[1:]:
         sys.exit(_smoke_test(expect_oqs="--expect-oqs" in sys.argv[1:]))
+    logger.info(describe())
     window = None
     try:
         # Set up signal handlers for graceful shutdown

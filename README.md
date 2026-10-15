@@ -55,16 +55,25 @@ Prerequisites:
 - Python with `venv` and `pip`. The script creates `.venv-build` from `requirements-build.txt` so nothing else in your environment is bundled; `--current-env` builds with the running interpreter instead.
 - A C compiler: Visual Studio Build Tools on Windows (or let Nuitka download MinGW), Xcode Command Line Tools on macOS, `gcc` on Linux.
 
-The build checks itself with `RefacDir --smoke-test` before finishing. Extra arguments are passed to Nuitka, e.g. `python build_exe.py --jobs=4`.
+The build checks itself with `RefacDir --smoke-test` before finishing. Extra arguments are passed to Nuitka, e.g. `python build_exe.py --jobs=4`. Each step is timed and logged to `build/logs/build_exe-<build id>.log`.
 
-`python build_exe.py --headless` builds `dist/RefacDirHeadless(.exe)` instead: the MCP server with no window (`app_headless.py`), with the `mcp` package included.
+`python build_exe.py --with-headless` also builds `dist/RefacDirHeadless(.exe)`: the MCP server with no window (`app_headless.py`). Both executables include the `mcp` package.
+
+Version and reproducibility:
+
+- The version comes from the `VERSION` file at the repo root and shows in the executable's properties, with the build id in its description. The app logs its version and build at startup.
+- Each build writes `build/nuitka/build_info.json` (version, build id, OQS, package versions, the commit it was built from), which is bundled, and `build/nuitka/build-requirements.lock.txt`, the build venv's `pip freeze`. `--lock=<file>` installs the build venv from such a file to repeat a build; delete `.venv-build` first for an exact copy.
+- Nuitka and PySide6 are pinned in `requirements-build.txt` to a pair known to work.
+- Before compressing the executable, the last step of a compile, the build waits until enough memory is free (`scripts/nuitka_memory_wait.py`), because running out there loses the whole compile. `--min-free-memory=<GiB>` sets the amount; `0` turns the wait off.
+
+`python scripts/package_release.py` publishes the executables in `dist/` as a GitHub release: it rebuilds any that are behind the checkout, stages them in `dist/release/v<version>/` with checksums and the lock file, writes release notes for approval, tags the commit and creates a draft release with `gh`. `--no-upload` stops after staging; `--publish` publishes the draft. Note that `build_info.json`, and so the executable, contains the path of the checkout it was built from.
 
 `--with-oqs` (for either build) adds quantum-safe key encapsulation from [liboqs](https://github.com/open-quantum-safe/liboqs-python): the build installs liboqs-python and bundles the liboqs library it loads. If liboqs is not installed yet, liboqs-python builds it on first import, which needs git, CMake and a C compiler; or set `OQS_INSTALL_PATH` to an existing install. A build without OQS cannot read a settings cache that was encrypted with OQS keys (one written by a source checkout that has liboqs): it starts with empty settings and leaves the cache file untouched. Build with `--with-oqs` if your existing cache uses OQS keys.
 
 What the executable includes and leaves out:
 
 - The test suite and pytest are included, so the Run tests window works.
-- Not included: the MCP server in the UI build (use the headless build), liboqs unless built `--with-oqs`, and image categorization (it needs Weidr and its models). 7-Zip stays an external program.
+- Not included: liboqs unless built `--with-oqs`, and image categorization (it needs Weidr and its models). 7-Zip stays an external program.
 - User data is not stored next to the executable. Configs, caches and logs live in `%LOCALAPPDATA%\refacdir\` on Windows and `~/.local/share/refacdir/` elsewhere, shared with a source checkout on the same machine and account.
-- The first start unpacks the executable to a folder under your user cache directory (`refacdir\unpacked\refacdir-<build time>`; on Windows that is inside `%LOCALAPPDATA%\refacdir\`). Folders left by older builds can be deleted.
+- The first start unpacks the executable to `unpacked/refacdir-<build time>` (`refacdir-headless-<build time>` for the headless build) in the same app data folder. Folders left by older builds can be deleted.
 - Started from a terminal on Windows, the executable prints its log there, but the terminal does not wait for it: the prompt is drawn at launch, so after you close the app the terminal looks stuck until you press Enter. Use `start /wait dist\RefacDir.exe` to make it wait.

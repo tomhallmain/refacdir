@@ -2,6 +2,13 @@
 # imports. pytest and pytest-qt are runtime dependencies there, because the
 # app's Run tests window runs the bundled test suite.
 -r requirements.txt
-nuitka
+# A pair known to build and run: SD Runner built with Nuitka 4.3 and PySide6
+# 6.12.0 crashed natively at runtime, and 4.2.2 with 6.11.2 worked.
+nuitka==4.2.2
+PySide6==6.11.2
 # Compresses the onefile payload.
 zstandard
+# Lets scripts/nuitka_memory_wait.py read free memory off Windows.
+psutil
+# Both executables serve MCP (extensions/mcp_server.py).
+mcp
