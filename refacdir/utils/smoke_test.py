@@ -78,7 +78,11 @@ class SmokeTest:
         """The MCP SDK and the HTTP transport the server runs on."""
         with self.guarded("MCP SDK"):
             try:
-                from mcp.server import Context, MCPServer  # noqa: F401  (what extensions/mcp_server.py uses)
+                # What extensions/mcp_server.py's _serve and _register_tools import.
+                from extensions.mcp_server import sdk_context_class
+                from mcp.server import MCPServer  # noqa: F401
+
+                sdk_context_class()
                 self.check("MCP SDK", True)
             except ImportError as e:
                 self.check("MCP SDK", False, str(e))

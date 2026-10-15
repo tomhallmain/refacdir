@@ -488,3 +488,55 @@ class TestAskToApprove:
 
     def test_failed_elicitation_is_declined(self):
         assert self._ask(_FakeContext(raises=RuntimeError("transport closed"))) == DECLINED
+
+
+class TestClientCapabilities:
+    """Where the client's elicitation capability is read from, in both SDK shapes."""
+
+    @staticmethod
+    def _session(**attrs):
+        return type("Ctx", (), {"session": type("Session", (), attrs)()})()
+
+    @staticmethod
+    def _caps(supports):
+        return type("Caps", (), {"elicitation": object() if supports else None})()
+
+    def test_sdk_2_3_capabilities_without_client_params(self):
+        ctx = self._session(client_capabilities=self._caps(True), client_params=None)
+        assert MCPServerExtension._client_supports_elicitation(ctx) is True
+
+    def test_client_params_capabilities_when_the_session_has_no_shortcut(self):
+        params = type("Params", (), {"capabilities": self._caps(True)})()
+        ctx = self._session(client_params=params)
+        assert MCPServerExtension._client_supports_elicitation(ctx) is True
+
+    def test_no_declared_elicitation(self):
+        ctx = self._session(client_capabilities=self._caps(False), client_params=None)
+        assert MCPServerExtension._client_supports_elicitation(ctx) is False
+
+    def test_no_capabilities_at_all(self):
+        assert MCPServerExtension._client_supports_elicitation(self._session()) is False
+
+
+def test_sdk_context_class_is_the_one_mcp_server_recognizes():
+    """MCPServer finds a tool's context parameter by this class (SDK 2.3:
+    mcp.server.mcpserver.utilities.context_injection.find_context_parameter)."""
+    pytest.importorskip("mcp")
+    from extensions.mcp_server import sdk_context_class
+
+    context_class = sdk_context_class()
+    try:
+        from mcp.server.mcpserver import Context
+    except ImportError:
+        from mcp.server import Context
+    assert context_class is Context
+
+    try:
+        from mcp.server.mcpserver.utilities.context_injection import find_context_parameter
+    except ImportError:
+        return
+
+    def tool(ctx: context_class, test: bool = True) -> dict:
+        return {}
+
+    assert find_context_parameter(tool) == "ctx"

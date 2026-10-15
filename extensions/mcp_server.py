@@ -259,6 +259,18 @@ def resource_descriptors() -> list:
     ]
 
 
+def sdk_context_class():
+    """The SDK class a tool parameter is annotated with to receive the request
+    context; ``MCPServer`` recognizes that parameter by this class. SDK 2.3
+    defines it in ``mcp.server.mcpserver`` and does not export it from
+    ``mcp.server``; the fallback serves an SDK that exports it only there."""
+    try:
+        from mcp.server.mcpserver import Context
+    except ImportError:
+        from mcp.server import Context
+    return Context
+
+
 class MCPServerExtension:
     """Serves the MCP tool surface over HTTP, on its own thread.
 
@@ -509,8 +521,13 @@ class MCPServerExtension:
 
     @staticmethod
     def _client_supports_elicitation(ctx) -> bool:
-        params = getattr(getattr(ctx, "session", None), "client_params", None)
-        capabilities = getattr(params, "capabilities", None)
+        # SDK 2.3 has session.client_capabilities, which newer protocol
+        # revisions fill without client_params; earlier 2.x has only
+        # client_params.capabilities.
+        session = getattr(ctx, "session", None)
+        capabilities = getattr(session, "client_capabilities", None)
+        if capabilities is None:
+            capabilities = getattr(getattr(session, "client_params", None), "capabilities", None)
         return getattr(capabilities, "elicitation", None) is not None
 
     async def _ask_to_approve(self, ctx, message: str) -> str:
@@ -623,7 +640,7 @@ class MCPServerExtension:
         would have no way to call it properly. Descriptions come from
         ``tool_descriptors`` so the catalogue stays the one place they are said.
         """
-        from mcp.server import Context
+        Context = sdk_context_class()
 
         described = {d["name"]: d["description"] for d in tool_descriptors()}
 
