@@ -896,9 +896,9 @@ class BatchJob:
             internal folders, under ``target_dir/<archive stem>/``. Left False,
             files are written flat into ``target_dir`` and a name collision
             takes the source archive's stem (then a counter) as a suffix.
-          - ``delete_sources`` (bool, default False): send an archive to the
+          - ``delete_sources`` (bool, default True): send an archive to the
             trash once every member of it extracted successfully. An archive
-            with any failed member is kept.
+            with any failed member is kept. Set False to keep every archive.
           - ``test`` / ``skip_confirm``: default to the batch-level setting.
         """
         name = yaml_dict["name"]
@@ -908,7 +908,7 @@ class BatchJob:
         recursive = Utils.get_from_dict(yaml_dict, "recursive", True)
         normalise = Utils.get_from_dict(yaml_dict, "normalise", True)
         preserve_structure = Utils.get_from_dict(yaml_dict, "preserve_structure", False)
-        delete_sources = Utils.get_from_dict(yaml_dict, "delete_sources", False)
+        delete_sources = Utils.get_from_dict(yaml_dict, "delete_sources", True)
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         logger.info(

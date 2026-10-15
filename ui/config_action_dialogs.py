@@ -865,7 +865,8 @@ class ArchiveExtractorActionDialog(BaseActionDialog):
             "files are never re-ingested; it cannot be search_dir or a parent of it. "
             "preserve_structure: keep each archive's folders under target_dir/<archive stem>/ "
             "(default off writes everything flat, tagging a collision with the archive's name). "
-            "delete_sources: trash an archive once all of its members extracted."
+            "delete_sources (default on): trash an archive once all of its members extracted; "
+            "set it false to keep the archives."
         )
 
     def default_mapping(self) -> dict:
@@ -874,6 +875,7 @@ class ArchiveExtractorActionDialog(BaseActionDialog):
             "search_dir": ".",
             "target_dir": "./extracted",
             "pattern": "*.zip",
+            "delete_sources": True,
         }
 
     def property_key_options(self) -> list[str]:

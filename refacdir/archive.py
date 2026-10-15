@@ -1,3 +1,19 @@
+"""
+List and search the contents of archives under a directory without extracting
+them, through 7-Zip. Run as ``python -m refacdir.archive <dir> [search_term]``.
+
+It covers what ARCHIVE_EXTRACTOR (``refacdir/archive_extractor.py``) does not,
+and could later be folded into it or into an action of its own:
+
+- Any format 7-Zip reads (7z, RAR, TAR and others; recognized via
+  ``patoolib.is_archive``), where the extractor handles ZIP only.
+- Searching member paths across many archives for a term, case-insensitive by
+  default, reporting which archives contain a match.
+- A per-archive summary: member count, top-level entries and size.
+
+No action type uses it. It needs ``patoolib``, which no requirements file
+lists, and 7-Zip installed at ``C:\\Program Files\\7-Zip\\7z.exe``.
+"""
 import os
 import patoolib
 import subprocess

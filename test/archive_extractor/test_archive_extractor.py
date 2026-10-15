@@ -1,5 +1,6 @@
 """Unit tests for ``ArchiveExtractor``."""
 
+import shutil
 import zipfile
 
 import pytest
@@ -148,11 +149,11 @@ def test_rerun_finds_nothing_new(tmp_path):
     target = search / "extracted"
     make_zip(search / "nested.zip", {"inner.zip": "not really a zip"})
 
-    runner = extractor(search, target)
+    runner = extractor(search, target, delete_sources=False)
     runner.run()
     assert (target / "inner.zip").exists()
 
-    second = extractor(search, target)
+    second = extractor(search, target, delete_sources=False)
     assert second.find_archives() == [str(search / "nested.zip")]
 
 
@@ -188,39 +189,82 @@ def test_unreadable_archive_is_reported_without_stopping_the_run(tmp_path):
     assert (target / "a.txt").read_text(encoding="utf-8") == "a"
 
 
-def test_delete_sources_removes_extracted_archives_only(tmp_path, monkeypatch):
+def test_delete_sources_removes_extracted_archives_only(tmp_path, removed_archives):
     search = tmp_path / "search"
     target = tmp_path / "out"
     search.mkdir(parents=True)
     (search / "broken.zip").write_text("not a zip at all", encoding="utf-8")
     make_zip(search / "good.zip", {"a.txt": "a"})
 
-    removed = []
-    monkeypatch.setattr(
-        "refacdir.archive_extractor.remove_file",
-        lambda path: removed.append(path) or True,
-    )
-
     extractor(search, target, delete_sources=True).run()
 
-    assert removed == [str(search / "good.zip")]
+    assert removed_archives == [str(search / "good.zip")]
 
 
-def test_delete_sources_is_not_applied_on_a_dry_run(tmp_path, monkeypatch):
+def test_delete_sources_is_the_default(tmp_path, removed_archives):
+    search = tmp_path / "search"
+    target = tmp_path / "out"
+    make_zip(search / "a.zip", {"a.txt": "a"})
+    make_zip(search / "b.zip", {"b.txt": "b"})
+
+    extractor(search, target).run()
+
+    assert removed_archives == [str(search / "a.zip"), str(search / "b.zip")]
+
+
+def test_delete_sources_false_keeps_every_archive(tmp_path, removed_archives):
     search = tmp_path / "search"
     target = tmp_path / "out"
     make_zip(search / "good.zip", {"a.txt": "a"})
 
-    removed = []
-    monkeypatch.setattr(
-        "refacdir.archive_extractor.remove_file",
-        lambda path: removed.append(path) or True,
-    )
+    extractor(search, target, delete_sources=False).run()
 
-    extractor(search, target, delete_sources=True, test=True).run()
+    assert (target / "a.txt").exists()
+    assert removed_archives == []
 
-    assert removed == []
+
+def test_an_archive_with_a_failed_member_is_kept(tmp_path, removed_archives, monkeypatch):
+    search = tmp_path / "search"
+    target = tmp_path / "out"
+    make_zip(search / "partial.zip", {"ok.txt": "ok", "bad.txt": "bad"})
+    make_zip(search / "whole.zip", {"fine.txt": "fine"})
+
+    real_copy = shutil.copyfileobj
+
+    def copy(src, dst, *args, **kwargs):
+        if dst.name.endswith("bad.txt"):
+            raise OSError("disk full")
+        return real_copy(src, dst, *args, **kwargs)
+
+    monkeypatch.setattr(shutil, "copyfileobj", copy)
+
+    extractor(search, target).run()
+
+    assert (target / "ok.txt").exists()
+    assert removed_archives == [str(search / "whole.zip")]
+
+
+def test_delete_sources_is_not_applied_on_a_dry_run(tmp_path, removed_archives):
+    search = tmp_path / "search"
+    target = tmp_path / "out"
+    make_zip(search / "good.zip", {"a.txt": "a"})
+
+    extractor(search, target, test=True).run()
+
+    assert removed_archives == []
     assert (search / "good.zip").exists()
+
+
+def test_cancelled_confirmation_deletes_nothing(tmp_path, removed_archives, monkeypatch):
+    search = tmp_path / "search"
+    target = tmp_path / "out"
+    make_zip(search / "good.zip", {"a.txt": "a"})
+    monkeypatch.setattr("refacdir.archive_extractor.confirm_action", lambda *args, **kwargs: False)
+
+    extractor(search, target, skip_confirm=False).run()
+
+    assert removed_archives == []
+    assert not target.exists()
 
 
 def test_target_inside_search_is_rejected_when_it_swallows_the_search_dir(tmp_path):

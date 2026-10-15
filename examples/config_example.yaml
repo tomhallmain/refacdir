@@ -214,7 +214,9 @@ actions:
   mappings:
 
   # Flat merge (default): every file lands directly in target_dir, and a name
-  # collision takes the source archive's stem as a suffix.
+  # collision takes the source archive's stem as a suffix. delete_sources
+  # defaults to true: an archive is trashed once every member of it extracted
+  # successfully, and one with any failed member is kept.
   - name: "Downloads ZIP merge"
     test: true
     search_dir: "{{USER_HOME}}\\Downloads"
@@ -223,8 +225,7 @@ actions:
     recursive: true
 
   # preserve_structure keeps each archive's own folders under
-  # target_dir/<archive stem>/. delete_sources trashes an archive only once
-  # every member of it extracted successfully.
+  # target_dir/<archive stem>/. delete_sources: false keeps the archives.
   - name: "Archived projects"
     test: true
     search_dir: "D:\\archives"

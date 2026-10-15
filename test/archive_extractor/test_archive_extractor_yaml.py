@@ -118,3 +118,44 @@ def test_batch_yaml_archive_extractor_missing_required_key_fails(
     job.run_config_file("archive_extractor_config.yaml")
 
     assert job.failures
+
+
+def test_batch_yaml_archive_extractor_trashes_archives_by_default(
+    tmp_path, monkeypatch, restore_batch_configs, removed_archives
+):
+    from refacdir.batch import BatchArgs, BatchJob
+
+    search = tmp_path / "search"
+    target = tmp_path / "out"
+    make_zip(search / "reports.zip", {"q1.pdf": "a"})
+
+    patch_batch_job_base_dir(monkeypatch, str(tmp_path), BatchJob)
+    write_config(tmp_path, search, target)
+
+    args = BatchArgs(configs={"archive_extractor_config.yaml": True})
+    job = BatchJob(args)
+    job.run_config_file("archive_extractor_config.yaml")
+
+    assert not job.failures, job.failures
+    assert removed_archives == [str(search / "reports.zip")]
+
+
+def test_batch_yaml_archive_extractor_delete_sources_false_keeps_archives(
+    tmp_path, monkeypatch, restore_batch_configs, removed_archives
+):
+    from refacdir.batch import BatchArgs, BatchJob
+
+    search = tmp_path / "search"
+    target = tmp_path / "out"
+    make_zip(search / "reports.zip", {"q1.pdf": "a"})
+
+    patch_batch_job_base_dir(monkeypatch, str(tmp_path), BatchJob)
+    write_config(tmp_path, search, target, extra={"delete_sources": "false"})
+
+    args = BatchArgs(configs={"archive_extractor_config.yaml": True})
+    job = BatchJob(args)
+    job.run_config_file("archive_extractor_config.yaml")
+
+    assert not job.failures, job.failures
+    assert (target / "q1.pdf").exists()
+    assert removed_archives == []

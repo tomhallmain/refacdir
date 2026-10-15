@@ -141,7 +141,7 @@ class ArchiveExtractor:
         recursive: bool = True,
         normalise: bool = True,
         preserve_structure: bool = False,
-        delete_sources: bool = False,
+        delete_sources: bool = True,
         test: bool = False,
         skip_confirm: bool = False,
         app_actions=None,
@@ -151,6 +151,8 @@ class ArchiveExtractor:
         :param normalise: NFKC-normalise both filename and pattern before matching,
             so a name carrying an NBSP or a decomposed accent still matches a
             pattern typed with the plain form.
+        :param delete_sources: Trash each archive once every one of its members
+            extracted; an archive with any failed member is kept.
         :param test: If True, dry run only (nothing extracted, created or deleted).
         """
         self.name = name
