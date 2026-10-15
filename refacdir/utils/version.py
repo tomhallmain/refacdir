@@ -121,3 +121,50 @@ def source_state(repo: str) -> dict:
     else:
         changes = hashlib.sha1(diff.encode("utf-8")).hexdigest() if diff else ""
     return {"commit": commit, "tree": tree, "changes": changes}
+
+
+def source_drift():
+    """In a build, compare the source it was built from with that checkout
+    as it is now. Returns (drifted, message), or None in a source checkout
+    or a build that recorded no source."""
+    import os
+
+    try:
+        source = build_info().get("source")
+    except (OSError, ValueError):
+        return None
+    if not source or not source.get("repo"):
+        return None
+    repo, built = source["repo"], source.get("commit") or ""
+    if not os.path.isdir(os.path.join(repo, ".git")):
+        return False, f"Source checkout {repo} not found; cannot compare it with this build."
+    current = source_state(repo)
+    if not built or not current["commit"]:
+        return False, f"Commit unknown for this build or for {repo}; cannot compare."
+    if current["commit"] == built:
+        if current["changes"] is None or current["changes"] == source.get("changes"):
+            return False, f"This build matches the source checkout {repo} ({built[:10]})."
+        return True, (f"The source checkout {repo} is at this build's commit {built[:10]}, "
+                      f"but its uncommitted changes differ from the build's.")
+    # A different commit with the same files and the same uncommitted changes
+    # (a squash, amend or rebase that changed no file, or an empty commit).
+    tree = source.get("tree")
+    if (tree and tree == current.get("tree") and current["changes"] is not None
+            and current["changes"] == source.get("changes")):
+        return False, (f"This build matches the source checkout {repo}: its commit {current['commit'][:10]} "
+                       f"has the same files as this build's commit {built[:10]}.")
+    newer = run_git(repo, "rev-list", "--count", f"{built}..{current['commit']}")
+    missing = run_git(repo, "rev-list", "--count", f"{current['commit']}..{built}")
+    if newer is None or missing is None:
+        # An empty tree means git did not run, which says nothing about the commit.
+        if current.get("tree") and run_git(repo, "cat-file", "-e", f"{built}^{{commit}}") is None:
+            # Rewritten history after gc, or a fresh clone.
+            detail = "this build's commit is not in its history, so the two cannot be compared"
+        else:
+            detail = "a different commit"
+    else:
+        detail = f"{int(newer)} commit(s) not in this build"
+        if int(missing):
+            detail += f", and lacks {int(missing)} commit(s) this build has"
+    return True, (f"This build is from commit {built[:10]}; the source checkout {repo} is at "
+                  f"{current['commit'][:10]}: {detail}.")

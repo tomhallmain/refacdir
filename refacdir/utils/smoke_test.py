@@ -3,8 +3,12 @@
 ``build_exe.py`` runs the built app this way with ``REFACDIR_APP_DATA_DIR``
 pointing at a scratch directory. Each entry point adds the checks specific to
 it; getting far enough to run any of them already proves its imports resolved.
+A check that raises fails by name with its full traceback logged; that
+includes ``SystemExit``, which Nuitka's metadata lookup for a package bundled
+without its distribution metadata raises.
 """
 
+import contextlib
 import os
 
 from refacdir.utils.app_paths import resource_path
@@ -22,12 +26,23 @@ class SmokeTest:
         if not ok:
             self.failures.append(name)
 
-    def check_import(self, name: str, module: str) -> None:
+    @contextlib.contextmanager
+    def guarded(self, name: str):
+        """Fail check *name*, with the traceback logged, if the block raises."""
         try:
-            __import__(module)
+            yield
+        except (Exception, SystemExit):
+            logger.exception(f"smoke test: {name}: FAILED with an exception")
+            self.failures.append(name)
+
+    def check_import(self, name: str, module: str) -> None:
+        with self.guarded(name):
+            try:
+                __import__(module)
+            except ImportError as e:
+                self.check(name, False, str(e))
+                return
             self.check(name, True)
-        except ImportError as e:
-            self.check(name, False, str(e))
 
     def check_version(self) -> None:
         """VERSION is bundled and, in a build, build_info.json names the same version."""
@@ -51,52 +66,68 @@ class SmokeTest:
                 f"{BUILD_INFO_FILE} names {built!r}, {VERSION_FILE} holds {version!r}",
             )
 
+    def check_fault_log(self) -> None:
+        """The fault log opens; it then stays enabled for the process."""
+        from refacdir.utils.crash_log import enable_fault_log
+
+        with self.guarded("fault log"):
+            path = enable_fault_log()
+            self.check("fault log", os.path.isfile(path), path)
+
     def check_mcp(self) -> None:
         """The MCP SDK and the HTTP transport the server runs on."""
-        try:
-            from mcp.server import Context, MCPServer  # noqa: F401  (what extensions/mcp_server.py uses)
-            self.check("MCP SDK", True)
-        except ImportError as e:
-            self.check("MCP SDK", False, str(e))
+        with self.guarded("MCP SDK"):
+            try:
+                from mcp.server import Context, MCPServer  # noqa: F401  (what extensions/mcp_server.py uses)
+                self.check("MCP SDK", True)
+            except ImportError as e:
+                self.check("MCP SDK", False, str(e))
         self.check_import("uvicorn (MCP HTTP transport)", "uvicorn")
 
     def check_common(self, expect_oqs: bool = False) -> None:
         """Version, config, translations, example configs, config discovery,
         keyring backend, and OQS: required with *expect_oqs*, otherwise only
         reported."""
-        import keyring
-        import keyring.backends.fail
-        from refacdir.batch import BatchArgs
-        from refacdir.config import config
-        from refacdir.utils.translations import I18N
+        with self.guarded("version"):
+            self.check_version()
+        with self.guarded("config"):
+            from refacdir.config import config
 
-        self.check_version()
-        self.check("config", os.path.isfile(config.config_path), config.config_path)
-        self.check("locale", os.path.isdir(I18N.localedir), I18N.localedir)
+            self.check("config", os.path.isfile(config.config_path), config.config_path)
+        with self.guarded("locale"):
+            from refacdir.utils.translations import I18N
+
+            self.check("locale", os.path.isdir(I18N.localedir), I18N.localedir)
         self.check("example configs", os.path.isfile(resource_path("examples", "config_example.yaml")))
         self.check(
             "search functions template",
             os.path.isfile(resource_path("examples", "custom_file_name_search_funcs.py.example")),
         )
-        try:
+        with self.guarded("config discovery"):
+            from refacdir.batch import BatchArgs
+
             BatchArgs.discover_configs_from_disk()
             self.check("config discovery", True)
-        except Exception as e:
-            self.check("config discovery", False, str(e))
-        backend = keyring.get_keyring()
-        self.check(
-            "keyring backend",
-            not isinstance(backend, keyring.backends.fail.Keyring),
-            f"{type(backend).__module__}.{type(backend).__name__}",
-        )
+        with self.guarded("keyring backend"):
+            import keyring
+            import keyring.backends.fail
 
-        from refacdir.utils import encryptor
+            backend = keyring.get_keyring()
+            self.check(
+                "keyring backend",
+                not isinstance(backend, keyring.backends.fail.Keyring),
+                f"{type(backend).__module__}.{type(backend).__name__}",
+            )
+        with self.guarded("OQS key encapsulation"):
+            from refacdir.utils import encryptor
 
-        oqs_available = encryptor.KeyEncapsulation is not None
-        if expect_oqs:
-            self.check("OQS key encapsulation", oqs_available)
-        else:
-            logger.info(f"smoke test: OQS key encapsulation {'available' if oqs_available else 'not in this build'}")
+            oqs_available = encryptor.KeyEncapsulation is not None
+            if expect_oqs:
+                self.check("OQS key encapsulation", oqs_available)
+            else:
+                logger.info(
+                    f"smoke test: OQS key encapsulation {'available' if oqs_available else 'not in this build'}"
+                )
 
     def result(self) -> int:
         """Exit code: 0 if every check passed."""

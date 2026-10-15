@@ -25,6 +25,9 @@ from refacdir.utils.app_paths import resource_path
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
+from refacdir.utils.build_maintenance import start_build_maintenance
+from refacdir.utils.crash_log import enable_fault_log
+from refacdir.utils.unpack_cleanup import UNPACK_DIR_PREFIX
 from refacdir.utils.version import describe
 from ui import (
     AppActions,
@@ -40,6 +43,7 @@ from ui import (
     run_duplicate_review_dialog,
 )
 from ui.inactivity_shutdown import DEFAULT_INACTIVITY_TIMEOUT_MINUTES, InactivityShutdown
+from ui.qt_message_log import install_qt_message_handler, qt_message_reaches_logging
 
 # Set up logger for UI
 logger = setup_logger('ui')
@@ -70,6 +74,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     review_duplicates_signal = Signal(object, object)
     confirm_signal = Signal(object, object)
     mcp_call_signal = Signal(object)
+    # A build's startup check found its source checkout has changed; carries the detail.
+    source_drift_signal = Signal(str)
     # Emitted once the window has accepted its close; __main__ quits the app on it.
     closed_signal = Signal()
     
@@ -126,6 +132,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.review_duplicates_signal.connect(self._handle_review_duplicates_request)
         self.confirm_signal.connect(self._handle_confirm_request)
         self.mcp_call_signal.connect(self._handle_mcp_call)
+        self.source_drift_signal.connect(self._notify_source_drift)
         
         self.setup_ui()
         self.setup_connections()
@@ -867,6 +874,13 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         """Show a toast notification"""
         self._toast.show_message(message)
 
+    def _notify_source_drift(self, detail: str):
+        """Tell the user this build no longer matches its source checkout
+        (slot for source_drift_signal). *detail* is already in the log."""
+        self._toast.show_message(
+            _("This build differs from its source checkout. Details are in the log."), duration=8000,
+        )
+
     def alert(self, title: str, message: str, kind: str = "info"):
         """Show an alert dialog (thread-safe: marshals to main thread if needed)."""
         if kind not in ("error", "warning", "info"):
@@ -1093,6 +1107,7 @@ def _smoke_test(expect_oqs: bool = False) -> int:
 
     smoke = SmokeTest()
     smoke.check_common(expect_oqs=expect_oqs)
+    smoke.check_fault_log()
     # _start_mcp_server serves from the window when mcp_server_port is set.
     smoke.check_mcp()
 
@@ -1103,10 +1118,13 @@ def _smoke_test(expect_oqs: bool = False) -> int:
     smoke.check("pytest.ini", os.path.isfile(resource_path("pytest.ini")))
 
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    install_qt_message_handler()
     qt_app = QApplication([])
     reader = QImageReader(resource_path("ui", "assets", "refacdir_icon.svg"))
     can_read = reader.canRead()
     smoke.check("window icon (SVG image plugin)", can_read, "" if can_read else reader.errorString())
+    with smoke.guarded("Qt messages logged"):
+        smoke.check("Qt messages logged", qt_message_reaches_logging())
     qt_app.quit()
     return smoke.result()
 
@@ -1128,6 +1146,11 @@ if __name__ == "__main__":
     if "--smoke-test" in sys.argv[1:]:
         sys.exit(_smoke_test(expect_oqs="--expect-oqs" in sys.argv[1:]))
     logger.info(describe())
+    try:
+        logger.info(f"Fault log: {enable_fault_log()}")
+    except OSError as e:
+        logger.error(f"Could not open the fault log: {e}")
+    install_qt_message_handler()
     window = None
     try:
         # Set up signal handlers for graceful shutdown
@@ -1153,6 +1176,7 @@ if __name__ == "__main__":
         window.closed_signal.connect(app.quit)
         window.show()
         _start_mcp_server(window)
+        start_build_maintenance(UNPACK_DIR_PREFIX, on_drift=window.source_drift_signal.emit)
         exit_code = app.exec()
         logger.info("Event loop finished; exiting")
         _exit_process(exit_code)

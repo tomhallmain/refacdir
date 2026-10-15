@@ -105,3 +105,87 @@ def test_source_state_without_git(monkeypatch, tmp_path):
     (tmp_path / ".git").mkdir()
     (tmp_path / ".git" / "HEAD").write_text("f" * 40 + "\n", encoding="utf-8")
     assert version.source_state(str(tmp_path)) == {"commit": "f" * 40, "tree": "", "changes": None}
+
+
+# source_drift
+
+def _built_from(resources, checkout, commit="b" * 40, tree="t" * 40, changes=""):
+    (resources / version.BUILD_INFO_FILE).write_text(json.dumps({
+        "version": "1.2.3",
+        "source": {"repo": str(checkout), "commit": commit, "tree": tree, "changes": changes},
+    }), encoding="utf-8")
+
+
+@pytest.fixture
+def checkout(tmp_path):
+    path = tmp_path / "checkout"
+    (path / ".git").mkdir(parents=True)
+    return path
+
+
+def _checkout_at(monkeypatch, commit, tree="t" * 40, changes="", counts=None, has_commit=True):
+    """Stub the checkout's state; *counts* maps a rev-list range to its count."""
+    monkeypatch.setattr(version, "source_state",
+                        lambda repo: {"commit": commit, "tree": tree, "changes": changes})
+
+    def run_git(repo, *args):
+        if args[:2] == ("rev-list", "--count"):
+            return None if counts is None else f"{counts[args[2]]}\n"
+        if args[:2] == ("cat-file", "-e"):
+            return "" if has_commit else None
+        return None
+
+    monkeypatch.setattr(version, "run_git", run_git)
+
+
+def test_source_drift_is_none_in_a_checkout(resources):
+    assert version.source_drift() is None
+
+
+def test_source_drift_matches_the_same_commit(resources, checkout, monkeypatch):
+    _built_from(resources, checkout)
+    _checkout_at(monkeypatch, "b" * 40)
+    drifted, message = version.source_drift()
+    assert drifted is False
+    assert "matches" in message
+
+
+def test_source_drift_notices_changed_uncommitted_work(resources, checkout, monkeypatch):
+    _built_from(resources, checkout)
+    _checkout_at(monkeypatch, "b" * 40, changes="f" * 40)
+    drifted, message = version.source_drift()
+    assert drifted is True
+    assert "uncommitted" in message
+
+
+def test_source_drift_counts_commits_both_ways(resources, checkout, monkeypatch):
+    _built_from(resources, checkout)
+    _checkout_at(monkeypatch, "c" * 40, tree="u" * 40,
+                 counts={f"{'b' * 40}..{'c' * 40}": 3, f"{'c' * 40}..{'b' * 40}": 1})
+    drifted, message = version.source_drift()
+    assert drifted is True
+    assert "3 commit(s) not in this build" in message
+    assert "lacks 1 commit(s)" in message
+
+
+def test_source_drift_accepts_a_rewritten_commit_with_the_same_files(resources, checkout, monkeypatch):
+    _built_from(resources, checkout)
+    _checkout_at(monkeypatch, "e" * 40, has_commit=False)
+    drifted, message = version.source_drift()
+    assert drifted is False
+    assert "same files" in message
+
+
+def test_source_drift_names_a_commit_missing_from_the_history(resources, checkout, monkeypatch):
+    _built_from(resources, checkout)
+    _checkout_at(monkeypatch, "e" * 40, tree="u" * 40, has_commit=False)
+    drifted, message = version.source_drift()
+    assert drifted is True
+    assert "not in its history" in message
+
+
+def test_source_drift_reports_a_missing_checkout(resources, tmp_path):
+    _built_from(resources, tmp_path / "gone")
+    drifted, message = version.source_drift()
+    assert drifted is False
+    assert "not found" in message

@@ -120,13 +120,17 @@ def test_lock_has(build_exe, tmp_path):
 
 
 def test_smoke_test_env_overrides_shell_values(build_exe, monkeypatch, tmp_path):
-    monkeypatch.setenv("REFACDIR_CONFIGS_DIR", "/real/configs")
-    monkeypatch.setenv("REFACDIR_CACHE_DIR", "/real/cache")
+    # Stand-ins for values exported in a developer's shell. They are set in
+    # this process's environment for the test, so they stay inside tmp_path.
+    shell = tmp_path / "shell"
+    scratch = tmp_path / "scratch"
+    monkeypatch.setenv("REFACDIR_CONFIGS_DIR", str(shell / "configs"))
+    monkeypatch.setenv("REFACDIR_CACHE_DIR", str(shell / "cache"))
     monkeypatch.setenv("REFACDIR_DISABLE_APP_INFO_CACHE_LOAD", "1")
-    env = build_exe._smoke_test_env(str(tmp_path))
-    assert env["REFACDIR_APP_DATA_DIR"] == str(tmp_path)
-    assert env["REFACDIR_CONFIGS_DIR"] == os.path.join(str(tmp_path), "configs")
-    assert env["REFACDIR_CACHE_DIR"] == os.path.join(str(tmp_path), "cache")
+    env = build_exe._smoke_test_env(str(scratch))
+    assert env["REFACDIR_APP_DATA_DIR"] == str(scratch)
+    assert env["REFACDIR_CONFIGS_DIR"] == os.path.join(str(scratch), "configs")
+    assert env["REFACDIR_CACHE_DIR"] == os.path.join(str(scratch), "cache")
     assert "REFACDIR_DISABLE_APP_INFO_CACHE_LOAD" not in env
 
 

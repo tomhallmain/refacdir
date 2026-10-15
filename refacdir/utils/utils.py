@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import functools
 import os
 import re
 import shutil
@@ -52,6 +53,7 @@ class Utils:
     @staticmethod
     def periodic(run_obj, sleep_attr="", run_attr=None):
         def scheduler(fcn):
+            @functools.wraps(fcn)
             async def wrapper(*args, **kwargs):
                 while True:
                     asyncio.create_task(fcn(*args, **kwargs))

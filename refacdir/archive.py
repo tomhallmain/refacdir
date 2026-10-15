@@ -1,11 +1,15 @@
 import os
 import patoolib
-from subprocess import Popen, PIPE
+import subprocess
+from subprocess import DEVNULL, Popen, PIPE
 import sys
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for archive operations
 logger = setup_logger('archive')
+
+# Keeps a console child of the windowed Windows build from opening a console window.
+_NO_CONSOLE_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
 
 
 class Archive:
@@ -19,7 +23,10 @@ class Archive:
         return os.stat(self.path).st_size
 
     def list_files(self):
-        proc = Popen(["C:\\Program Files\\7-Zip\\7z.exe", "l", "-ba", "-slt", self.path], stdout=PIPE)
+        # stdin is explicit: a windowed Windows build can have no valid standard
+        # handles, and inheriting one fails with WinError 6 before 7-Zip starts.
+        proc = Popen(["C:\\Program Files\\7-Zip\\7z.exe", "l", "-ba", "-slt", self.path],
+                     stdin=DEVNULL, stdout=PIPE, creationflags=_NO_CONSOLE_WINDOW)
         files = [l[len(Archive.PATH_EQUALS):] for l in proc.stdout.read().decode().splitlines() if l.startswith(Archive.PATH_EQUALS)]
         return files
 

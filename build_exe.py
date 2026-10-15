@@ -247,6 +247,8 @@ def _write_build_info(version: str, build_id: str, environment: dict, with_oqs: 
         "with_oqs": with_oqs,
         "python": environment["python"],
         "packages": {name: v for name, v in environment["packages"].items() if v},
+        # The startup drift check finds the checkout by this path, which anyone
+        # with the executable can read; scripts/package_release.py warns of it.
         "source": {"repo": REPO_ROOT, **_version_module()["source_state"](REPO_ROOT)},
     }
     os.makedirs(BUILD_DIR, exist_ok=True)

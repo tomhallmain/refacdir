@@ -75,5 +75,6 @@ What the executable includes and leaves out:
 - The test suite and pytest are included, so the Run tests window works.
 - Not included: liboqs unless built `--with-oqs`, and image categorization (it needs Weidr and its models). 7-Zip stays an external program.
 - User data is not stored next to the executable. Configs, caches and logs live in `%LOCALAPPDATA%\refacdir\` on Windows and `~/.local/share/refacdir/` elsewhere, shared with a source checkout on the same machine and account.
-- The first start unpacks the executable to `unpacked/refacdir-<build time>` (`refacdir-headless-<build time>` for the headless build) in the same app data folder. Folders left by older builds can be deleted.
+- The first start unpacks the executable to `unpacked/refacdir-<build time>` (`refacdir-headless-<build time>` for the headless build) in the same app data folder. Each executable removes the folders its older builds left there at startup, skipping any a running copy still uses.
+- Crashes in native code (Qt, liboqs) leave a Python stack trace in `logs/faults.log` in the app data folder. A build also checks at startup whether the checkout it was built from has changed since, and says so.
 - Started from a terminal on Windows, the executable prints its log there, but the terminal does not wait for it: the prompt is drawn at launch, so after you close the app the terminal looks stuck until you press Enter. Use `start /wait dist\RefacDir.exe` to make it wait.

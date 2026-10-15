@@ -107,3 +107,51 @@ def test_version_check_fails_without_a_version_file(build_resources):
     smoke = SmokeTest()
     smoke.check_version()
     assert smoke.failures == ["version"]
+
+
+@pytest.mark.parametrize("error", [RuntimeError("boom"), SystemExit(1)])
+def test_a_check_that_raises_fails_by_name_with_its_traceback(caplog, error):
+    smoke = SmokeTest()
+    with smoke.guarded("metadata lookup"):
+        raise error
+    assert smoke.failures == ["metadata lookup"]
+    assert any(record.exc_info for record in caplog.records if "metadata lookup" in record.getMessage())
+
+
+def test_check_import_fails_on_an_import_time_error(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def exits(name, *args, **kwargs):
+        if name == "refacdir_exits_on_import":
+            raise SystemExit("metadata missing")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", exits)
+    smoke = SmokeTest()
+    smoke.check_import("exits", "refacdir_exits_on_import")
+    assert smoke.failures == ["exits"]
+
+
+def test_one_failing_common_check_does_not_stop_the_rest(monkeypatch):
+    import keyring
+
+    def broken():
+        raise RuntimeError("no backend at all")
+
+    monkeypatch.setattr(keyring, "get_keyring", broken)
+    smoke = SmokeTest()
+    smoke.check_common()
+    assert smoke.failures == ["keyring backend"]
+
+
+def test_fault_log_check(monkeypatch, tmp_path):
+    from refacdir.utils import crash_log
+
+    path = tmp_path / crash_log.FAULT_LOG_NAME
+    path.write_text("", encoding="utf-8")
+    monkeypatch.setattr(crash_log, "enable_fault_log", lambda: str(path))
+    smoke = SmokeTest()
+    smoke.check_fault_log()
+    assert smoke.failures == []

@@ -41,6 +41,9 @@ from refacdir.job_queue import JobQueue
 from refacdir.utils.background_runner import ThreadedTaskRunner
 from refacdir.utils.headless_app_actions import build_headless_app_actions
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.build_maintenance import start_build_maintenance
+from refacdir.utils.crash_log import enable_fault_log
+from refacdir.utils.unpack_cleanup import HEADLESS_UNPACK_DIR_PREFIX
 from refacdir.utils.version import describe
 
 logger = setup_logger("app_headless")
@@ -238,6 +241,7 @@ def _smoke_test(expect_oqs: bool = False) -> int:
 
     smoke = SmokeTest()
     smoke.check_common(expect_oqs=expect_oqs)
+    smoke.check_fault_log()
     smoke.check_mcp()
     smoke.check("no Qt imported", "PySide6" not in sys.modules)
     return smoke.result()
@@ -293,7 +297,21 @@ def main(argv=None) -> int:
     return 0
 
 
+def _start_process_services() -> None:
+    """The fault log, and in a build the cleanup of older builds' unpack
+    folders and the comparison with the source checkout, which is logged.
+    Kept out of main() so that tests calling it change nothing process-wide."""
+    try:
+        logger.info(f"Fault log: {enable_fault_log()}")
+    except OSError as e:
+        logger.error(f"Could not open the fault log: {e}")
+    start_build_maintenance(HEADLESS_UNPACK_DIR_PREFIX)
+
+
 if __name__ == "__main__":
+    # A smoke test exits within seconds, which would cut a folder removal short.
+    if "--smoke-test" not in sys.argv[1:]:
+        _start_process_services()
     try:
         sys.exit(main())
     except KeyboardInterrupt:
