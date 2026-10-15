@@ -363,7 +363,7 @@ class ThemeManager:
             }}
             
             /* Text edit styling */
-            QTextEdit {{
+            QTextEdit, QPlainTextEdit {{
                 border: 1px solid {colors['fg']};
                 border-radius: 4px;
                 padding: 4px;

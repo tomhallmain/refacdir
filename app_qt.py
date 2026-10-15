@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 import os
 import signal
 import sys
@@ -43,6 +44,7 @@ from ui import (
     run_duplicate_review_dialog,
 )
 from ui.inactivity_shutdown import DEFAULT_INACTIVITY_TIMEOUT_MINUTES, InactivityShutdown
+from ui.log_panel import LogPanel
 from ui.qt_message_log import install_qt_message_handler, qt_message_reaches_logging
 
 # Set up logger for UI
@@ -252,6 +254,17 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.history_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
         self.history_btn.clicked.connect(self.open_batch_history)
         actions_layout.addWidget(self.history_btn)
+
+        # An app setting, kept apart from the per-run Operation Settings.
+        idle_row = QHBoxLayout()
+        idle_row.addWidget(QLabel(_("Idle shutdown")))
+        self.inactivity_timeout_spin = QSpinBox()
+        self.inactivity_timeout_spin.setRange(1, 24 * 60)
+        self.inactivity_timeout_spin.setSuffix(_(" min"))
+        self.inactivity_timeout_spin.setToolTip(_("Close the UI after this many minutes without keyboard or mouse activity."))
+        self.inactivity_timeout_spin.valueChanged.connect(self._on_inactivity_timeout_changed)
+        idle_row.addWidget(self.inactivity_timeout_spin)
+        actions_layout.addLayout(idle_row)
         
         sidebar_layout.addWidget(actions_frame)
         
@@ -300,20 +313,13 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         main_content = QWidget()
         main_content.setObjectName("mainContent")
         main_layout = QVBoxLayout(main_content)
-        main_layout.setContentsMargins(30, 30, 30, 30)
-        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(12)
         
-        # Header section
         self._create_header_section(main_layout)
-        
-        # Options section
         self._create_options_section(main_layout)
-        
-        # Progress section
         self._create_progress_section(main_layout)
-        
-        # Add stretch to push everything up
-        main_layout.addStretch()
+        self._create_log_section(main_layout)
         
         parent_layout.addWidget(main_content)
         
@@ -321,14 +327,16 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         """Create the header section with title and description"""
         header = QWidget()
         header_layout = QVBoxLayout(header)
-        header_layout.setSpacing(10)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(2)
         
         title = QLabel(_("File Management Dashboard"))
-        title.setFont(QFont("Helvetica", 24, QFont.Bold))
+        title.setFont(QFont("Helvetica", 18, QFont.Bold))
         header_layout.addWidget(title)
         
         description = QLabel(_("Configure and run file management operations with ease. Select configurations from the sidebar and customize options below."))
         description.setWordWrap(True)
+        description.setFont(QFont("Helvetica", 9))
         description.setStyleSheet("color: gray;")
         header_layout.addWidget(description)
         
@@ -340,16 +348,16 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         options_frame.setObjectName("optionsFrame")
         options_frame.setFrameStyle(QFrame.StyledPanel)
         options_layout = QVBoxLayout(options_frame)
-        options_layout.setSpacing(15)
+        options_layout.setSpacing(8)
         
-        # Options title
         options_title = QLabel(_("Operation Settings"))
-        options_title.setFont(QFont("Helvetica", 14, QFont.Bold))
+        options_title.setFont(QFont("Helvetica", 12, QFont.Bold))
         options_layout.addWidget(options_title)
         
         # Configuration options in a grid
         options_grid = QGridLayout()
-        options_grid.setSpacing(15)
+        options_grid.setHorizontalSpacing(15)
+        options_grid.setVerticalSpacing(6)
         
         self.recur_check = QCheckBox(_("Recur Selected Actions"))
         self.recur_check.stateChanged.connect(self.set_recurring_action)
@@ -382,40 +390,38 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         )
         options_grid.addWidget(self.persist_definition_caches_check, 2, 0, 1, 2)
 
-        self.inactivity_timeout_spin = QSpinBox()
-        self.inactivity_timeout_spin.setRange(1, 24 * 60)
-        self.inactivity_timeout_spin.setSuffix(_(" min"))
-        self.inactivity_timeout_spin.setToolTip(_("Close the UI after this many minutes without keyboard or mouse activity."))
-        self.inactivity_timeout_spin.valueChanged.connect(self._on_inactivity_timeout_changed)
-        options_grid.addWidget(QLabel(_("Idle shutdown")), 3, 0)
-        options_grid.addWidget(self.inactivity_timeout_spin, 3, 1)
-
         options_layout.addLayout(options_grid)
         parent_layout.addWidget(options_frame)
         
     def _create_progress_section(self, parent_layout):
-        """Create the progress section with status and progress bar"""
+        """One row: the status text, and the progress bar while a run reports progress."""
         progress_frame = QFrame()
         progress_frame.setObjectName("progressFrame")
         progress_frame.setFrameStyle(QFrame.StyledPanel)
-        progress_layout = QVBoxLayout(progress_frame)
-        progress_layout.setSpacing(15)
+        progress_layout = QHBoxLayout(progress_frame)
+        progress_layout.setSpacing(12)
         
-        # Progress title
         progress_title = QLabel(_("Operation Status"))
-        progress_title.setFont(QFont("Helvetica", 14, QFont.Bold))
+        progress_title.setFont(QFont("Helvetica", 10, QFont.Bold))
         progress_layout.addWidget(progress_title)
         
         self.status_label = QLabel(_("Ready"))
         self.status_label.setFont(QFont("Helvetica", 10))
-        progress_layout.addWidget(self.status_label)
+        progress_layout.addWidget(self.status_label, 1)
         
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.progress_bar.setMinimumHeight(25)
+        self.progress_bar.setFixedWidth(200)
         progress_layout.addWidget(self.progress_bar)
         
         parent_layout.addWidget(progress_frame)
+
+    def _create_log_section(self, parent_layout):
+        """The live log view, taking the height the sections above leave."""
+        self.log_panel = LogPanel()
+        self.log_panel.level_changed.connect(lambda _level: self.schedule_store_ui_settings())
+        parent_layout.addWidget(self.log_panel, 1)
+        self.log_panel.attach()
         
     def apply_theme(self, is_dark: bool):
         """Apply the selected theme to the application"""
@@ -925,6 +931,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.inactivity_timeout_spin.setValue(timeout_minutes)
             self.inactivity_timeout_spin.blockSignals(False)
             self._inactivity_shutdown.set_timeout_minutes(timeout_minutes)
+            self.log_panel.set_level(operation_settings.get('log_panel_level', logging.INFO))
             
             # Restore selected configurations
             cached_configs = app_info_cache.get_selected_configs()
@@ -974,6 +981,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 'only_observers': self.only_observers_check.isChecked(),
                 'persist_definition_caches_across_batch_runs': self.persist_definition_caches_check.isChecked(),
                 'inactivity_shutdown_timeout_minutes': self.inactivity_timeout_spin.value(),
+                'log_panel_level': self.log_panel.level(),
             }
             app_info_cache.set_operation_settings(operation_settings)
             
@@ -1010,6 +1018,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         """Handle window close event"""
         self._inactivity_shutdown.stop()
         self.flush_store_ui_settings()
+        self.log_panel.detach()
         
         if self.server is not None:
             try:

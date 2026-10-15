@@ -3,6 +3,7 @@ Pytest fixtures for Qt UI tests (pytest-qt).
 
 Use the ``qtbot`` fixture from pytest-qt when constructing widgets; call
 ``qtbot.addWidget(widget)`` so the widget is tracked and destroyed cleanly.
+A main window goes through ``destroy_widget`` instead (see ``main_window``).
 
 Cache/config isolation comes from root ``test/conftest.py`` (``isolated_app_singletons``).
 """
@@ -10,6 +11,8 @@ Cache/config isolation comes from root ``test/conftest.py`` (``isolated_app_sing
 from __future__ import annotations
 
 import pytest
+from PySide6.QtCore import QEvent
+from PySide6.QtWidgets import QApplication
 
 from refacdir.batch import BatchArgs
 from refacdir.config import Config
@@ -77,9 +80,25 @@ class _InactivityShutdownStub:
         pass
 
 
+def destroy_widget(widget) -> None:
+    """Close *widget* and delete its native object now.
+
+    A top-level widget held in Python reference cycles (lambdas and bound
+    methods connected to it) is otherwise freed whenever the cycle collector
+    runs, which can be inside a Qt loop over every widget: the next window's
+    ``QApplication.setStyleSheet`` repolishes them all and calls into Python
+    on the way. Qt then walks freed memory (Windows: 0xc0000374).
+    """
+    widget.close()
+    widget.deleteLater()
+    QApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+
+
 @pytest.fixture
 def main_window(qtbot, monkeypatch):
-    """MainWindow with network/server and restore paths stubbed out."""
+    """MainWindow with network/server and restore paths stubbed out. Not
+    registered with qtbot: its teardown would close the already deleted
+    window."""
     import app_qt
 
     monkeypatch.setattr(app_qt.MainWindow, "setup_server", lambda self: None)
@@ -89,8 +108,8 @@ def main_window(qtbot, monkeypatch):
     monkeypatch.setattr(app_qt, "InactivityShutdown", _InactivityShutdownStub)
 
     window = app_qt.MainWindow()
-    qtbot.addWidget(window)
-    return window
+    yield window
+    destroy_widget(window)
 
 
 def write_runnable_config(name: str, *, will_run: bool = True) -> str:
