@@ -435,8 +435,8 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def toggle_theme(self):
         """Toggle between light and dark themes"""
         self.apply_theme(not self.is_dark_theme)
-        self.toast.show_message(
-            "Theme switched to light." if not self.is_dark_theme else "Theme switched to dark."
+        self.toast(
+            _("Theme switched to dark.") if self.is_dark_theme else _("Theme switched to light.")
         )
         self.schedule_store_ui_settings()
 
