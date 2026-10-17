@@ -181,7 +181,7 @@ def _behind(repo, path, version, info, info_path, head, head_tree, head_time):
     """Why the executable at *path* is behind commit *head*, or None when it
     was built from it, or from an ancestor with the same files (tree)."""
     if info is None:
-        # No build_info.json (RefacDir writes none): only the time is known.
+        # No build_info.json (a build script that writes none): only the time is known.
         if os.path.getmtime(path) < head_time:
             return "it is older than the checkout's last commit"
         return None

@@ -542,7 +542,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def toggle_config(self, config: str, state: int):
         """Handle config checkbox state changes"""
         if config in self.filtered_configs:
-            will_run = state == Qt.Checked
+            will_run = Qt.CheckState(state) == Qt.CheckState.Checked
             self.filtered_configs[config] = will_run
             self.batch_args.update_config_state(config, will_run)
             BatchArgs.write_will_run_to_file(config, will_run)
@@ -706,7 +706,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
 
     def set_recurring_action(self, state: int):
         """Handle recurring action checkbox state changes"""
-        self.recurring_action_config.set(state == Qt.Checked)
+        self.recurring_action_config.set(Qt.CheckState(state) == Qt.CheckState.Checked)
         if self.recurring_action_config.is_running:
             self.skip_confirm_check.setChecked(True)
             start_thread(self.run_recurring_actions)
