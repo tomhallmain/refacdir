@@ -8,7 +8,7 @@ nuitka==4.2.2
 PySide6==6.11.2
 # Compresses the onefile payload.
 zstandard
-# Lets scripts/nuitka_memory_wait.py read free memory off Windows.
+# Lets the memory-wait plugin (shipped with app-release) read free memory off Windows.
 psutil
 # Both executables serve MCP (extensions/mcp_server.py).
 mcp

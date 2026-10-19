@@ -24,11 +24,12 @@ The GUI build ships pytest, pytest-qt and the test/ tree: the app's Run tests
 window runs the suite so users can see the backup cases it covers.
 
 Before compressing the onefile payload, the last step of each compile, the
-build waits for enough free memory (scripts/nuitka_memory_wait.py), since a
-failed allocation there loses the whole compile. ``--min-free-memory=<GiB>``
-sets the amount instead of the estimate; 0 turns the wait off. Each step is
-timed, and the log goes to ``build/logs/build_exe-<build id>.log`` as well
-(Nuitka's own output only to the console).
+build waits for enough free memory (the memory-wait plugin, from app-release
+when installed), since a failed allocation there loses the whole compile.
+``--min-free-memory=<GiB>`` sets the amount instead of the estimate; 0 turns
+the wait off. Each step is timed, and the log goes to
+``build/logs/build_exe-<build id>.log`` as well (Nuitka's own output only to
+the console).
 
 ``--with-oqs`` adds quantum-safe (OQS) key encapsulation: it installs
 liboqs-python, finds the liboqs shared library the build interpreter loads, and
@@ -46,8 +47,8 @@ bundled so the app logs it at startup, and ``build/nuitka/build-requirements.loc
 the build venv's ``pip freeze``. ``--lock=<file>`` installs the build venv from
 such a file instead of requirements-build.txt, to repeat a known good build;
 packages already in the venv but absent from the file stay installed, so
-delete .venv-build first for an exact copy. scripts/package_release.py
-publishes the executables in dist/ as a GitHub release.
+delete .venv-build first for an exact copy. app-release publishes the
+executables in dist/ as a GitHub release.
 """
 import contextlib
 import json
@@ -74,8 +75,9 @@ VERSION_MODULE = os.path.join("refacdir", "utils", "version.py")
 BUILD_INFO_PATH = os.path.join(BUILD_DIR, "build_info.json")
 LOCK_PATH = os.path.join(BUILD_DIR, "build-requirements.lock.txt")
 LOG_DIR = os.path.join(REPO_ROOT, "build", "logs")
-MEMORY_WAIT_PLUGIN = os.path.join(REPO_ROOT, "scripts", "nuitka_memory_wait.py")
-# Read by MEMORY_WAIT_PLUGIN.
+# Set by app-release, which ships the memory-wait plugin, when it runs this script.
+MEMORY_WAIT_PLUGIN_ENV = "NUITKA_MEMORY_WAIT_PLUGIN"
+# Read by the memory-wait plugin.
 MIN_FREE_MEMORY_ENV = "BUILD_MIN_FREE_MEMORY_GB"
 # Versions the build output and build_info.json record.
 RECORDED_DISTRIBUTIONS = (
@@ -243,12 +245,12 @@ def _write_build_info(version: str, build_id: str, environment: dict, with_oqs: 
     info = {
         "version": version,
         "build_id": build_id,
-        # scripts/package_release.py rebuilds with --with-oqs when this is true.
+        # app-release rebuilds with --with-oqs when this is true.
         "with_oqs": with_oqs,
         "python": environment["python"],
         "packages": {name: v for name, v in environment["packages"].items() if v},
         # The startup drift check finds the checkout by this path, which anyone
-        # with the executable can read; scripts/package_release.py warns of it.
+        # with the executable can read; app-release warns of it.
         "source": {"repo": REPO_ROOT, **_version_module()["source_state"](REPO_ROOT)},
     }
     os.makedirs(BUILD_DIR, exist_ok=True)
@@ -303,7 +305,30 @@ def _write_windows_icon(python: str) -> None:
     subprocess.run([python, "-c", script, os.path.join(REPO_ROOT, ICON_SVG), ICON_ICO], env=env, check=True)
 
 
-def _common_args(exe_name: str, unpack_prefix: str, version: str, build_id: str) -> list:
+def _memory_wait_plugin():
+    """The memory-wait plugin's path: from app-release's variable, else from an
+    installed app-release, else None (the build does not wait)."""
+    path = os.environ.get(MEMORY_WAIT_PLUGIN_ENV)
+    tool = None if path else shutil.which("app-release")
+    if tool:
+        try:
+            result = subprocess.run([tool, "--memory-wait-plugin"], capture_output=True, text=True,
+                                    stdin=subprocess.DEVNULL, timeout=60)
+        except (OSError, subprocess.SubprocessError) as e:
+            logger.warning(f"Cannot ask {tool} for the memory-wait plugin: {e}")
+        else:
+            if result.returncode == 0:
+                path = result.stdout.strip()
+    if path and os.path.isfile(path):
+        logger.info(f"Memory-wait plugin: {path}")
+        return path
+    logger.warning("No memory-wait plugin: the onefile step will not wait for free memory. "
+                   "Install app-release, or build through it.")
+    return None
+
+
+def _common_args(exe_name: str, unpack_prefix: str, version: str, build_id: str,
+                 memory_wait_plugin=None) -> list:
     args = [
         "--onefile",
         # The exe unpacks its runtime to this folder. A fixed path (no
@@ -332,7 +357,7 @@ def _common_args(exe_name: str, unpack_prefix: str, version: str, build_id: str)
         # loads its protocol and event-loop modules by name.
         "--include-distribution-metadata=mcp",
         "--include-package=uvicorn",
-        f"--user-plugin={MEMORY_WAIT_PLUGIN}",
+        *([f"--user-plugin={memory_wait_plugin}"] if memory_wait_plugin else []),
     ]
     # The user's search functions file is loaded at runtime and can only import
     # what the build contains; its template promises these.
@@ -516,11 +541,13 @@ def main() -> None:
     if sys.platform == "win32":
         _write_windows_icon(python)
     oqs_args = _oqs_args(python, with_oqs)
+    memory_wait_plugin = _memory_wait_plugin()
 
     for base_name, entry, unpack_prefix, target_args in _targets(with_headless):
         exe_name = _exe_name(base_name)
         nuitka_args = [
-            *_common_args(exe_name, unpack_prefix, version, build_id), *target_args(), *oqs_args,
+            *_common_args(exe_name, unpack_prefix, version, build_id, memory_wait_plugin),
+            *target_args(), *oqs_args,
             *args, os.path.join(REPO_ROOT, entry),
         ]
         with _timed(f"Compiling {base_name} with Nuitka"):

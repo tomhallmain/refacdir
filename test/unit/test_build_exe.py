@@ -63,8 +63,8 @@ def test_headless_target_is_built_only_on_request(build_exe):
     assert [t[0] for t in build_exe._targets(with_headless=True)] == ["RefacDir", "RefacDirHeadless"]
 
 
-def test_package_release_finds_the_headless_option(build_exe):
-    """scripts/package_release.py looks for this literal to rebuild RefacDirHeadless."""
+def test_build_exe_reads_the_headless_option_app_release_passes(build_exe):
+    """app-release passes --with-headless to rebuild RefacDirHeadless."""
     with open(_BUILD_EXE, "r", encoding="utf-8") as f:
         assert '"--with-headless"' in f.read()
 
@@ -145,11 +145,48 @@ def test_copy_to_dist_replaces_a_folder_build(build_exe, monkeypatch, tmp_path):
     assert os.path.isfile(path)
 
 
-def test_memory_wait_plugin_is_loaded(build_exe):
-    args = build_exe._common_args("RefacDir.exe", "refacdir", "1.2.3", BUILD_ID)
-    plugin = build_exe._pop_option(args, "--user-plugin")
-    assert plugin == build_exe.MEMORY_WAIT_PLUGIN
-    assert os.path.isfile(plugin)
+def test_memory_wait_plugin_is_passed_when_found(build_exe):
+    args = build_exe._common_args("RefacDir.exe", "refacdir", "1.2.3", BUILD_ID, "/plugins/wait.py")
+    assert build_exe._pop_option(args, "--user-plugin") == "/plugins/wait.py"
+    args = build_exe._common_args("RefacDir.exe", "refacdir", "1.2.3", BUILD_ID, None)
+    assert build_exe._pop_option(args, "--user-plugin") is None
+
+
+class TestMemoryWaitLookup:
+    @staticmethod
+    def _no_tool(build_exe, monkeypatch, tools=None):
+        """No variable, *tools* ({command: path}) as what shutil.which finds."""
+        monkeypatch.delenv(build_exe.MEMORY_WAIT_PLUGIN_ENV, raising=False)
+        monkeypatch.setattr(build_exe.shutil, "which", lambda name: (tools or {}).get(name))
+
+    def test_the_variable_names_the_plugin(self, build_exe, monkeypatch, tmp_path):
+        plugin = tmp_path / "nuitka_memory_wait.py"
+        plugin.write_text("", encoding="utf-8")
+        self._no_tool(build_exe, monkeypatch)
+        monkeypatch.setenv(build_exe.MEMORY_WAIT_PLUGIN_ENV, str(plugin))
+        assert build_exe._memory_wait_plugin() == str(plugin)
+
+    def test_an_installed_tool_names_the_plugin(self, build_exe, monkeypatch, tmp_path):
+        import subprocess
+
+        plugin = tmp_path / "nuitka_memory_wait.py"
+        plugin.write_text("", encoding="utf-8")
+        self._no_tool(build_exe, monkeypatch, tools={"app-release": "/bin/app-release"})
+        calls = []
+
+        def fake_run(args, **kwargs):
+            calls.append(args)
+            return subprocess.CompletedProcess(args, 0, stdout=f"{plugin}\n", stderr="")
+
+        monkeypatch.setattr(build_exe.subprocess, "run", fake_run)
+        assert build_exe._memory_wait_plugin() == str(plugin)
+        assert calls == [["/bin/app-release", "--memory-wait-plugin"]]
+
+    def test_no_plugin_anywhere_builds_without_it(self, build_exe, monkeypatch, caplog):
+        self._no_tool(build_exe, monkeypatch)
+        with caplog.at_level("WARNING", logger="build_exe"):
+            assert build_exe._memory_wait_plugin() is None
+        assert any("app-release" in message for message in caplog.messages)
 
 
 def test_min_free_memory_reaches_nuitka(build_exe, monkeypatch):
@@ -169,9 +206,9 @@ def test_min_free_memory_refuses_other_values(build_exe, value):
         build_exe._min_free_memory(value)
 
 
-def test_min_free_memory_variable_matches_the_plugin(build_exe):
-    with open(build_exe.MEMORY_WAIT_PLUGIN, "r", encoding="utf-8") as f:
-        assert f'MIN_FREE_ENV = "{build_exe.MIN_FREE_MEMORY_ENV}"' in f.read()
+def test_min_free_memory_variable_is_the_one_the_plugin_reads(build_exe):
+    # app-release's tests pin the plugin's side of this name.
+    assert build_exe.MIN_FREE_MEMORY_ENV == "BUILD_MIN_FREE_MEMORY_GB"
 
 
 @pytest.mark.parametrize("seconds, text", [
