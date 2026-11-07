@@ -10,6 +10,8 @@ User configs, caches and logs live outside the repo, in a per-user app data dire
 
 Configs and cache files left in the repo by older versions are moved there automatically on first start.
 
+The cache is encrypted. Its keys sit in `MyPersonalApplicationsService/RefacDir__key_store.json` under `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS and `$XDG_DATA_HOME` (default `~/.local/share`) elsewhere; only the passphrase protecting them stays in the OS keychain. Keys kept in the keychain by older versions are moved into that file on first start. After every write the key store is backed up to an external drive (set `REFACDIR_KEY_BACKUP_DIR` to choose where). Run `python scripts/key_material.py` to check that backup's state, or `python scripts/key_material.py backup` to take one by hand.
+
 Available batch actions include:
 - Duplicate removal
 - File renaming, including the following functions:

@@ -51,6 +51,13 @@ os.environ.setdefault("REFACDIR_CACHE_DIR", str(_FIXTURE_CACHE))
 # and the move of legacy repo files is disabled while it is set.
 _SESSION_APP_DATA = tempfile.mkdtemp(prefix="refacdir-test-appdata-")
 os.environ["REFACDIR_APP_DATA_DIR"] = _SESSION_APP_DATA
+# The encryptor's key store lives outside the app data dir and has its own
+# override; the off-drive backup taken after each key store write would
+# otherwise go to the first writable external drive found -- the developer's
+# real one. Both are forced into the session dir and repointed per test by
+# ``isolated_keyring``.
+os.environ["REFACDIR_KEY_STORE_DIR"] = os.path.join(_SESSION_APP_DATA, "key_store")
+os.environ["REFACDIR_KEY_BACKUP_DIR"] = os.path.join(_SESSION_APP_DATA, "key_backup")
 atexit.register(shutil.rmtree, _SESSION_APP_DATA, ignore_errors=True)
 
 import keyring
@@ -123,14 +130,22 @@ class InMemoryKeyring(keyring.backend.KeyringBackend):
 
 
 @pytest.fixture(autouse=True)
-def isolated_keyring(monkeypatch):
+def isolated_keyring(monkeypatch, tmp_path):
     """Keep every test off the OS keyring, even one that unsets the disable flag.
 
-    Keys go to a per-test in-memory backend. The passphrase lookup is stubbed
-    too: its platform branches reach past ``keyring`` (``win32cred`` on Windows,
-    a ``~/.config`` file on unknown platforms).
+    Keys go to a per-test in-memory backend, and the key store file and its
+    off-drive backup to ``tmp_path``. The passphrase lookup is stubbed too: its
+    platform branches reach past ``keyring`` (``win32cred`` on Windows, a
+    ``~/.config`` file on unknown platforms). The encryptor caches key material
+    per (service, app) for the life of the process, so that cache is cleared
+    on both sides of each test.
     """
     import refacdir.utils.encryptor as encryptor_module
+
+    monkeypatch.setenv(encryptor_module.KEY_STORE_DIR_ENV_VAR, str(tmp_path / "key_store"))
+    monkeypatch.setenv(encryptor_module.KEY_BACKUP_DIR_ENV_VAR, str(tmp_path / "key_backup"))
+    encryptor_module.clear_key_store_cache()
+    encryptor_module._auto_backup_warned.clear()
 
     backend = InMemoryKeyring()
     # Not restored afterwards: reading the current backend would initialize the
@@ -142,7 +157,9 @@ def isolated_keyring(monkeypatch):
         staticmethod(lambda *args, **kwargs: "test-only-passphrase"),
     )
     monkeypatch.setattr(encryptor_module, "ENCRYPTOR_CLASSES", {})
-    return backend
+    yield backend
+    encryptor_module.clear_key_store_cache()
+    encryptor_module._auto_backup_warned.clear()
 
 
 @pytest.fixture
