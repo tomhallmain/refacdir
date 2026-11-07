@@ -10,6 +10,7 @@ from unittest.mock import patch
 from refacdir.backup.backup_manager import BackupManager
 from refacdir.backup.backup_mapping import BackupMapping, BackupMode, BackupTransaction, FileMode, HashMode
 from refacdir.backup.backup_source_data import BackupSourceData
+from refacdir.utils.translations import _
 from .test_backup_helper import create_test_structure, compare_directories, clean_test_dirs
 
 # Test directory structure
@@ -365,6 +366,11 @@ def test_backup_manager_passes_overwrite_to_source_data_load(overwrite):
     assert recorded == [overwrite]
 
 
+def _duplicate_hash_prefix():
+    """The duplicate-hash warning up to its first placeholder, in the active locale."""
+    return _("Duplicate content hash {0}... : {1}").split("{0}")[0]
+
+
 def test_warn_duplicates_logs_when_enabled(caplog):
     """When warn_duplicates is True, setup logs one line per duplicate content hash."""
     structure = {
@@ -389,7 +395,7 @@ def test_warn_duplicates_logs_when_enabled(caplog):
         manager.run()
 
     messages = [r.getMessage() for r in caplog.records]
-    assert any("Duplicate content hash" in m for m in messages)
+    assert any(m.startswith(_duplicate_hash_prefix()) for m in messages)
 
 
 def test_warn_duplicates_no_log_when_disabled(caplog):
@@ -416,7 +422,7 @@ def test_warn_duplicates_no_log_when_disabled(caplog):
         manager.run()
 
     messages = [r.getMessage() for r in caplog.records]
-    assert not any("Duplicate content hash" in m for m in messages)
+    assert not any(m.startswith(_duplicate_hash_prefix()) for m in messages)
 
 
 def test_file_mode_dirs_only():

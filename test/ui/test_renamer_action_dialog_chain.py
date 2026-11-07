@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 
 from refacdir.batch import ActionType
+from refacdir.utils.translations import _
 from ui.config_action_dialogs import RenamerActionDialog
 
 pytestmark = pytest.mark.ui
@@ -51,7 +52,7 @@ def test_selecting_a_chained_rule_checks_the_box_and_shows_hint(qtbot):
     dialog.rules_list.setCurrentRow(0)
 
     assert dialog.rule_chain_check.isChecked() is True
-    assert "chained" in dialog.rules_list.item(0).text()
+    assert _("chained") in dialog.rules_list.item(0).text()
 
 
 def test_selecting_a_plain_rule_unchecks_the_box(qtbot):

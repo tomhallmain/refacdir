@@ -79,7 +79,9 @@ class I18N:
     r'''
     NOTE when gathering the translation strings, set _() == to gettext.gettext() instead of the above, and run:
 
-        ```python C:\Python310\Tools\i18n\pygettext.py -d base -o locale\base.pot .```
+        ```python C:\Python310\Tools\i18n\pygettext.py -d base -k LocalizedText -o locale\base.pot .```
+
+    ``-k LocalizedText`` also extracts the templates passed to LocalizedText (below).
 
     in the base directory. The POT output file can be used as source for the PO files in each locale.
     Run personal script C:\Scripts\i18n_manager.py to generate new PO files and look for invalid translations.
@@ -96,3 +98,46 @@ class I18N:
 # function object here stays correct across a locale switch: ``I18N._`` resolves
 # ``I18N.translate`` on every call, and ``install_locale`` rebinds that attribute.
 _ = I18N._
+
+
+class LocalizedText(str):
+    """English text that can also produce its translation.
+
+    For a message that goes both to the user and somewhere that needs stable
+    English: the LLM retry prompt, substring checks on error text, the log
+    file. As a ``str`` it is the English text, so equality, ``in``, joins,
+    f-strings and ``str(exc)`` for an exception raised with it all see
+    English; ``localized()`` translates the template at call time and fills
+    in the same arguments. Raise as ``Exception(LocalizedText("… {0}", x))``
+    and display through ``localized_str``.
+    """
+
+    def __new__(cls, template, *args):
+        text = super().__new__(cls, template.format(*args) if args else template)
+        text.template = template
+        text.template_args = args
+        return text
+
+    def __getnewargs__(self):
+        # Pickling and copying rebuild from the template, not the English text.
+        return (self.template, *self.template_args)
+
+    def localized(self) -> str:
+        translated = I18N._(self.template)
+        return translated.format(*self.template_args) if self.template_args else translated
+
+
+def as_localized_text(value):
+    """The ``LocalizedText`` an exception was raised with, else ``str(value)``."""
+    if isinstance(value, BaseException) and len(value.args) == 1 and isinstance(value.args[0], LocalizedText):
+        return value.args[0]
+    if isinstance(value, LocalizedText):
+        return value
+    return str(value)
+
+
+def localized_str(value) -> str:
+    """Text to show the user for *value*: a ``LocalizedText``, an exception
+    raised with one, or anything else via ``str()``."""
+    text = as_localized_text(value)
+    return text.localized() if isinstance(text, LocalizedText) else text

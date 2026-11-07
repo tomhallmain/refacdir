@@ -278,7 +278,7 @@ class BaseActionDialog(SmartDialog):
     def _build_mapping_from_editor(self) -> dict:
         mapping = {"name": self.name_edit.text().strip()}
         if mapping["name"] == "":
-            raise ValueError("Mapping name is required.")
+            raise ValueError(_("Mapping name is required."))
 
         for row in self._mapping_property_rows:
             key = row.key()
@@ -349,10 +349,10 @@ class BaseActionDialog(SmartDialog):
         for mapping in self._mappings:
             name = str(mapping.get("name", "")).strip()
             if not name:
-                raise ValueError("All mappings must have a name.")
+                raise ValueError(_("All mappings must have a name."))
             names.append(name)
         if len(set(names)) != len(names):
-            raise ValueError("Mapping names must be unique within the action.")
+            raise ValueError(_("Mapping names must be unique within the action."))
 
     def _on_accept(self):
         try:
@@ -396,7 +396,7 @@ class RenamerActionDialog(BaseActionDialog):
 
     def default_mapping(self) -> dict:
         return {
-            "name": "New renamer mapping",
+            "name": _("New renamer mapping"),
             "function": "rename_by_ctime",
             "locations": [{"root": "{{USER_HOME}}\\Downloads"}],
             "mappings": [],
@@ -476,7 +476,7 @@ class RenamerActionDialog(BaseActionDialog):
         self.rule_exclude_edit.setMinimumHeight(70)
         rule_editor_form.addRow("exclude_patterns", self.rule_exclude_edit)
         self.rule_chain_check = QCheckBox(
-            "also match OS/browser duplicate-download copies, e.g. \"name (1).ext\""
+            _('also match OS/browser duplicate-download copies, e.g. "name (1).ext"')
         )
         rule_editor_form.addRow("chain_parenthetical_indices", self.rule_chain_check)
         self.rule_tag_edit = QLineEdit()
@@ -524,7 +524,7 @@ class RenamerActionDialog(BaseActionDialog):
     def _build_mapping_from_editor(self) -> dict:
         name = self.name_edit.text().strip()
         if not name:
-            raise ValueError("Mapping name is required.")
+            raise ValueError(_("Mapping name is required."))
 
         locations = []
         for line in self.locations_editor.toPlainText().splitlines():
@@ -533,14 +533,14 @@ class RenamerActionDialog(BaseActionDialog):
                 locations.append({"root": root})
 
         if not locations:
-            raise ValueError("At least one location root is required.")
+            raise ValueError(_("At least one location root is required."))
 
         if self._selected_rule_index is not None and 0 <= self._selected_rule_index < len(self._rules):
             # Persist active rule edits if user changed fields but forgot save.
             self._rules[self._selected_rule_index] = self._build_rule_from_editor()
 
         if not self._rules:
-            raise ValueError("At least one rename rule is required.")
+            raise ValueError(_("At least one rename rule is required."))
 
         mapping = {
             "name": name,
@@ -573,16 +573,22 @@ class RenamerActionDialog(BaseActionDialog):
         for idx, rule in enumerate(self._rules):
             patterns = rule.get("search_patterns", "")
             if isinstance(patterns, list):
-                pattern_preview = f"{len(patterns)} pattern(s)"
+                pattern_preview = _("{0} pattern(s)").format(len(patterns))
             else:
                 pattern_preview = str(patterns)[:35]
-            tag = str(rule.get("rename_tag", "")) or "(auto per-pattern)"
+            tag = str(rule.get("rename_tag", "")) or _("(auto per-pattern)")
             excludes = rule.get("exclude_patterns", [])
             if isinstance(excludes, str):
                 excludes = [excludes]
-            exclude_hint = f", {len(excludes)} exclude(s)" if excludes else ""
-            chain_hint = ", chained" if rule.get("chain_parenthetical_indices") else ""
-            self.rules_list.addItem(f"{idx + 1}. {tag} <- {pattern_preview}{exclude_hint}{chain_hint}")
+            annotations = []
+            if excludes:
+                annotations.append(_("{0} exclude(s)").format(len(excludes)))
+            if rule.get("chain_parenthetical_indices"):
+                annotations.append(_("chained"))
+            label = f"{idx + 1}. {tag} <- {pattern_preview}"
+            if annotations:
+                label += ", " + ", ".join(annotations)
+            self.rules_list.addItem(label)
         if self._rules:
             row = 0 if self._selected_rule_index is None else min(self._selected_rule_index, len(self._rules) - 1)
             self.rules_list.setCurrentRow(row)
@@ -625,7 +631,7 @@ class RenamerActionDialog(BaseActionDialog):
     def _build_rule_from_editor(self) -> dict:
         patterns_text = self.rule_search_edit.text().strip()
         if not patterns_text:
-            raise ValueError("search_patterns is required.")
+            raise ValueError(_("search_patterns is required."))
         rename_tag = self.rule_tag_edit.text().strip()
 
         if "," in patterns_text:
@@ -643,8 +649,10 @@ class RenamerActionDialog(BaseActionDialog):
             pattern_list = patterns if isinstance(patterns, list) else [patterns]
             if any("{{" in p for p in pattern_list):
                 raise ValueError(
-                    "rename_tag is required when a search pattern uses a "
-                    '"{{...}}" template or custom function reference.'
+                    _(
+                        "rename_tag is required when a search pattern uses a "
+                        '"{{...}}" template or custom function reference.'
+                    )
                 )
 
         exclude_lines = [
@@ -813,7 +821,7 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
 
     def default_mapping(self) -> dict:
         return {
-            "name": "named_subdir_collector mapping",
+            "name": _("named_subdir_collector mapping"),
             "root": ".",
             "subdir_names": ["folder_one", "folder_two"],
             "subdir_depth": 1,
@@ -824,8 +832,10 @@ class NamedSubdirCollectorActionDialog(BaseActionDialog):
         mapping["subdir_names"] = Utils.parse_yamlish_list(mapping.get("subdir_names"))
         if not mapping["subdir_names"]:
             raise ValueError(
-                "subdir_names is required and must not be empty "
-                "(comma-separated names, or YAML list in the saved file)."
+                _(
+                    "subdir_names is required and must not be empty "
+                    "(comma-separated names, or YAML list in the saved file)."
+                )
             )
         return mapping
 
@@ -871,7 +881,7 @@ class ArchiveExtractorActionDialog(BaseActionDialog):
 
     def default_mapping(self) -> dict:
         return {
-            "name": "archive_extractor mapping",
+            "name": _("archive_extractor mapping"),
             "search_dir": ".",
             "target_dir": "./extracted",
             "pattern": "*.zip",

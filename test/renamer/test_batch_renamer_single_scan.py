@@ -15,6 +15,8 @@ import pytest
 
 from refacdir.batch_renamer import BatchRenamer, Location
 from refacdir.filename_ops import FilenameMappingDefinition
+from refacdir.utils.translations import _
+from refacdir.utils.utils import Utils
 
 
 def _counting_matcher(matching_names):
@@ -131,8 +133,12 @@ def test_no_files_found_logs_warning_and_skips_started_message(tmp_path, caplog)
         br.rename_by_ctime()
 
     messages = [record.message for record in caplog.records]
-    assert any("No files found" in m for m in messages)
-    assert not any("BATCH RENAME PROCESS STARTED" in m for m in messages)
+    no_files = _("{0} - No files found at {1} ({2})").format(
+        "warn-check", Utils.stringify_list(br.locations, do_print=False), "batch_rename_by_ctime"
+    )
+    assert no_files in messages
+    started = _("BATCH RENAME PROCESS STARTED: {0}").format("warn-check")
+    assert not any(started in m for m in messages)
 
 
 def test_files_found_logs_started_and_complete(tmp_path, caplog):
@@ -148,5 +154,7 @@ def test_files_found_logs_started_and_complete(tmp_path, caplog):
         br.rename_by_ctime()
 
     messages = [record.message for record in caplog.records]
-    assert any("BATCH RENAME PROCESS STARTED" in m for m in messages)
-    assert any("BATCH RENAME PROCESS COMPLETE" in m for m in messages)
+    started = _("BATCH RENAME PROCESS STARTED: {0}").format("log-check")
+    complete = _("BATCH RENAME PROCESS COMPLETE: {0}").format("log-check")
+    assert any(started in m for m in messages)
+    assert any(complete in m for m in messages)

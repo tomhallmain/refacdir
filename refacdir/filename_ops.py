@@ -3,6 +3,7 @@ import fnmatch
 import os
 import re
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import LocalizedText
 
 from refacdir import user_search_funcs
 
@@ -136,7 +137,7 @@ class FilenameMappingDefinition:
 
     def __init__(self, pattern, function_calls=[]):
         if not pattern or pattern == "":
-            raise Exception("Pattern not provided to FilenameMappingDefinition")
+            raise Exception(LocalizedText("Pattern not provided to FilenameMappingDefinition"))
         self.pattern = pattern
         self.function_calls = function_calls
 
@@ -171,16 +172,25 @@ class FilenameMappingDefinition:
             function_call = self.function_calls[int(index)]
         else:
             if not func_name or func_name.strip() == "":
-                raise Exception("Not enough arguments provided to generate subpattern")
+                raise Exception(LocalizedText("Not enough arguments provided to generate subpattern"))
             # Not defined in the config: the user's own file, then the built-ins.
             func = user_search_funcs.find(func_name) or user_search_funcs.builtin(func_name)
             if func is None:
-                message = (
-                    f"Function {func_name} not found in config filename_mapping_functions, "
-                    f"in {user_search_funcs.user_file_path()}, or among the built-in search functions"
-                )
                 if user_search_funcs.load_error():
-                    message += f" (the user file failed to load: {user_search_funcs.load_error()})"
+                    message = LocalizedText(
+                        "Function {0} not found in config filename_mapping_functions, in {1}, "
+                        "or among the built-in search functions (the user file failed to load: {2})",
+                        func_name,
+                        user_search_funcs.user_file_path(),
+                        user_search_funcs.load_error(),
+                    )
+                else:
+                    message = LocalizedText(
+                        "Function {0} not found in config filename_mapping_functions, in {1}, "
+                        "or among the built-in search functions",
+                        func_name,
+                        user_search_funcs.user_file_path(),
+                    )
                 raise Exception(message)
             return func
         return FilenameMappingDefinition.call_from_cache(function_call)
@@ -228,7 +238,7 @@ class FilenameMappingDefinition:
             return [patterns]
         if isinstance(patterns, list):
             return patterns
-        raise Exception(f"Invalid pattern list type {type(patterns)} ({patterns})")
+        raise Exception(LocalizedText("Invalid pattern list type {0} ({1})", type(patterns), patterns))
 
     @staticmethod
     def _compile_pattern(pattern, funcs):
@@ -369,7 +379,7 @@ class FilenameMappingDefinition:
         """
         if isinstance(entry, dict):
             if "pattern" not in entry:
-                raise Exception(f"search_patterns dict entry missing required 'pattern' key: {entry}")
+                raise Exception(LocalizedText("search_patterns dict entry missing required 'pattern' key: {0}", entry))
             return (
                 entry["pattern"],
                 entry.get("chain_parenthetical_indices", default_chain_parenthetical_indices),
@@ -392,9 +402,12 @@ class FilenameMappingDefinition:
         """
         if not isinstance(pattern, str) or "{{" in pattern:
             raise Exception(
-                "rename_tag is required when a search pattern is not a plain "
-                f"literal string (got {pattern!r}); auto-derivation only works "
-                "for literal patterns."
+                LocalizedText(
+                    "rename_tag is required when a search pattern is not a plain "
+                    "literal string (got {0!r}); auto-derivation only works "
+                    "for literal patterns.",
+                    pattern,
+                )
             )
         tag_source = pattern[:-2] if pattern.endswith(".*") else pattern
         return tag_source.replace("*", "") + "_"
@@ -492,7 +505,7 @@ class FilenameMappingDefinition:
                     )
                     add_key(pattern, chain)
             else:
-                raise Exception(f"Invalid search pattern type {type(search_pattern)}")
+                raise Exception(LocalizedText("Invalid search pattern type {0}", type(search_pattern)))
         return mappings
 
 class FiletypesDefinition:
@@ -504,10 +517,10 @@ class FiletypesDefinition:
 
         for extension in extensions_list:
             if not isinstance(extension, str):
-                raise Exception(f"Invalid filetype definition, expected type string, got: {type(extension)}")
+                raise Exception(LocalizedText("Invalid filetype definition, expected type string, got: {0}", type(extension)))
             extension = extension.strip()
             if len(extension) == 0 or extension[0]!= ".":
-                raise Exception(f"Invalid filetype definition, expected a valid extension, got {extension}")
+                raise Exception(LocalizedText("Invalid filetype definition, expected a valid extension, got {0}", extension))
             self._filetypes.append(extension)
 
     @staticmethod
@@ -563,6 +576,6 @@ class FiletypesDefinition:
             try:
                 return FiletypesDefinition.compile(definitions_obj)._filetypes
             except KeyError as e:
-                raise Exception(f"Invalid filetypes definition name: {e}")
+                raise Exception(LocalizedText("Invalid filetypes definition name: {0}", e))
         else:
-            raise Exception(f"Invalid filetype definition type: {type(definitions_obj)} ({definitions_obj})")
+            raise Exception(LocalizedText("Invalid filetype definition type: {0} ({1})", type(definitions_obj), definitions_obj))

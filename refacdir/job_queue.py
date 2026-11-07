@@ -2,6 +2,7 @@ import threading
 import uuid
 
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import LocalizedText
 
 # Set up logger for job queue
 logger = setup_logger('job_queue')
@@ -74,7 +75,11 @@ class JobQueue:
     def add(self, run_config):
         with self._lock:
             if len(self.pending_jobs) >= self.max_size:
-                raise Exception(f"Reached limit of pending runs: {self.max_size} - wait until current run has completed.")
+                raise Exception(
+                    LocalizedText(
+                        "Reached limit of pending runs: {0} - wait until current run has completed.", self.max_size
+                    )
+                )
             self.pending_jobs.append(run_config)
         logger.info(f"Added pending job: {run_config}")
         return run_config

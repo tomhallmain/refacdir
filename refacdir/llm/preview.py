@@ -28,7 +28,7 @@ from typing import Any, Dict
 
 from refacdir.batch import ActionType
 from refacdir.llm.validation import construct_for_action_type
-from refacdir.utils.translations import _
+from refacdir.utils.translations import _, as_localized_text
 
 
 @dataclass
@@ -140,7 +140,7 @@ def preview_action(action_type: ActionType, action_dict: dict) -> PreviewResult:
     except ValueError:
         raise
     except Exception as exc:
-        return PreviewResult(action_type=action_type, available=False, reason=str(exc))
+        return PreviewResult(action_type=action_type, available=False, reason=as_localized_text(exc))
 
     try:
         if action_type == ActionType.RENAMER:
@@ -150,4 +150,4 @@ def preview_action(action_type: ActionType, action_dict: dict) -> PreviewResult:
             return _preview_batch_renamer(action_type, constructed.batch_renamer)
         return _PREVIEW_DISPATCH[action_type](action_type, constructed)
     except Exception as exc:
-        return PreviewResult(action_type=action_type, available=False, reason=str(exc))
+        return PreviewResult(action_type=action_type, available=False, reason=as_localized_text(exc))

@@ -4,7 +4,7 @@ from refacdir.file_renamer import FileRenamer
 from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.utils import Utils
 from refacdir.utils.confirm import confirm_action
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for batch renamer
@@ -13,7 +13,7 @@ logger = setup_logger('batch_renamer')
 class Location:
     def __init__(self, root, exclude_dirs=[]):
         if not isinstance(root, str):
-            raise TypeError(f"directory root must be a string, got {type(root)} ({root})")
+            raise TypeError(LocalizedText("directory root must be a string, got {0} ({1})", type(root), root))
         self.root = Utils.fix_path(root)
         self.exclude_dirs = list(map(lambda p: Utils.fix_path(p), exclude_dirs))
 
@@ -104,7 +104,7 @@ class BatchRenamer:
             file_renamer = FileRenamer(root=root, test=self.test, preserve_alpha=self.preserve_alpha, exclude_dirs=exclude_dirs,
                                        find_unused_filenames=self.find_unused_filenames)
         else:
-            error_msg = f"Invalid location provided: {location}"
+            error_msg = LocalizedText("Invalid location provided: {0}", location)
             logger.error(error_msg)
             raise Exception(error_msg)
         return file_renamer
@@ -161,8 +161,7 @@ class BatchRenamer:
                 for filename in filenames:
                     if filename in seen:
                         logger.warning(
-                            f"{filename} matches more than one search pattern in "
-                            "this mapping; keeping it under the first pattern only."
+                            _("{0} matches more than one search pattern in this mapping; keeping it under the first pattern only.").format(filename)
                         )
                         continue
                     seen.add(filename)
@@ -175,7 +174,9 @@ class BatchRenamer:
             if temp in BatchRenamer.DESCRIPTIONS:
                 _func = temp
             else:
-                error_msg = f"Invalid function provided: {_func}. Must be one of: {BatchRenamer.DESCRIPTIONS.keys()}"
+                error_msg = LocalizedText(
+                    "Invalid function provided: {0}. Must be one of: {1}", _func, BatchRenamer.DESCRIPTIONS.keys()
+                )
                 logger.error(error_msg)
                 raise Exception(error_msg)
         _desc = BatchRenamer.DESCRIPTIONS[_func]
@@ -195,12 +196,14 @@ class BatchRenamer:
             )
 
         if self.test:
-            logger.info(f"|=============== TESTING BATCH RENAME PROCESS: {self.name} (no change to be made) ===============|")
+            logger.info("|=============== " + _("TESTING BATCH RENAME PROCESS: {0} (no change to be made)").format(self.name) + " ===============|")
         elif not any_found:
-            logger.warning(f"{self.name} - No files found for {_desc} {Utils.stringify_list(self.locations, do_print=False)}")
+            logger.warning(_("{0} - No files found at {1} ({2})").format(
+                self.name, Utils.stringify_list(self.locations, do_print=False), _func
+            ))
             return
         else:
-            logger.info(f"|=============== BATCH RENAME PROCESS STARTED: {self.name} ===============|")
+            logger.info("|=============== " + _("BATCH RENAME PROCESS STARTED: {0}").format(self.name) + " ===============|")
 
         logger.info(f"About to {_desc} locations: {Utils.stringify_list(self.locations, do_print=False)}")
         logger.info(f"With mapping patterns: {Utils.stringify_dict(self.mappings, do_print=False)}")
@@ -221,7 +224,7 @@ class BatchRenamer:
                 _('Run "{0}" on {1} file(s) found?').format(self.name, found),
                 details=_("Locations:") + "\n" + locations,
             ):
-                logger.info("Operation cancelled by user")
+                logger.info(_("Operation cancelled by user"))
                 return
 
         for location in self.locations:
@@ -231,4 +234,4 @@ class BatchRenamer:
             scanned = scanned_by_location[location] if scanned_by_location is not None else None
             operation(self.mappings, recursive=self.recursive, make_dirs=self.make_dirs, scanned=scanned)
 
-        logger.info(f"|=============== BATCH RENAME PROCESS COMPLETE: {self.name} ===============|\n\n")
+        logger.info("|=============== " + _("BATCH RENAME PROCESS COMPLETE: {0}").format(self.name) + " ===============|\n\n")

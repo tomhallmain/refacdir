@@ -3,6 +3,8 @@ import re
 import fnmatch
 from collections import Counter, defaultdict
 
+from refacdir.utils.translations import LocalizedText
+
 
 _SEPARATOR_RE = re.compile(r"[_\-\s]+")
 _HEX_RE = re.compile(r"[0-9a-fA-F]{32,64}")
@@ -45,24 +47,24 @@ _NOTORIOUS_DEFAULT_BASENAMES = [
 # one in the UI; nothing here is ever applied automatically.
 _COMMON_PATTERN_PRESETS = [
     {
-        "name": "Integer Basename",
+        "name": LocalizedText("Integer Basename"),
         "search_patterns": "{{is_short_integer_filename}}",
         "rename_tag": "int_",
         "function_hint": "rename_by_ctime",
         "chain_parenthetical_indices": True,
-        "reason": (
+        "reason": LocalizedText(
             'Filenames that are just a short number (up to 5 digits), e.g. "1234.jpg" — '
             "the same browser-download collision as the letter case: re-downloading "
             'saves it as "1234 (1).jpg", "1234 (2).jpg", etc. rather than overwriting it.'
         ),
     },
     {
-        "name": "Single-Letter/Initialism Basename",
+        "name": LocalizedText("Single-Letter/Initialism Basename"),
         "search_patterns": "{{is_short_alpha_filename}}",
         "rename_tag": "letter_",
         "function_hint": "rename_by_ctime",
         "chain_parenthetical_indices": True,
-        "reason": (
+        "reason": LocalizedText(
             'Filenames that are just one or two letters, e.g. "O.jpg" or "R.png" — '
             "a known browser-download collision: re-downloading (or saving from a "
             'different tab/page) the same image saves it as "R (1).png", "R (2).png", '
@@ -70,18 +72,18 @@ _COMMON_PATTERN_PRESETS = [
         ),
     },
     {
-        "name": "Camera Photo (IMG_####)",
+        "name": LocalizedText("Camera Photo (IMG_####)"),
         "search_patterns": "IMG_",
         "rename_tag": "cam_",
         "function_hint": "rename_by_ctime",
-        "reason": 'Default camera/phone photo naming, e.g. "IMG_1234.jpg".',
+        "reason": LocalizedText('Default camera/phone photo naming, e.g. "IMG_1234.jpg".'),
     },
     {
-        "name": "Hash/UUID Basename",
+        "name": LocalizedText("Hash/UUID Basename"),
         "search_patterns": "{{is_id_filename}}",
         "rename_tag": "id_",
         "function_hint": "rename_by_ctime",
-        "reason": (
+        "reason": LocalizedText(
             "Filenames that look like a random ID or hash rather than a human-chosen "
             "name. Deliberately NOT paired with chain_parenthetical_indices: a "
             'collision here (e.g. two files both matching "{{is_id_filename}}") means '
@@ -91,7 +93,7 @@ _COMMON_PATTERN_PRESETS = [
         ),
     },
     {
-        "name": "Notorious Default/Generic Filenames",
+        "name": LocalizedText("Notorious Default/Generic Filenames"),
         # Each basename gets a literal "." appended so it only ever matches
         # as a whole basename ("imgproxy.png") — not as a prefix of some
         # unrelated longer name ("image_chroma_text_to_image_lora.json"
@@ -105,7 +107,7 @@ _COMMON_PATTERN_PRESETS = [
         # than collapsing every match under one shared generic tag.
         "chain_parenthetical_indices": True,
         "function_hint": "rename_by_ctime",
-        "reason": (
+        "reason": LocalizedText(
             "Basenames that many unrelated sites/tools hand out as a generic default "
             '(e.g. "maxresdefault"/"hqdefault" from YouTube thumbnails, or a server '
             'falling back to "image"/"download") rather than anything file-specific — '
@@ -278,7 +280,7 @@ def suggest_renamer_rules(directory: str, recursive: bool = False, max_rules: in
             suggestions.append(
                 _build_suggestion(
                     pattern=candidate,
-                    reason=f"Structural glob candidate matching {count} file(s).",
+                    reason=LocalizedText("Structural glob candidate matching {0} file(s).", count),
                     files_for_group=matched,
                     total_files=total,
                     score=count * 8,
@@ -307,7 +309,7 @@ def suggest_renamer_rules(directory: str, recursive: bool = False, max_rules: in
         suggestions.append(
             _build_suggestion(
                 pattern=token,
-                reason=f"Common leading token in {count} file(s).",
+                reason=LocalizedText("Common leading token in {0} file(s).", count),
                 files_for_group=matched,
                 total_files=total,
                 score=count * 5,
@@ -323,7 +325,7 @@ def suggest_renamer_rules(directory: str, recursive: bool = False, max_rules: in
         suggestions.append(
             _build_suggestion(
                 pattern="{{sixty_four_uppercase_hexadecimal}}",
-                reason=f"Detected long hexadecimal patterns in {len(hex_files)} file(s).",
+                reason=LocalizedText("Detected long hexadecimal patterns in {0} file(s).", len(hex_files)),
                 files_for_group=matched,
                 total_files=total,
                 score=len(hex_files) * 6,

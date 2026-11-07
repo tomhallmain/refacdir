@@ -29,6 +29,7 @@ from refacdir.llm.client import LLM, LLMResponseException
 from refacdir.llm.config_schema import get_full_schema_description
 from refacdir.llm.safety import apply_safety_defaults
 from refacdir.llm.validation import ValidationResult, validate_action
+from refacdir.utils.translations import LocalizedText, as_localized_text, localized_str
 
 DEFAULT_MAX_ATTEMPTS = 3
 
@@ -82,6 +83,17 @@ class DraftResult:
             return last.validation.error_summary()
         return ""
 
+    def localized_last_error_summary(self) -> str:
+        """``last_error_summary`` translated for display."""
+        if not self.attempts:
+            return ""
+        last = self.attempts[-1]
+        if last.parse_error:
+            return localized_str(last.parse_error)
+        if last.validation is not None:
+            return last.validation.localized_error_summary()
+        return ""
+
 
 def _build_system_prompt(action_type: ActionType, language: str) -> str:
     schema = get_full_schema_description(action_type)
@@ -128,18 +140,18 @@ def _extract_json_object(text: str) -> dict:
     cleaned = re.sub(r"^```(?:json)?", "", cleaned).strip()
     cleaned = re.sub(r"```$", "", cleaned).strip()
     if not cleaned:
-        raise ValueError("Empty response")
+        raise ValueError(LocalizedText("Empty response"))
     start = cleaned.find("{")
     end = cleaned.rfind("}")
     if start == -1 or end == -1 or end < start:
-        raise ValueError("No JSON object found in response")
+        raise ValueError(LocalizedText("No JSON object found in response"))
     candidate = cleaned[start:end + 1]
     try:
         parsed = json.loads(candidate)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Malformed JSON: {exc}")
+        raise ValueError(LocalizedText("Malformed JSON: {0}", exc))
     if not isinstance(parsed, dict):
-        raise ValueError(f"Expected a JSON object, got {type(parsed).__name__}")
+        raise ValueError(LocalizedText("Expected a JSON object, got {0}", type(parsed).__name__))
     return parsed
 
 
@@ -190,7 +202,7 @@ def draft_action(
         try:
             result = llm.generate_response(query, system_prompt=system_prompt)
         except LLMResponseException as exc:
-            attempts.append(DraftAttempt(raw_response="", parse_error=str(exc)))
+            attempts.append(DraftAttempt(raw_response="", parse_error=as_localized_text(exc)))
             continue
 
         raw_response = result.response
@@ -198,7 +210,7 @@ def draft_action(
         try:
             parsed = _extract_json_object(raw_response)
         except ValueError as exc:
-            attempt = DraftAttempt(raw_response=raw_response, parse_error=str(exc))
+            attempt = DraftAttempt(raw_response=raw_response, parse_error=as_localized_text(exc))
             attempts.append(attempt)
             query = _build_retry_prompt(description, attempt)
             continue

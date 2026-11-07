@@ -41,6 +41,7 @@ from refacdir.job_queue import JobQueue
 from refacdir.utils.background_runner import ThreadedTaskRunner
 from refacdir.utils.headless_app_actions import build_headless_app_actions
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import _
 from refacdir.utils.build_maintenance import start_build_maintenance
 from refacdir.utils.crash_log import enable_fault_log
 from refacdir.utils.unpack_cleanup import HEADLESS_UNPACK_DIR_PREFIX
@@ -249,7 +250,7 @@ def _smoke_test(expect_oqs: bool = False) -> int:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        description=(
+        description=_(
             "Hold a RefacDir session open with no GUI and serve it over MCP, "
             "for an agent to drive."
         )
@@ -257,19 +258,21 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--configs",
         default=None,
-        help="Comma-separated config paths to select. Default: discover them, "
-             "each with the will_run its own YAML sets.",
+        help=_(
+            "Comma-separated config paths to select. Default: discover them, "
+            "each with the will_run its own YAML sets."
+        ),
     )
-    parser.add_argument("--host", default=None, help="default: config.mcp_server_host")
-    parser.add_argument("--port", type=int, default=None, help="default: config.mcp_server_port")
-    parser.add_argument("--token", default=None, help="default: config.mcp_server_token")
+    parser.add_argument("--host", default=None, help=_("default: {0}").format("config.mcp_server_host"))
+    parser.add_argument("--port", type=int, default=None, help=_("default: {0}").format("config.mcp_server_port"))
+    parser.add_argument("--token", default=None, help=_("default: {0}").format("config.mcp_server_token"))
     parser.add_argument(
         "--smoke-test", action="store_true",
-        help="Check that this build can serve, then exit without serving.",
+        help=_("Check that this build can serve, then exit without serving."),
     )
     parser.add_argument(
         "--expect-oqs", action="store_true",
-        help="With --smoke-test: fail if OQS key encapsulation is unavailable.",
+        help=_("With --smoke-test: fail if OQS key encapsulation is unavailable."),
     )
     args = parser.parse_args(argv)
     if args.smoke_test:

@@ -12,6 +12,7 @@ from typing import List
 
 from refacdir.batch import ActionType, BatchArgs, BatchJob
 from refacdir.llm.config_schema import SUPPORTED_ACTION_CONSTRUCTORS
+from refacdir.utils.translations import LocalizedText, as_localized_text, localized_str
 
 # Distinct, stable substrings from the exception messages construct_* methods
 # (via DuplicateRemover/DirectoryObserver) raise when a referenced directory
@@ -47,13 +48,18 @@ def _renamer_missing_rename_tag_errors(action_dict: dict) -> List[str]:
     errors = []
     for rule in action_dict.get("mappings", []) or []:
         if isinstance(rule, dict) and not rule.get("rename_tag"):
-            errors.append(f"Missing required key: 'rename_tag' (in mapping rule: {rule})")
+            errors.append(LocalizedText("Missing required key: 'rename_tag' (in mapping rule: {0})", rule))
     return errors
 
 
 @dataclass
 class ValidationResult:
-    """Result of dry-constructing one candidate action dict."""
+    """Result of dry-constructing one candidate action dict.
+
+    ``errors`` and ``warnings`` are English (``LocalizedText`` where the
+    message has a translation): they feed the retry prompt. Show them to the
+    user through ``localized_error_summary`` / ``localized_str``.
+    """
     action_type: ActionType
     valid: bool
     errors: List[str] = field(default_factory=list)
@@ -62,6 +68,10 @@ class ValidationResult:
     def error_summary(self) -> str:
         """Errors joined into one string, ready to feed back into a retry prompt."""
         return "\n".join(self.errors)
+
+    def localized_error_summary(self) -> str:
+        """Errors joined into one string, translated for display."""
+        return "\n".join(localized_str(error) for error in self.errors)
 
 
 def _build_validation_batch_job() -> BatchJob:
@@ -140,10 +150,10 @@ def validate_action(action_type: ActionType, action_dict: dict) -> ValidationRes
         return ValidationResult(
             action_type=action_type,
             valid=False,
-            errors=[f"Missing required key: {exc}"],
+            errors=[LocalizedText("Missing required key: {0}", exc)],
         )
     except Exception as exc:
-        message = str(exc)
+        message = as_localized_text(exc)
         if _is_path_existence_error(message):
             return ValidationResult(action_type=action_type, valid=True, warnings=[message])
         return ValidationResult(action_type=action_type, valid=False, errors=[message])

@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from typing import Any, Iterator, Optional
 
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import LocalizedText
 
 logger = setup_logger("batch_job_history")
 
@@ -381,7 +382,7 @@ def rescue_legacy_relative_paths(job_id: str) -> dict[str, int]:
     history = app_info_cache.get_batch_job_history()
     job_index = next((i for i, j in enumerate(history) if j.get("job_id") == job_id), None)
     if job_index is None:
-        raise ValueError(f"Batch job not found in history: {job_id}")
+        raise ValueError(LocalizedText("Batch job not found in history: {0}", job_id))
 
     job = history[job_index]
     roots_by_key: dict[tuple[str, str], list[str]] = {}
@@ -479,7 +480,7 @@ def reverse_job(
     history = app_info_cache.get_batch_job_history()
     job_index = next((i for i, j in enumerate(history) if j.get("job_id") == job_id), None)
     if job_index is None:
-        raise ValueError(f"Batch job not found in history: {job_id}")
+        raise ValueError(LocalizedText("Batch job not found in history: {0}", job_id))
 
     job = history[job_index]
     result = ReverseResult(job_id=job_id, dry_run=dry_run)

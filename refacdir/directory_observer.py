@@ -3,6 +3,7 @@ import os
 
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import LocalizedText, _
 
 # Set up logger for directory observer
 logger = setup_logger('directory_observer')
@@ -43,7 +44,7 @@ class DirData:
         DirData.file_types = file_types
         if ((".jpg" in DirData.file_types and ".jpeg" not in DirData.file_types)
                 or (".jpg" not in DirData.file_types and ".jpeg" in DirData.file_types)):
-            raise Exception("JPG can have two types, .jpg, and .jpeg. It is recommended to use both if using one.")
+            raise Exception(LocalizedText("JPG can have two types, .jpg, and .jpeg. It is recommended to use both if using one."))
 
     @staticmethod
     def remove_file_types(file_types):
@@ -63,7 +64,7 @@ class DirData:
                     first_index = DirData.file_types.index(t)
                 DirData.file_types.remove(t)
         if first_index is None:
-            raise Exception("No file type was found in the list of file types.")
+            raise Exception(LocalizedText("No file type was found in the list of file types."))
         DirData.file_types.insert(first_index, preserving_name)
 
     def __init__(self, directory):
@@ -129,28 +130,28 @@ class DirectoryObserver:
         for d in sortable_dirs:
             sort_dir = os.path.join(d, DirectoryObserver.UNSORTED)
             if not os.path.isdir(sort_dir):
-                raise Exception("Invalid directory provided: " + d)
+                raise Exception(LocalizedText("Invalid directory provided: {0}", d))
             self.dir_data[sort_dir] = DirData(sort_dir)
 
         for d in extra_dirs:
             if not os.path.isdir(d):
-                raise Exception("Invalid directory provided: " + d)
+                raise Exception(LocalizedText("Invalid directory provided: {0}", d))
             self.dir_data[d] = DirData(d)
         
         for d in parent_dirs:
             if not os.path.isdir(d):
-                raise Exception("Invalid directory provided: " + d)
+                raise Exception(LocalizedText("Invalid directory provided: {0}", d))
             logger.info(f"Adding directories from parent: {d}")
             for subdir in [ f.path for f in os.scandir(d) if f.is_dir() ]:
                 self.dir_data[subdir] = DirData(subdir)
 
         for d in exclude_dirs:
             if not Utils.isdir_with_retry(d):
-                raise Exception("Invalid exclude directory provided: " + d)
+                raise Exception(LocalizedText("Invalid exclude directory provided: {0}", d))
             self.apply_exclude_dir_to_matching_dir_data(d)
 
         if len(file_types) == 0 or len(self.dir_data) == 0:
-            raise Exception("No sort dirs or file types provided")
+            raise Exception(LocalizedText("No sort dirs or file types provided"))
 
         DirData.set_file_types(file_types)
 
@@ -186,14 +187,14 @@ class DirectoryObserver:
             DirData.remove_file_types(to_remove_file_types)
 
     def log(self):
-        logger.info("Current state of directories:")
-        logger.info(f"Total: {self.total_file_count} files")
+        logger.info(_("Current state of directories:"))
+        logger.info(_("Total: {0} files").format(self.total_file_count))
         rows = []
-        header = ["Directory"]
+        header = [_("Directory")]
         for ext in DirData.file_types:
             header.append(ext)
-        header.append("Other")
-        header.append("Total")
+        header.append(_("Other"))
+        header.append(_("Total"))
 
         for d, dir_data in self.dir_data.items():
             if not dir_data.has_files():
@@ -216,4 +217,4 @@ class DirectoryObserver:
                 dir_data.apply_exclude_dir(exclude_dir)
                 return
 
-        logger.warning(f"No matching directory found for exclude directory {exclude_dir}")
+        logger.warning(_("No matching directory found for exclude directory {0}").format(exclude_dir))

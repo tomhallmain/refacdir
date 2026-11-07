@@ -41,7 +41,7 @@ class ConfigEditorWindow(SmartWindow):
         super().__init__(
             persistent_parent=parent,
             position_parent=parent,
-            title="Config Editor",
+            title=_("Config Editor"),
             geometry="1200x800",
             center=True,
             window_flags=Qt.WindowType.Window,
@@ -240,7 +240,7 @@ class ConfigEditorWindow(SmartWindow):
             with open(abs_path, "r", encoding="utf-8") as handle:
                 loaded = yaml.safe_load(handle) or {}
             if not isinstance(loaded, dict):
-                raise ValueError("Top-level YAML must be a dictionary.")
+                raise ValueError(_("Top-level YAML must be a dictionary."))
             self.current_config_data = loaded
             self.current_config_path = config_rel_path
             self._sync_ui_from_data()
@@ -283,7 +283,7 @@ class ConfigEditorWindow(SmartWindow):
 
     def add_action(self):
         values = [a.value for a in ActionType]
-        selected, ok = QInputDialog.getItem(self, "Choose Action Type", "Action Type", values, 0, False)
+        selected, ok = QInputDialog.getItem(self, _("Choose Action Type"), _("Action Type"), values, 0, False)
         if not ok or not selected:
             return
         action_type = ActionType[selected]
@@ -351,15 +351,15 @@ class ConfigEditorWindow(SmartWindow):
         try:
             funcs = yaml.safe_load(self.filename_funcs_editor.toPlainText()) or []
             if not isinstance(funcs, list):
-                raise ValueError("filename_mapping_functions must be a list.")
+                raise ValueError(_("filename_mapping_functions must be a list."))
             self.current_config_data["filename_mapping_functions"] = funcs
 
             filetypes = yaml.safe_load(self.filetypes_editor.toPlainText()) or []
             if not isinstance(filetypes, list):
-                raise ValueError("filetype_definitions must be a list.")
+                raise ValueError(_("filetype_definitions must be a list."))
             self.current_config_data["filetype_definitions"] = filetypes
         except Exception as exc:
-            raise ValueError(f"Invalid YAML block: {exc}") from exc
+            raise ValueError(_("Invalid YAML block: {0}").format(exc)) from exc
 
     def save_current_config(self):
         if self.current_config_path is None:

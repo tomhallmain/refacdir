@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-20 18:47-0400\n"
-"PO-Revision-Date: 2026-09-20 18:47-0400\n"
-"Last-Translator: Translator Name <translator@example.com>\n"
+"POT-Creation-Date: 2026-11-07 18:12-0500\n"
+"PO-Revision-Date: 2026-11-07 18:12-0500\n"
+"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
 "Language-Team: it Team <<EMAIL>>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -12,51 +12,96 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app_qt.py:74 app_qt.py:126 app_qt.py:188
+#: app_headless.py:254
+msgid ""
+"Hold a RefacDir session open with no GUI and serve it over MCP, for an agent"
+" to drive."
+msgstr ""
+"Mantieni aperta una sessione RefacDir senza GUI e servila tramite MCP, per "
+"consentire a un agente di gestirla."
+
+#: app_headless.py:262
+msgid ""
+"Comma-separated config paths to select. Default: discover them, each with "
+"the will_run its own YAML sets."
+msgstr ""
+"Percorsi di configurazione separati da virgole da selezionare. Predefinito: "
+"scoprirli, ognuno con il proprio set YAML."
+
+#: app_headless.py:266 app_headless.py:267 app_headless.py:268
+msgid "default: {0}"
+msgstr "Predefinito: {0}"
+
+#: app_headless.py:271
+msgid "Check that this build can serve, then exit without serving."
+msgstr "Verifica che questa build possa servire, poi esci senza servire."
+
+#: app_headless.py:275
+msgid "With --smoke-test: fail if OQS key encapsulation is unavailable."
+msgstr ""
+"Con --smoke-test: fallisce se l’incapsulamento della chiave OQS non è "
+"disponibile."
+
+#: app_qt.py:89 app_qt.py:153 app_qt.py:215
 msgid "RefacDir"
 msgstr "RefacDir"
 
-#: app_qt.py:192
+#: app_qt.py:219
 msgid "File Management"
 msgstr "Gestione dei file"
 
-#: app_qt.py:205
+#: app_qt.py:232
 msgid "Toggle Theme"
 msgstr "Cambia tema"
 
-#: app_qt.py:210
+#: app_qt.py:237
 msgid "Run tests"
 msgstr "Esegui i test"
 
-#: app_qt.py:215
+#: app_qt.py:242
 msgid "Run Operations"
 msgstr "Esegui operazioni"
 
-#: app_qt.py:220
+#: app_qt.py:248
 msgid "Edit Configs"
 msgstr "Modifica configurazioni"
 
-#: app_qt.py:225
+#: app_qt.py:253
 msgid "Job History"
 msgstr "Cronologia dei lavori"
 
-#: app_qt.py:237
+#: app_qt.py:260
+msgid "Idle shutdown"
+msgstr "Spegnimento inattivo"
+
+#: app_qt.py:263
+msgid " min"
+msgstr " min"
+
+#: app_qt.py:264
+msgid ""
+"Close the UI after this many minutes without keyboard or mouse activity."
+msgstr ""
+"Chiudi l’interfaccia dopo questo numero di minuti senza attività di tastiera"
+" o mouse."
+
+#: app_qt.py:276
 msgid "Search Configurations"
 msgstr "Cerca nelle configurazioni"
 
-#: app_qt.py:242
+#: app_qt.py:281
 msgid "Type to filter..."
 msgstr "Inserisci il testo da filtrare..."
 
-#: app_qt.py:253
+#: app_qt.py:292
 msgid "Available Configurations"
 msgstr "Configurazioni disponibili"
 
-#: app_qt.py:300
+#: app_qt.py:333
 msgid "File Management Dashboard"
 msgstr "Pannello di controllo gestione file"
 
-#: app_qt.py:304
+#: app_qt.py:337
 msgid ""
 "Configure and run file management operations with ease. Select "
 "configurations from the sidebar and customize options below."
@@ -65,31 +110,31 @@ msgstr ""
 "Seleziona le configurazioni dalla barra laterale e personalizza le opzioni "
 "sottostanti."
 
-#: app_qt.py:320
+#: app_qt.py:353
 msgid "Operation Settings"
 msgstr "Impostazioni operative"
 
-#: app_qt.py:328
+#: app_qt.py:362
 msgid "Recur Selected Actions"
 msgstr "Ripeti azioni selezionate"
 
-#: app_qt.py:332
+#: app_qt.py:366
 msgid "Test Mode"
 msgstr "Modalità di prova"
 
-#: app_qt.py:336
+#: app_qt.py:370
 msgid "Skip Confirmations"
 msgstr "Salta le conferme"
 
-#: app_qt.py:340
+#: app_qt.py:374
 msgid "Only Observers"
 msgstr "Solo Osservatori"
 
-#: app_qt.py:345
+#: app_qt.py:379
 msgid "Persist YAML definition caches between batch runs"
 msgstr "Mantenere la cache delle definizioni YAML tra le esecuzioni batch"
 
-#: app_qt.py:349
+#: app_qt.py:383
 msgid ""
 "Unchecked (default): at each run, clear filename_mapping_functions and "
 "filetype_definitions registries before loading configs in this run. Checked:"
@@ -100,168 +145,1095 @@ msgstr ""
 "configurazioni in questa esecuzione. Checked: mantenere le definizioni delle"
 " esecuzioni precedenti in questa sessione (legacy)."
 
-#: app_qt.py:361
-msgid " min"
-msgstr " min"
-
-#: app_qt.py:362
-msgid ""
-"Close the UI after this many minutes without keyboard or mouse activity."
-msgstr ""
-"Chiudi l’interfaccia dopo questo numero di minuti senza attività di tastiera"
-" o mouse."
-
-#: app_qt.py:364
-msgid "Idle shutdown"
-msgstr "Spegnimento inattivo"
-
-#: app_qt.py:379
+#: app_qt.py:404
 msgid "Operation Status"
 msgstr "Stato operativo"
 
-#: app_qt.py:383 app_qt.py:566 app_qt.py:886
+#: app_qt.py:408 app_qt.py:611 app_qt.py:1090
 msgid "Ready"
 msgstr "Pronti"
 
-#: app_qt.py:527
+#: app_qt.py:439
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_toggle_theme.py:31
+#: test/ui/test_main_window_toggle_theme.py:31
+msgid "Theme switched to dark."
+msgstr "Tema impostato su scuro."
+
+#: app_qt.py:439
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_toggle_theme.py:27
+#: test/ui/test_main_window_toggle_theme.py:27
+msgid "Theme switched to light."
+msgstr "Tema impostato su chiaro."
+
+#: app_qt.py:563
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:100
+#: test/ui/test_main_window_run_config.py:100
 msgid "Queue full"
 msgstr "Coda piena"
 
-#: app_qt.py:548
+#: app_qt.py:592
 msgid "Running operations..."
 msgstr "Operazioni in corso..."
 
-#: app_qt.py:557
+#: app_qt.py:600 app_qt.py:866
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:65
+#: test/ui/test_main_window_run_config.py:65 ui/log_panel.py:133
+#: ui/test_results_window.py:497
+msgid "Error"
+msgstr "Errore"
+
+#: app_qt.py:601
 msgid "Operation failed"
 msgstr "Operazione non riuscita"
 
-#: app_qt.py:682
-msgid "Failed to set target directory to receive marked files."
-msgstr ""
-"Impossibile impostare la directory di destinazione per ricevere i file "
-"contrassegnati."
+#: app_qt.py:751
+msgid "Config saved: {0}"
+msgstr "Configurazione salvata: {0}"
 
-#: refacdir/batch.py:266
+#: app_qt.py:814
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_confirm.py:58
+#: test/ui/test_main_window_confirm.py:58
+msgid "Waiting for confirmation: {0}"
+msgstr "In attesa di conferma: {0}"
+
+#: app_qt.py:866
+msgid "Config not found: {0}"
+msgstr "Configurazione non trovata: {0}"
+
+#: app_qt.py:872
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:74
+#: test/ui/test_main_window_run_config.py:74
+msgid "Config not enabled"
+msgstr "Configurazione non abilitata"
+
+#: app_qt.py:873
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:74
+#: test/ui/test_main_window_run_config.py:74
+msgid "Check {0} to run it."
+msgstr "Verifica {0} per eseguirlo."
+
+#: app_qt.py:887
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_source_drift.py:26
+#: test/ui/test_main_window_source_drift.py:26
+msgid "This build differs from its source checkout. Details are in the log."
+msgstr ""
+"Questa build differisce dal checkout di origine. I dettagli sono nel "
+"registro."
+
+#: run.py:11
+msgid ""
+"Edit configuration YAML files in configs directory to configure file management batch actions.\n"
+"\n"
+"Once desired configurations are set, run with:\n"
+"python run.py [args]\n"
+"\n"
+"    -h, --help\n"
+"        Print this help text\n"
+"\n"
+"    -v, --verbose\n"
+"        Run in verbose mode\n"
+"\n"
+"    -t, --test\n"
+"        Run file management actions in test mode, without taking any action\n"
+"\n"
+"    -s, --skip-confirm\n"
+"        Run file management actions without confirming\n"
+"\n"
+"        --configs\n"
+"        Specify comma-separated list of config files to run\n"
+"\n"
+"    -o, --only-observers\n"
+"        Load configs but only run any Directory Observer actions defined in them\n"
+"\n"
+"    --persist-definition-caches\n"
+"        Keep filename_mapping_functions / filetype_definitions registries across batch runs\n"
+"        in the same process (default is to clear them at each run for a clean YAML-only view)\n"
+msgstr ""
+"Modifica i file YAML di configurazione nella directory configs per configurare le azioni batch di gestione file.\n"
+"\n"
+"Una volta impostate le configurazioni desiderate, esegui con:\n"
+"python run.py [args]\n"
+"\n"
+"    -h, --help\n"
+"        Stampa questo messaggio di aiuto\n"
+"\n"
+"    -v, --verbose\n"
+"        Esegui in modalità verbosa\n"
+"\n"
+"    -t, --test\n"
+"        Esegui le azioni di gestione file in modalità test, senza compiere alcuna azione\n"
+"\n"
+"    -s, --skip-confirm\n"
+"        Esegui le azioni di gestione file senza conferma\n"
+"\n"
+"        --configs\n"
+"        Specifica un elenco di file di configurazione separati da virgole da eseguire\n"
+"\n"
+"    -o, --only-observers\n"
+"        Carica le configurazioni ma esegui solo le azioni Directory Observer definite\n"
+"\n"
+"    --persist-definition-caches\n"
+"        Mantieni i registri filename_mapping_functions / filetype_definitions tra le esecuzioni batch\n"
+"        nello stesso processo (default è svuotare ad ogni esecuzione per una visualizzazione solo YAML) "
+
+#: run.py:80
+msgid "Expected config file paths list not found"
+msgstr "Elenco dei percorsi dei file di configurazione previsto non trovato"
+
+#: run.py:89
+msgid "Invalid config list provided: {0}"
+msgstr "Elenco di configurazione non valido fornito: {0}"
+
+#: build/nuitka/app_qt.dist/test/ui/test_config_editor_paths.py:94
+#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91
+#: ui/config_editor_window.py:257
+msgid "(new config)"
+msgstr "(nuova configurazione)"
+
+#: build/nuitka/app_qt.dist/test/ui/test_log_panel.py:132
+#: test/ui/test_log_panel.py:132 ui/log_panel.py:140
+msgid "Clear"
+msgstr "Cancella"
+
+#: build/nuitka/app_qt.dist/test/ui/test_log_panel.py:133
+#: test/ui/test_log_panel.py:133 ui/log_panel.py:131
+msgid "Info"
+msgstr "Info"
+
+#: extensions/mcp_server.py:498
+msgid "Run these configs live? Files may be moved, renamed or deleted."
+msgstr ""
+"Eseguire queste configurazioni live? I file potrebbero essere spostati, "
+"rinominati o eliminati."
+
+#: extensions/mcp_server.py:506
+msgid "(could not read: {0})"
+msgstr "(impossibile leggere: {0})"
+
+#: extensions/mcp_server.py:513
+msgid "Duplicate policy: {0}"
+msgstr "Politica duplicata: {0}"
+
+#: extensions/mcp_server.py:546
+msgid "Run this batch for real"
+msgstr "Esegui questo batch sul serio"
+
+#: refacdir/archive_extractor.py:220
+msgid "{0}: skipping member with unsafe path {1!r} in {2}"
+msgstr "{0}: salto del membro con percorso non sicuro {1!r} in {2}"
+
+#: refacdir/archive_extractor.py:278
+msgid "{0}: could not read {1}: {2}"
+msgstr "{0}: impossibile leggere {1}: {2}"
+
+#: refacdir/archive_extractor.py:282
+msgid "{0}: no extractable files found for pattern {1} in {2}"
+msgstr "{0}: Nessun file estraibile trovato per il modello {1} in {2}"
+
+#: refacdir/archive_extractor.py:291
+msgid "TEST (dry run) {0}: nothing extracted or deleted"
+msgstr "TEST (esecuzione di prova) {0}: nulla estratto né eliminato"
+
+#: refacdir/archive_extractor.py:294
+msgid "TEST {0}: would extract {1} file(s) from {2} archive(s) into {3}"
+msgstr "TEST {0}: estrarrebbe {1} file da {2} archivio(i) in {3}"
+
+#: refacdir/archive_extractor.py:298
+msgid "TEST extract {0} from {1} -> {2}{3}"
+msgstr "TEST estrae {0} da {1} -> {2}{3}"
+
+#: refacdir/archive_extractor.py:300 refacdir/named_subdir_collector.py:224
+msgid "TEST ... and {0} more"
+msgstr "TEST ... e {0} altri"
+
+#: refacdir/archive_extractor.py:302
+msgid "TEST {0}: would remove {1} source archive(s)"
+msgstr "TEST {0}: rimuoverebbe {1} archivio(i) sorgente"
+
+#: refacdir/archive_extractor.py:306
+msgid "{0}: extracting {1} file(s) from {2} archive(s) into {3}"
+msgstr "{0}: estrazione di {1} file da {2} archivio(i) in {3}"
+
+#: refacdir/archive_extractor.py:310
+msgid "Confirm archive extraction"
+msgstr "Conferma estrazione archivio"
+
+#: refacdir/archive_extractor.py:311
+msgid "\"{0}\": extract {1} file(s) from {2} archive(s) into {3}?"
+msgstr "\"{0}\": estrarre {1} file da {2} archivio(i) in {3}?"
+
+#: refacdir/archive_extractor.py:315
+msgid "Source archives will be deleted afterwards."
+msgstr "Gli archivi di origine verranno cancellati in seguito."
+
+#: refacdir/archive_extractor.py:318 refacdir/batch_renamer.py:227
+#: refacdir/image_categorizer.py:109 refacdir/named_subdir_collector.py:237
+msgid "Operation cancelled by user"
+msgstr "Operazione annullata dall'utente"
+
+#: refacdir/archive_extractor.py:337
+msgid "extracted {0} -> {1} (renamed)"
+msgstr "estratto {0} -> {1} (rinominato)"
+
+#: refacdir/archive_extractor.py:339
+msgid "extracted {0} -> {1}"
+msgstr "estratto {0} -> {1}"
+
+#: refacdir/archive_extractor.py:343
+msgid "{0}: failed to extract {1} from {2}: {3}"
+msgstr "{0}: estrazione di {1} da {2} non riuscita: {3}"
+
+#: refacdir/archive_extractor.py:347
+msgid "{0}: failed to open {1}: {2}"
+msgstr "{0}: impossibile aprire {1}: {2}"
+
+#: refacdir/archive_extractor.py:349
+msgid "{0}: extracted {1} file(s) into {2}"
+msgstr "{0}: estratti {1} file in {2}"
+
+#: refacdir/archive_extractor.py:351
+msgid "{0}: {1} file(s) renamed to avoid name collisions"
+msgstr "{0}: {1} file rinominati per evitare collisioni di nomi"
+
+#: refacdir/archive_extractor.py:361
+msgid "{0}: keeping {1}, not every member extracted successfully"
+msgstr ""
+"{0}: mantenendo {1}, non tutti i membri sono stati estratti con successo"
+
+#: refacdir/archive_extractor.py:365
+msgid "{0}: removed source archive {1}"
+msgstr "{0}: archivio sorgente {1} rimosso"
+
+#: refacdir/archive_extractor.py:367
+msgid "{0}: failed to remove source archive {1}"
+msgstr "{0}: impossibile rimuovere l'archivio sorgente {1}"
+
+#: refacdir/batch.py:65
+msgid "No config files found!"
+msgstr "Nessun file di configurazione trovato!"
+
+#: refacdir/batch.py:291
 msgid "Starting batch operations..."
 msgstr "Avvio operazioni batch..."
 
-#: refacdir/batch.py:282
+#: refacdir/batch.py:302
+msgid "Processing config {0}/{1}: {2}"
+msgstr "Elaborazione configurazione {0}/{1}: {2}"
+
+#: refacdir/batch.py:307
+msgid "Batch operations completed with {0} skipped actions"
+msgstr "Operazioni batch completate con {0} azioni saltate"
+
+#: refacdir/batch.py:308
 msgid "Batch operations completed (skipped {0} actions)"
 msgstr "Operazioni batch completate ({0} azioni saltate)"
 
-#: refacdir/batch.py:285
+#: refacdir/batch.py:310
+msgid "Batch operations completed successfully"
+msgstr "Operazioni batch completate con successo"
+
+#: refacdir/batch.py:311
 msgid "Batch operations completed"
 msgstr "Operazioni batch completate"
 
-#: refacdir/batch.py:293
+#: refacdir/batch.py:316
+msgid "Batch job cancelled"
+msgstr "Processo batch annullato"
+
+#: refacdir/batch.py:318
+msgid "Batch job interrupted by user"
+msgstr "Processo batch interrotto dall'utente"
+
+#: refacdir/batch.py:319
+msgid "Exiting prematurely at user request..."
+msgstr "Uscita prematura su richiesta dell'utente..."
+
+#: refacdir/batch.py:322
 msgid "Operations cancelled by user"
 msgstr "Operazioni annullate dall'utente"
 
-#: refacdir/batch.py:343
+#: refacdir/batch.py:339
+msgid "Config {0} failed to load: {1}"
+msgstr "Configurazione {0} non è stata caricata: {1}"
+
+#: refacdir/batch.py:346
+msgid "{0} is set to will run = False, skipping..."
+msgstr "{0} è impostato su will run = False, salto..."
+
+#: refacdir/batch.py:352
+msgid "Config {0} failed to load: no actions found in the config file."
+msgstr ""
+"La configurazione {0} non è stata caricata: nessuna azione trovata nel file "
+"di configurazione."
+
+#: refacdir/batch.py:375
+msgid "Config {0} stopped after {1} actions (skipped {2} actions)"
+msgstr "Configurazione {0} interrotta dopo {1} azioni (saltate {2} azioni)"
+
+#: refacdir/batch.py:377
 msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
 msgstr ""
 "Configurazione {0}/{1}: {2} interrotto dopo {3} azioni ({4} azioni saltate)"
 
-#: refacdir/batch.py:398
+#: refacdir/batch.py:400
+msgid "{0} {1} job(s) completed"
+msgstr "{0} {1} lavoro(i) completato(i)"
+
+#: refacdir/batch.py:405
+msgid "{0} {1} job(s) failed"
+msgstr "{0} {1} job(s) non riuscito"
+
+#: refacdir/batch.py:412
+msgid "{0} completed, {1} skipped."
+msgstr "{0} completato, {1} saltato."
+
+#: refacdir/batch.py:414
+msgid "{0} completed."
+msgstr "{0} completato."
+
+#: refacdir/batch.py:416
+msgid "{0} skipped."
+msgstr "{0} saltato."
+
+#: refacdir/batch.py:420 ui/batch_history_window.py:74
+msgid "Failures:"
+msgstr "Errori:"
+
+#: refacdir/batch.py:424
+msgid "Batch Operations Failed"
+msgstr "Operazioni batch non riuscite"
+
+#: refacdir/batch.py:426
+msgid "All operations completed successfully"
+msgstr "Tutte le operazioni sono state completate con successo"
+
+#: refacdir/batch.py:433
+msgid "{0} - Skipping {1} action"
+msgstr "{0} - Ignorando l'azione {1}"
+
+#: refacdir/batch.py:436
 msgid "Config {0}/{1}: Running {2} action in {3}"
 msgstr "Configurazione {0}/{1}: Esecuzione dell'azione {2} in {3}"
 
-#: refacdir/batch.py:455
+#: refacdir/batch.py:447
+msgid "Invalid action configuration in {0} at index {1}: {2}"
+msgstr "Configurazione dell'azione non valida in {0} all'indice {1}: {2}"
+
+#: refacdir/batch.py:453
+msgid "Failed to run action at index {0} in {1}: {2}"
+msgstr "Impossibile eseguire l'azione all'indice {0} in {1}: {2}"
+
+#: refacdir/batch.py:484
+msgid "Error in {0}, {1} action \"{2}\": {3}"
+msgstr "Errore in {0}, azione {1} \"{2}\": {3}"
+
+#: refacdir/batch.py:490
+msgid "Error in {0}, {1} action #{2}: {3}"
+msgstr "Errore in {0}, {1} azione #{2}: {3}"
+
+#: refacdir/batch.py:502
 msgid "Config {0}/{1}: Running {2} {3}/{4} in {5}"
 msgstr "Configurazione {0}/{1}: Esecuzione di {2} {3}/{4} in {5}"
 
-#: refacdir/batch.py:498
+#: refacdir/batch.py:510
+msgid "{0}: {1} action \"{2}\" failed: {3}"
+msgstr "{0}: {1} azione \"{2}\" non riuscita: {3}"
+
+#: refacdir/batch.py:521
+msgid "{0} - Skipping renamer mapping {1} (will_run=false)"
+msgstr "{0} - Ignoro la mappatura del rinominatore {1} (will_run=false)"
+
+#: refacdir/batch.py:533
+msgid "Error in {0}, renamer mapping \"{1}\": {2}"
+msgstr "Errore in {0}, mapping del rinominatore \"{1}\": {2}"
+
+#: refacdir/batch.py:539
+msgid "Error in {0}, renamer mapping #{1}: {2}"
+msgstr "Errore in {0}, mappatura del rinominatore #{1}: {2}"
+
+#: refacdir/batch.py:551
 msgid "Config {0}/{1}: Running renamer mapping {2}/{3} in {4}"
 msgstr ""
 "Configurazione {0}/{1}: Esecuzione della mappatura del rinominatore {2}/{3} "
 "in {4}"
 
-#: refacdir/backup/backup_manager.py:77 refacdir/backup/backup_manager.py:94
+#: refacdir/batch.py:563
+msgid "{0}: renamer mapping \"{1}\" failed: {2}"
+msgstr "{0}: mappatura del rinominatore \"{1}\" non riuscita: {2}"
+
+#: refacdir/batch.py:603
+msgid "Duplicate remover {0}: duplicate_policy is cancel, keeping duplicates"
+msgstr ""
+"Rimuovi duplicati {0}: duplicate_policy è cancel, i duplicati vengono "
+"mantenuti"
+
+#: refacdir/batch_renamer.py:164
+msgid ""
+"{0} matches more than one search pattern in this mapping; keeping it under "
+"the first pattern only."
+msgstr ""
+"{0} corrisponde a più di un modello di ricerca in questa mappatura; viene "
+"mantenuto solo sotto il primo modello."
+
+#: refacdir/batch_renamer.py:199
+msgid "TESTING BATCH RENAME PROCESS: {0} (no change to be made)"
+msgstr ""
+"TEST DEL PROCESSO DI RINOMINAZIONE IN BATCH: {0} (nessuna modifica da "
+"apportare)"
+
+#: refacdir/batch_renamer.py:201
+#: test/renamer/test_batch_renamer_single_scan.py:136
+msgid "{0} - No files found at {1} ({2})"
+msgstr "{0} - Nessun file trovato in {1} ({2})"
+
+#: refacdir/batch_renamer.py:206
+#: test/renamer/test_batch_renamer_single_scan.py:140
+#: test/renamer/test_batch_renamer_single_scan.py:157
+msgid "BATCH RENAME PROCESS STARTED: {0}"
+msgstr "PROCESSO DI RINOMINAZIONE BATCH AVVIATO: {0}"
+
+#: refacdir/batch_renamer.py:223
+msgid "Confirm renaming"
+msgstr "Conferma rinomina"
+
+#: refacdir/batch_renamer.py:224
+msgid "Run \"{0}\" on {1} file(s) found?"
+msgstr "Eseguire \"{0}\" su {1} file trovati?"
+
+#: refacdir/batch_renamer.py:225
+msgid "Locations:"
+msgstr "Posizioni:"
+
+#: refacdir/batch_renamer.py:237
+#: test/renamer/test_batch_renamer_single_scan.py:158
+msgid "BATCH RENAME PROCESS COMPLETE: {0}"
+msgstr "Processo di rinominazione batch completato: {0}"
+
+#: refacdir/directory_observer.py:190
+msgid "Current state of directories:"
+msgstr "Stato attuale delle directory:"
+
+#: refacdir/directory_observer.py:191
+msgid "Total: {0} files"
+msgstr "Totale: {0} file"
+
+#: refacdir/directory_observer.py:193 ui/renamer_rule_suggester_dialog.py:71
+msgid "Directory"
+msgstr "Cartella"
+
+#: refacdir/directory_observer.py:196
+msgid "Other"
+msgstr "Altro"
+
+#: refacdir/directory_observer.py:197
+msgid "Total"
+msgstr "Totale"
+
+#: refacdir/directory_observer.py:220
+msgid "No matching directory found for exclude directory {0}"
+msgstr ""
+"Nessuna directory corrispondente trovata per la directory di esclusione {0}"
+
+#: refacdir/duplicate_remover.py:174
+msgid "Running duplicate removal for: {0}"
+msgstr "Rimozione dei duplicati per: {0}"
+
+#: refacdir/duplicate_remover.py:177
+msgid "TEST {0}: logging duplicates, removing nothing"
+msgstr "TEST {0}: registrazione dei duplicati, nessuna rimozione"
+
+#: refacdir/duplicate_remover.py:182
+msgid "skip_confirm set. Removing all duplicates without prompt."
+msgstr "skip_confirm impostato. Rimuovendo tutti i duplicati senza conferma."
+
+#: refacdir/duplicate_remover.py:189
+msgid "No duplicates found after review payload generation."
+msgstr ""
+"Nessun duplicato trovato dopo la generazione del payload di revisione."
+
+#: refacdir/duplicate_remover.py:200
+msgid "Duplicate review cancelled by user."
+msgstr "Revisione duplicata annullata dall'utente."
+
+#: refacdir/duplicate_remover.py:204 refacdir/duplicate_remover.py:359
+msgid "Confirm duplicate removal"
+msgstr "Conferma rimozione duplicato"
+
+#: refacdir/duplicate_remover.py:205
+msgid "Remove all duplicates listed above?"
+msgstr "Rimuovere tutti i duplicati elencati sopra?"
+
+#: refacdir/duplicate_remover.py:206
+msgid "User confirmed removal of all duplicates"
+msgstr "L'utente ha confermato la rimozione di tutti i duplicati"
+
+#: refacdir/duplicate_remover.py:209 refacdir/duplicate_remover.py:214
+msgid "No change made."
+msgstr "Nessuna modifica apportata."
+
+#: refacdir/duplicate_remover.py:210
+msgid "Remove duplicates with confirmation one by one?"
+msgstr "Rimuovere i duplicati con conferma uno alla volta?"
+
+#: refacdir/duplicate_remover.py:211
+msgid "User chose to remove duplicates with individual confirmation"
+msgstr "L'utente ha scelto di rimuovere i duplicati con conferma individuale"
+
+#: refacdir/duplicate_remover.py:215
+msgid "Save duplicates report?"
+msgstr "Salvare il report dei duplicati?"
+
+#: refacdir/duplicate_remover.py:216
+msgid "User chose to save duplicates report"
+msgstr "L'utente ha scelto di salvare il rapporto sui duplicati"
+
+#: refacdir/duplicate_remover.py:219 ui/duplicate_review_dialogs.py:117
+msgid "No duplicates found."
+msgstr "Nessun duplicato trovato."
+
+#: refacdir/duplicate_remover.py:271
+msgid "Removing file: {0}"
+msgstr "Rimozione file: {0}"
+
+#: refacdir/backup/backup_mapping.py:632 refacdir/duplicate_remover.py:275
+msgid "Failed to remove file {0}: {1}"
+msgstr "Impossibile rimuovere il file {0}: {1}"
+
+#: refacdir/duplicate_remover.py:305
+msgid "Error reading file info for \"{0}\": {1}"
+msgstr "Errore nella lettura delle informazioni del file \"{0}\": {1}"
+
+#: refacdir/duplicate_remover.py:307
+msgid "Error scanning directory \"{0}\": {1}"
+msgstr "Errore durante la scansione della directory \"{0}\": {1}"
+
+#: refacdir/duplicate_remover.py:322
+msgid "Error generating hash for \"{0}\": {1}"
+msgstr "Errore nella generazione dell'hash per «{0}»: {1}"
+
+#: refacdir/duplicate_remover.py:329
+msgid "Found {0} sets of duplicate files"
+msgstr "Trovati {0} set di file duplicati"
+
+#: refacdir/duplicate_remover.py:351 refacdir/duplicate_remover.py:355
+msgid "Keeping file: {0}"
+msgstr "Conservazione del file: {0}"
+
+#: refacdir/duplicate_remover.py:352 refacdir/duplicate_remover.py:356
+msgid "Removing duplicate files: {0}"
+msgstr "Rimozione file duplicati: {0}"
+
+#: refacdir/duplicate_remover.py:360
+msgid "Keep {0} and remove {1} duplicate(s)?"
+msgstr "Mantenere {0} e rimuovere {1} duplicato(i)?"
+
+#: refacdir/duplicate_remover.py:365
+msgid "User skipped removal of duplicates"
+msgstr "L'utente ha saltato la rimozione dei duplicati"
+
+#: refacdir/duplicate_remover.py:432
+msgid "Report saved at {0}"
+msgstr "Rapporto salvato in {0}"
+
+#: refacdir/duplicate_remover.py:446
+msgid "Remove duplicate files in a directory."
+msgstr "Rimuovere i file duplicati in una cartella."
+
+#: refacdir/duplicate_remover.py:447
+msgid "Directory to search for duplicate files"
+msgstr "Cartella per cercare file duplicati"
+
+#: refacdir/file_renamer.py:94
+msgid "TEST rename {0} to {1}"
+msgstr "TEST rinominare {0} in {1}"
+
+#: refacdir/file_renamer.py:96
+msgid "moved {0} to {1}"
+msgstr "Spostato {0} in {1}"
+
+#: refacdir/file_renamer.py:98
+msgid "renamed {0} to {1}"
+msgstr "rinominato {0} in {1}"
+
+#: refacdir/file_renamer.py:103
+msgid "Failed to rename {0} to {1}"
+msgstr "Impossibile rinominare {0} in {1}"
+
+#: refacdir/file_renamer.py:199
+msgid ""
+"Skipping {0}: no longer present (likely already renamed earlier in this run)"
+msgstr ""
+"Ignorando {0}: non più presente (probabilmente già rinominato prima in "
+"questa esecuzione)"
+
+#: refacdir/file_renamer.py:206
+msgid ""
+"Exact time for new filename \"{0}\" matches another file, will try to find a"
+" close value."
+msgstr ""
+"Il tempo esatto per il nuovo nome file \"{0}\" corrisponde a un altro file, "
+"si cercherà un valore vicino."
+
+#: refacdir/file_renamer.py:353
+msgid ""
+"TEST rename {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+msgstr ""
+"TEST rinominare {0} file in {1} per {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+
+#: refacdir/file_renamer.py:355 refacdir/file_renamer.py:359
+msgid ""
+"No files found to rename at {0} for glob_exp={1}, rename_base={2}, "
+"recursive={3}"
+msgstr ""
+"Nessun file da rinominare trovato in {0} per glob_exp={1}, rename_base={2}, "
+"ricorsivo={3}"
+
+#: refacdir/file_renamer.py:357
+msgid ""
+"Renamed {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+msgstr ""
+"Rinominati {0} file in {1} da {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+
+#: refacdir/file_renamer.py:363
+msgid ""
+"Some renaming operations failed. The following files may still be present:"
+msgstr ""
+"Alcune operazioni di rinomina non sono riuscite. I seguenti file potrebbero "
+"ancora essere presenti:"
+
+#: refacdir/file_renamer.py:384
+msgid "Rename all files in {0}? Confirm (y/n): "
+msgstr "Rinominare tutti i file in {0}? Confermare (s/n): "
+
+#: refacdir/file_renamer.py:386
+msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
+msgstr ""
+"Rinominare i file secondo il pattern glob {0} in {1}? Confermare (s/n): "
+
+#: refacdir/image_categorizer.py:89
+msgid "{0}: no images found to categorize under {1}"
+msgstr "{0}: nessuna immagine trovata da categorizzare sotto {1}"
+
+#: refacdir/image_categorizer.py:94
+msgid "TEST (dry run) {0}: no files moved"
+msgstr "TEST (esecuzione di prova) {0}: nessun file spostato"
+
+#: refacdir/image_categorizer.py:96
+msgid "TEST {0}: would categorize {1} image(s)"
+msgstr "TEST {0}: categorizzerebbe {1} immagine(i)"
+
+#: refacdir/image_categorizer.py:98 refacdir/named_subdir_collector.py:222
+msgid "TEST move {0} -> {1}"
+msgstr "TEST spostare {0} -> {1}"
+
+#: refacdir/image_categorizer.py:101
+msgid "{0}: categorizing {1} image(s) under {2}"
+msgstr "{0}: categorizzazione di {1} immagine(i) in {2}"
+
+#: refacdir/image_categorizer.py:104
+msgid "Confirm image categorization"
+msgstr "Conferma categorizzazione immagine"
+
+#: refacdir/image_categorizer.py:105
+msgid "\"{0}\": move {1} image(s) under {2} into categories {3}?"
+msgstr "\"{0}\": spostare {1} immagine(i) sotto {2} nelle categorie {3}?"
+
+#: refacdir/image_categorizer.py:118
+msgid "File already exists: {0}"
+msgstr "Il file esiste già: {0}"
+
+#: refacdir/image_categorizer.py:121 refacdir/named_subdir_collector.py:252
+msgid "moved {0} -> {1}"
+msgstr "spostato {0} -> {1}"
+
+#: refacdir/named_subdir_collector.py:199
+msgid "{0}: no files found to collect under {1}"
+msgstr "{0}: Nessun file da raccogliere sotto {1}"
+
+#: refacdir/named_subdir_collector.py:204
+msgid "TEST (dry run) {0}: no files moved or dirs cleared"
+msgstr "TEST (simulazione) {0}: nessun file spostato né cartelle cancellate"
+
+#: refacdir/named_subdir_collector.py:216
+msgid "TEST {0}: would move {1} file(s) under {2}"
+msgstr "TEST {0}: sposterebbe {1} file(s) sotto {2}"
+
+#: refacdir/named_subdir_collector.py:228
+msgid "{0}: collecting {1} file(s) into bucket folders at {2}"
+msgstr "{0}: raccolta di {1} file nelle cartelle bucket a {2}"
+
+#: refacdir/named_subdir_collector.py:232
+msgid "Confirm named subdir collection"
+msgstr "Conferma raccolta sottocartelle nominate"
+
+#: refacdir/named_subdir_collector.py:233
+msgid "\"{0}\": move {1} file(s) into folders {2} under {3}?"
+msgstr "\"{0}\": spostare {1} file in cartelle {2} sotto {3}?"
+
+#: refacdir/user_search_funcs.py:67
+msgid "User search functions not loaded"
+msgstr "Funzioni di ricerca utente non caricate"
+
+#: refacdir/user_search_funcs.py:68
+msgid ""
+"{0}\n"
+"\n"
+"This run uses the built-in search functions only."
+msgstr ""
+"{0}\n"
+"\n"
+"Questa esecuzione utilizza esclusivamente le funzioni di ricerca integrate."
+
+#: refacdir/backup/backup_manager.py:57
+msgid "TESTING BACKUPS"
+msgstr "TEST DEI BACKUP"
+
+#: refacdir/backup/backup_manager.py:57
+msgid "RUNNING BACKUPS"
+msgstr "ESECUZIONE DEI BACKUP"
+
+#: refacdir/backup/backup_manager.py:70
+msgid "Backup cancelled by user; no change made."
+msgstr "Backup annullato dall'utente; nessuna modifica apportata."
+
+#: refacdir/backup/backup_manager.py:80 refacdir/backup/backup_manager.py:97
 msgid "Backup \"{0}\" ({1}/{2}): {3}"
 msgstr "Backup \"{0}\" ({1}/{2}): {3}"
 
-#: refacdir/utils/translations.py:40
+#: refacdir/backup/backup_manager.py:84
+msgid "Starting backup mapping %s (%s/%s): %s -> %s"
+msgstr "Avvio del mapping di backup %s (%s/%s): %s -> %s"
+
+#: refacdir/backup/backup_manager.py:115
+msgid "\"{0}\": dry run of {1} backup mapping(s)?"
+msgstr "\"{0}\": prova di {1} mappatura(e) di backup?"
+
+#: refacdir/backup/backup_manager.py:117
+msgid ""
+"\"{0}\": run {1} backup mapping(s)? Files will be copied, moved or removed."
+msgstr ""
+"\"{0}\": eseguire {1} mappatura(e) di backup? I file verranno copiati, "
+"spostati o rimossi."
+
+#: refacdir/backup/backup_manager.py:120
+msgid "Confirm backup"
+msgstr "Conferma backup"
+
+#: refacdir/backup/backup_manager.py:123
+msgid "I have checked these mappings"
+msgstr "Ho verificato queste mappature"
+
+#: refacdir/backup/backup_manager.py:126
+msgid "Confirmation received, running backups."
+msgstr "Conferma ricevuta, backup in corso."
+
+#: refacdir/backup/backup_mapping.py:200 test/backup/test_backup.py:371
+msgid "Duplicate content hash {0}... : {1}"
+msgstr "Hash del contenuto duplicato {0}... : {1}"
+
+#: refacdir/backup/backup_mapping.py:202
+msgid "scan complete"
+msgstr "Scansione completata"
+
+#: refacdir/backup/backup_mapping.py:241
+msgid "counting files to scan…"
+msgstr "conteggio file da analizzare…"
+
+#: refacdir/backup/backup_mapping.py:251
+msgid "counted {0} files; hashing…"
+msgstr "contati {0} file; hashing…"
+
+#: refacdir/backup/backup_mapping.py:268
+msgid "hashed {0}/{1} files"
+msgstr "file {0}/{1} hashati"
+
+#: refacdir/backup/backup_mapping.py:311
+msgid "nothing to hash"
+msgstr "Niente da hashare"
+
+#: refacdir/backup/backup_mapping.py:329
+msgid "Creating directory: {0}"
+msgstr "Creazione della cartella: {0}"
+
+#: refacdir/backup/backup_mapping.py:361
+msgid "Moving file within external dir to: {0} - previous location: {1}"
+msgstr ""
+"Spostamento file nella directory esterna a: {0} - posizione precedente: {1}"
+
+#: refacdir/backup/backup_mapping.py:364
+msgid "Replacing file: {0}"
+msgstr "Sostituzione file: {0}"
+
+#: refacdir/backup/backup_mapping.py:366
+msgid "Creating file: {0}"
+msgstr "Creazione file: {0}"
+
+#: refacdir/backup/backup_mapping.py:387
+msgid "Removing file already backed up: {0}"
+msgstr "Rimozione del file già salvato: {0}"
+
+#: refacdir/backup/backup_mapping.py:446 refacdir/backup/backup_mapping.py:460
+msgid "Making new directory: {0}"
+msgstr "Creazione nuova cartella: {0}"
+
+#: refacdir/backup/backup_mapping.py:452
+msgid "directory structure only"
+msgstr "solo struttura della directory"
+
+#: refacdir/backup/backup_mapping.py:471
+msgid "nothing to sync"
+msgstr "Niente da sincronizzare"
+
+#: refacdir/backup/backup_mapping.py:478
+msgid "sync {0}/{1} content groups"
+msgstr "Sincronizza {0}/{1} gruppi di contenuto"
+
+#: refacdir/backup/backup_mapping.py:500
+msgid "Removing stale file: {0}"
+msgstr "Rimozione del file obsoleto: {0}"
+
+#: refacdir/backup/backup_mapping.py:517
+msgid "Removing stale empty directory: {0}"
+msgstr "Rimozione della cartella vuota obsoleta: {0}"
+
+#: refacdir/backup/backup_mapping.py:623
+msgid "No failures encountered for mapping: {0} -> {1}"
+msgstr "Nessun errore riscontrato per la mappatura: {0} -> {1}"
+
+#: refacdir/backup/backup_mapping.py:625
+msgid "Failures encountered for mapping: {0} -> {1}"
+msgstr "Errori rilevati durante la mappatura: {0} -> {1}"
+
+#: refacdir/backup/backup_mapping.py:630
+msgid "Failed to move {0} to {1}: {2}"
+msgstr "Impossibile spostare {0} in {1}: {2}"
+
+#: refacdir/backup/backup_mapping.py:634
+msgid "Failed to remove file {0} (target missing): {1}"
+msgstr "Impossibile rimuovere il file {0} (destinazione mancante): {1}"
+
+#: refacdir/backup/backup_mapping.py:636
+msgid "Failed to remove stale file {0}: {1}"
+msgstr "Impossibile rimuovere il file obsoleto {0}: {1}"
+
+#: refacdir/backup/backup_mapping.py:638
+msgid "Failed to remove stale directory {0}: {1}"
+msgstr "Impossibile rimuovere la directory obsoleta {0}: {1}"
+
+#: refacdir/backup/backup_mapping.py:647
+msgid "Saved failure data to {0}"
+msgstr "Dati di errore salvati in {0}"
+
+#: refacdir/backup/backup_mapping.py:649
+msgid "Could not write failure log: {0}"
+msgstr "Impossibile scrivere il registro degli errori: {0}"
+
+#: refacdir/backup/backup_mapping.py:675
+msgid ""
+"Name: {0}\n"
+"Source: {1}\n"
+"Target: {2}\n"
+"Mode: {3}\n"
+"File types: {4}\n"
+"Exclude dirs: {5}\n"
+"Exclude removal dirs: {6}"
+msgstr ""
+"Nome: {0}\n"
+"Origine: {1}\n"
+"Destinazione: {2}\n"
+"Modalità: {3}\n"
+"Tipi di file: {4}\n"
+"Escludi cartelle: {5}\n"
+"Escludi cartelle di rimozione: {6}"
+
+#: refacdir/llm/preview.py:54
+msgid "{0} file(s) matched across {1} location(s)."
+msgstr "{0} file corrispondente(i) in {1} posizione(i)."
+
+#: refacdir/llm/preview.py:73
+msgid ""
+"{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
+"removed (mirror-mode mappings only)."
+msgstr ""
+"{0} file verrebbero aggiunti/aggiornati, {1} file/cartella(e) obsoleti "
+"verrebbero rimossi (solo per le mappature in modalità mirror)."
+
+#: refacdir/llm/preview.py:83
+msgid "{0} duplicate file(s) would be removed across {1} group(s)."
+msgstr "{0} file duplicati verrebbero rimossi da {1} gruppo(i)."
+
+#: refacdir/llm/preview.py:93
+msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
+msgstr ""
+"{0} di {1} file totali corrispondenti ai tipi tracciati in {2} directory."
+
+#: refacdir/llm/preview.py:101
+msgid "{0} file(s) would be collected into {1} named subdir(s)."
+msgstr "{0} file verrebbero raccolti in {1} sottocartella(e) denominata(e)."
+
+#: refacdir/llm/preview.py:109
+msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
+msgstr "{0} file verrebbero estratti da {1} archivio(i) in {2}."
+
+#: refacdir/llm/preview.py:113
+msgid "{0} archive(s) could not be read."
+msgstr "Impossibile leggere {0} archivio(i)."
+
+#: refacdir/utils/confirm.py:56
+msgid "{0} (y/n): "
+msgstr "{0} (s/n): "
+
+#: refacdir/utils/translations.py:41
 msgid "Monday"
 msgstr "Lunedì"
 
-#: refacdir/utils/translations.py:42
+#: refacdir/utils/translations.py:43
 msgid "Tuesday"
 msgstr "Martedì"
 
-#: refacdir/utils/translations.py:44
+#: refacdir/utils/translations.py:45
 msgid "Wednesday"
 msgstr "Mercoledì"
 
-#: refacdir/utils/translations.py:46
+#: refacdir/utils/translations.py:47
 msgid "Thursday"
 msgstr "Giovedì"
 
-#: refacdir/utils/translations.py:48
+#: refacdir/utils/translations.py:49
 msgid "Friday"
 msgstr "Venerdì"
 
-#: refacdir/utils/translations.py:50
+#: refacdir/utils/translations.py:51
 msgid "Saturday"
 msgstr "Sabato"
 
-#: refacdir/utils/translations.py:52
+#: refacdir/utils/translations.py:53
 msgid "Sunday"
 msgstr "Domenica"
 
-#: refacdir/utils/translations.py:64
+#: refacdir/utils/translations.py:65
 msgid "seconds"
 msgstr "secondi"
 
-#: refacdir/utils/translations.py:66
+#: refacdir/utils/translations.py:67
 msgid "minutes"
 msgstr "minuti"
 
-#: refacdir/utils/translations.py:68
+#: refacdir/utils/translations.py:69
 msgid "hours"
 msgstr "ore"
 
-#: refacdir/utils/translations.py:70
+#: refacdir/utils/translations.py:71
 msgid "days"
 msgstr "giorni"
 
-#: refacdir/utils/translations.py:72
+#: refacdir/utils/translations.py:73
 msgid "weeks"
 msgstr "settimane"
 
-#: refacdir/utils/translations.py:74
+#: refacdir/utils/translations.py:75
 msgid "months"
 msgstr "mesi"
 
-#: refacdir/utils/translations.py:76
+#: refacdir/utils/translations.py:77
 msgid "years"
 msgstr "anni"
+
+#: test/ui/test_llm_config_chat_dialog.py:184 ui/llm_config_chat_dialog.py:235
+msgid "Failed after {0} attempt(s): {1}"
+msgstr "Fallito dopo {0} tentativo(i): {1}"
+
+#: test/ui/test_renamer_action_dialog_chain.py:55
+#: ui/config_action_dialogs.py:587
+msgid "chained"
+msgstr "incatenato"
 
 #: ui/batch_history_window.py:41
 msgid "(none)"
 msgstr "(nessuno)"
 
-#: ui/batch_history_window.py:44
-msgid " (cancelled)"
-msgstr " (annullato)"
+#: ui/batch_history_window.py:45
+msgid "{0} (cancelled) — {1} — {2} op(s), {3} reversible"
+msgstr "{0} (annullato) — {1} — {2} op., {3} reversibile"
 
-#: ui/batch_history_window.py:49 ui/batch_history_window.py:77
+#: ui/batch_history_window.py:48
+msgid "{0} — {1} — {2} op(s), {3} reversible"
+msgstr "{0} — {1} — {2} operazione(i), {3} reversibile"
+
+#: ui/batch_history_window.py:52 ui/batch_history_window.py:80
 msgid "(unknown config)"
 msgstr "(configurazione sconosciuta)"
 
-#: ui/batch_history_window.py:50 ui/batch_history_window.py:78
-#: ui/batch_history_window.py:91
+#: ui/batch_history_window.py:53 ui/batch_history_window.py:81
+#: ui/batch_history_window.py:94
 msgid "(untagged)"
 msgstr "(senza etichetta)"
 
-#: ui/batch_history_window.py:74
+#: ui/batch_history_window.py:56
+msgid "{0} / {1} — {2} op(s), {3} reversible"
+msgstr "{0} / {1} — {2} operazione(i), {3} reversibile"
+
+#: ui/batch_history_window.py:61
+msgid "Job ID: {0}"
+msgstr "ID del lavoro: {0}"
+
+#: ui/batch_history_window.py:62
+msgid "Started: {0}"
+msgstr "Avviato: {0}"
+
+#: ui/batch_history_window.py:63
+msgid "Finished: {0}"
+msgstr "Finito: {0}"
+
+#: ui/batch_history_window.py:64
+msgid "Configs: {0}"
+msgstr "Configurazioni: {0}"
+
+#: ui/batch_history_window.py:65
+msgid "Cancelled: Yes"
+msgstr "Annullato: Sì"
+
+#: ui/batch_history_window.py:65
+msgid "Cancelled: No"
+msgstr "Annullato: No"
+
+#: ui/batch_history_window.py:67
+msgid "Action counts:"
+msgstr "Conteggio azioni:"
+
+#: ui/batch_history_window.py:77
 msgid "(all mappings)"
 msgstr "(tutte le mappature)"
 
-#: ui/batch_history_window.py:118
+#: ui/batch_history_window.py:83
+msgid "File operations — {0}:"
+msgstr "Operazioni file — {0}:"
+
+#: ui/batch_history_window.py:98
+msgid "[reversed]"
+msgstr "[invertito]"
+
+#: ui/batch_history_window.py:102
+msgid "[can reverse]"
+msgstr "[può invertire]"
+
+#: ui/batch_history_window.py:104
+msgid "[missing at dest]"
+msgstr "[mancante nella destinazione]"
+
+#: ui/batch_history_window.py:106
+msgid "[not reversible]"
+msgstr "[non reversibile]"
+
+#: ui/batch_history_window.py:121
 msgid "Batch Job History"
 msgstr "Cronologia dei lavori batch"
 
-#: ui/batch_history_window.py:132
+#: ui/batch_history_window.py:135
 msgid ""
 "Last {0} batch jobs (stored in encrypted cache). Reverse an entire job or a "
 "single renamer mapping."
@@ -269,57 +1241,57 @@ msgstr ""
 "Ultimi {0} job batch (memorizzati nella cache crittografata). Invertire un "
 "intero job o una singola mappatura di rinominatore."
 
-#: ui/batch_history_window.py:158
+#: ui/batch_history_window.py:161
 msgid "Refresh"
 msgstr "Aggiorna"
 
-#: ui/batch_history_window.py:162 ui/batch_history_window.py:342
+#: ui/batch_history_window.py:165 ui/batch_history_window.py:345
 msgid "Preview reverse mapping"
 msgstr "Anteprima della mappatura inversa"
 
-#: ui/batch_history_window.py:166 ui/batch_history_window.py:313
-#: ui/batch_history_window.py:342
+#: ui/batch_history_window.py:169 ui/batch_history_window.py:316
+#: ui/batch_history_window.py:345
 msgid "Reverse mapping"
 msgstr "Invertire la mappatura"
 
-#: ui/batch_history_window.py:170 ui/batch_history_window.py:344
+#: ui/batch_history_window.py:173 ui/batch_history_window.py:347
 msgid "Preview reverse job"
 msgstr "Anteprima lavoro inverso"
 
-#: ui/batch_history_window.py:174 ui/batch_history_window.py:319
-#: ui/batch_history_window.py:344
+#: ui/batch_history_window.py:177 ui/batch_history_window.py:322
+#: ui/batch_history_window.py:347
 msgid "Reverse entire job"
 msgstr "Invertire l'intero lavoro"
 
-#: ui/batch_history_window.py:193
+#: ui/batch_history_window.py:196
 msgid ""
 "No batch jobs recorded yet. Run operations (non test mode) to build history."
 msgstr ""
 "Nessun job batch registrato finora. Esegui operazioni (modalità non di test)"
 " per creare la cronologia."
 
-#: ui/batch_history_window.py:277
+#: ui/batch_history_window.py:280
 msgid "Job not found (history may have changed)."
 msgstr "Lavoro non trovato (la cronologia potrebbe essere cambiata)."
 
-#: ui/batch_history_window.py:288 ui/batch_history_window.py:295
-#: ui/batch_history_window.py:301 ui/batch_history_window.py:338
+#: ui/batch_history_window.py:291 ui/batch_history_window.py:298
+#: ui/batch_history_window.py:304 ui/batch_history_window.py:341
 msgid "Batch history"
 msgstr "Storico batch"
 
-#: ui/batch_history_window.py:288
+#: ui/batch_history_window.py:291
 msgid "Select a job first."
 msgstr "Seleziona prima un lavoro."
 
-#: ui/batch_history_window.py:295
+#: ui/batch_history_window.py:298
 msgid "Select a renamer mapping first."
 msgstr "Seleziona prima una mappatura di rinomina."
 
-#: ui/batch_history_window.py:302
+#: ui/batch_history_window.py:305
 msgid "This job has no mapping tags; use Reverse entire job instead."
 msgstr "Questo lavoro non ha tag di mappatura; usa Reverse entire job invece."
 
-#: ui/batch_history_window.py:309
+#: ui/batch_history_window.py:312
 msgid ""
 "Move files back for mapping \"{0}\" in config \"{1}\"?\n"
 "Only operations from this mapping are reversed (newest first). If a later mapping renamed the same file, reverse that mapping first."
@@ -327,7 +1299,7 @@ msgstr ""
 "Spostare i file indietro per la mappatura \"{0}\" nella configurazione \"{1}\"?\n"
 "Vengono annullate solo le operazioni di questa mappatura (prima le più recenti). Se una mappatura successiva ha rinominato lo stesso file, annullare prima quella mappatura."
 
-#: ui/batch_history_window.py:316
+#: ui/batch_history_window.py:319
 msgid ""
 "Move files back along all recorded rename/move paths for this job?\n"
 "Operations are applied newest-first. Files must still exist at their destination."
@@ -335,7 +1307,7 @@ msgstr ""
 "Ripristinare i file lungo tutti i percorsi di rinomina/spostamento registrati per questo lavoro?\n"
 "Le operazioni vengono applicate dal più recente al più vecchio. I file devono ancora esistere nella destinazione."
 
-#: ui/batch_history_window.py:346
+#: ui/batch_history_window.py:349
 msgid ""
 "Attempted: {0}\n"
 "Succeeded: {1}\n"
@@ -347,279 +1319,9 @@ msgstr ""
 "Fallito: {2}\n"
 "Ignorato (non reversibile o mancante): {3}"
 
-#: ui/test_results_window.py:79
-msgid "Verification tests"
-msgstr "Test di verifica"
-
-#: ui/test_results_window.py:112
-msgid "Verification test results"
-msgstr "Risultati del test di verifica"
-
-#: ui/test_results_window.py:119
-msgid "Suite directory"
-msgstr "Directory suite"
-
-#: ui/test_results_window.py:124
-msgid "All suites"
-msgstr "Tutte le suite"
-
-#: ui/test_results_window.py:135
-msgid "Click Run suite to start."
-msgstr "Fai clic su Run suite per avviare."
-
-#: ui/test_results_window.py:171
-msgid "Total Tests: 0"
-msgstr "Test totali: 0"
-
-#: ui/test_results_window.py:174
-msgid "Passed: 0"
-msgstr "Passato: 0"
-
-#: ui/test_results_window.py:178
-msgid "Failed: 0"
-msgstr "Mancato: 0"
-
-#: ui/test_results_window.py:182
-msgid "Time: 0:00"
-msgstr "Tempo: 0:00"
-
-#: ui/test_results_window.py:191
-msgid "Run suite"
-msgstr "Esegui suite"
-
-#: ui/custom_title_bar.py:109 ui/llm_config_chat_dialog.py:154
-#: ui/test_results_window.py:195
-msgid "Close"
-msgstr "Chiudi"
-
-#: ui/test_results_window.py:199
-msgid "Save Results"
-msgstr "Salvare i risultati"
-
-#: ui/test_results_window.py:216
-msgid "Running tests..."
-msgstr "Esecuzione dei test..."
-
-#: ui/test_results_window.py:254
-msgid "Test tree not found: {0}"
-msgstr "Albero di test non trovato: {0}"
-
-#: ui/test_results_window.py:274
-msgid "Test suite directory not found: {0}"
-msgstr "Cartella della suite di test non trovata: {0}"
-
-#: ui/test_results_window.py:293
-msgid "Backup test directory not found (required for fixtures): {0}"
-msgstr ""
-"Directory di test del backup non trovata (richiesta per i fixture): {0}"
-
-#: ui/test_results_window.py:307
-msgid "Base directory: "
-msgstr "Directory di base: "
-
-#: ui/test_results_window.py:309
-msgid "Pytest targets: "
-msgstr "Obiettivi Pytest: "
-
-#: ui/test_results_window.py:313
-msgid "Backup fixtures directory: "
-msgstr "Directory dei fixture di backup: "
-
-#: ui/test_results_window.py:315
-msgid "Python path: "
-msgstr "Percorso Python: "
-
-#: ui/test_results_window.py:320
-msgid "Test target not found: {0}"
-msgstr "Obiettivo di test non trovato: {0}"
-
-#: ui/test_results_window.py:328
-msgid "Found test target: "
-msgstr "Obiettivo di test trovato: "
-
-#: ui/test_results_window.py:332
-msgid "No test targets remain to run."
-msgstr "Nessun target di test rimasto da eseguire."
-
-#: ui/test_results_window.py:344
-msgid "Analyzing test suite..."
-msgstr "Analisi della suite di test..."
-
-#: ui/test_results_window.py:363
-msgid "Found {0} tests in {1}"
-msgstr "Trovato {0} test in {1}"
-
-#: ui/test_results_window.py:369
-msgid "Error collecting tests from {0}: {1}"
-msgstr "Test di raccolta di errori da {0}: {1}"
-
-#: ui/test_results_window.py:389
-msgid "Running tests from {0}..."
-msgstr "Esecuzione di test da {0}..."
-
-#: ui/test_results_window.py:393
-msgid "Running tests from {0}:"
-msgstr "Test in esecuzione da {0}:"
-
-#: ui/test_results_window.py:420
-msgid "Error in {0}:"
-msgstr "Errore in {0}:"
-
-#: ui/test_results_window.py:438
-msgid "Error running tests in {0}: {1}"
-msgstr "Test di errore in esecuzione in {0}: {1}"
-
-#: ui/test_results_window.py:453
-msgid "Unexpected error running tests: {0}"
-msgstr "Test di errore inaspettati in esecuzione: {0}"
-
-#: ui/test_results_window.py:478
-msgid "Save Test Results"
-msgstr "Salva i risultati del test"
-
-#: ui/test_results_window.py:480
-msgid "Text Files (*.txt);;All Files (*)"
-msgstr "File di testo (*.txt);;Tutti i file (*)"
-
-#: ui/test_results_window.py:510
-msgid "Copy"
-msgstr "Copia"
-
-#: ui/duplicate_review_dialogs.py:57 ui/test_results_window.py:513
-msgid "Select All"
-msgstr "Seleziona tutto"
-
-#: ui/test_results_window.py:559
-msgid "Total Tests: {0}"
-msgstr "Totale test: {0}"
-
-#: ui/test_results_window.py:560
-msgid "Passed: {0}"
-msgstr "Passato: {0}"
-
-#: ui/test_results_window.py:561
-msgid "Failed: {0}"
-msgstr "Fallito: {0}"
-
-#: ui/test_results_window.py:567
-msgid "Time: {0}:{1:02d}"
-msgstr "Tempo trascorso: {0}:{1:02d}"
-
-#: ui/test_results_window.py:577
-msgid "Test Run Complete - "
-msgstr "Prova completata - "
-
-#: ui/test_results_window.py:578
-msgid "Total Tests: "
-msgstr "Test totali: "
-
-#: ui/test_results_window.py:579
-msgid "Passed: "
-msgstr "Passato: "
-
-#: ui/test_results_window.py:580
-msgid "Failed: "
-msgstr "Fallito: "
-
-#: ui/test_results_window.py:583
-msgid "All tests passed successfully!"
-msgstr "Tutti i test sono passati con successo!"
-
-#: ui/test_results_window.py:583
-msgid "Some tests failed - check results"
-msgstr "Alcuni test falliti - verifica risultati"
-
-#: refacdir/archive_extractor.py:300
-msgid "Confirm extraction of {0} file(s) from {1} archive(s) into {2} (y/n): "
-msgstr "Confermare l'estrazione di {0} file da {1} archivio(i) in {2} (s/n): "
-
-#: refacdir/batch_renamer.py:208
-msgid "Confirm (y/n) "
-msgstr "Confermare (s/n) "
-
-#: refacdir/duplicate_remover.py:197
-msgid "Confirm all duplicates removal (Y/n): "
-msgstr "Confermare la rimozione di tutti i duplicati (Y/n): "
-
-#: refacdir/duplicate_remover.py:203
-msgid "Remove duplicates with confirmation one by one? (Y/n): "
-msgstr "Rimuovere i duplicati uno per uno con conferma? (S/n): "
-
-#: refacdir/duplicate_remover.py:209
-msgid "Save duplicates report? (Y/n): "
-msgstr "Salvare il rapporto dei duplicati? (S/n): "
-
-#: refacdir/duplicate_remover.py:352
-msgid "OK to remove? (Y/n): "
-msgstr "OK per rimuovere? (S/n): "
-
-#: refacdir/file_renamer.py:384
-msgid "Rename all files in {0}? Confirm (y/n): "
-msgstr "Rinominare tutti i file in {0}? Confermare (s/n): "
-
-#: refacdir/file_renamer.py:386
-msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
-msgstr ""
-"Rinominare i file secondo il pattern glob {0} in {1}? Confermare (s/n): "
-
-#: refacdir/image_categorizer.py:102
-msgid "Confirm categorization of {0} image(s) into {1} categories (y/n): "
-msgstr ""
-"Confermare la categorizzazione di {0} immagine(i) in {1} categorie (s/n): "
-
-#: refacdir/named_subdir_collector.py:227
-msgid "Confirm named subdir collection (y/n): "
-msgstr "Confermare raccolta sottodirectory nominata (s/n): "
-
-#: refacdir/backup/backup_manager.py:110
-msgid ""
-"\n"
-"CONFIRM BACKUP (y/n): "
-msgstr " CONFERMA BACKUP (s/n): "
-
-#: refacdir/backup/backup_manager.py:114
-msgid ""
-"\n"
-"CONFIRM BACKUP AGAIN (y/n): "
-msgstr " CONFERMA BACKUP DI NUOVO (s/n): "
-
-#: refacdir/llm/preview.py:55
-msgid "{0} file(s) matched across {1} location(s)."
-msgstr "{0} file corrispondente(i) in {1} posizione(i)."
-
-#: refacdir/llm/preview.py:74
-msgid ""
-"{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
-"removed (mirror-mode mappings only)."
-msgstr ""
-"{0} file verrebbero aggiunti/aggiornati, {1} file/cartella(e) obsoleti "
-"verrebbero rimossi (solo per le mappature in modalità mirror)."
-
-#: refacdir/llm/preview.py:84
-msgid "{0} duplicate file(s) would be removed across {1} group(s)."
-msgstr "{0} file duplicati verrebbero rimossi da {1} gruppo(i)."
-
-#: refacdir/llm/preview.py:94
-msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
-msgstr ""
-"{0} di {1} file totali corrispondenti ai tipi tracciati in {2} directory."
-
-#: refacdir/llm/preview.py:102
-msgid "{0} file(s) would be collected into {1} named subdir(s)."
-msgstr "{0} file verrebbero raccolti in {1} sottocartella(e) denominata(e)."
-
-#: refacdir/llm/preview.py:110
-msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
-msgstr "{0} file verrebbero estratti da {1} archivio(i) in {2}."
-
-#: refacdir/llm/preview.py:114
-msgid "{0} archive(s) could not be read."
-msgstr "Impossibile leggere {0} archivio(i)."
-
-#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91
-#: ui/config_editor_window.py:257
-msgid "(new config)"
-msgstr "(nuova configurazione)"
+#: ui/batch_history_window.py:354
+msgid "... and {0} more"
+msgstr "... e {0} altri"
 
 #: ui/config_action_dialogs.py:74 ui/config_action_dialogs.py:158
 msgid "Remove"
@@ -637,7 +1339,7 @@ msgstr "(senza nome)"
 msgid "{0} ({1} key(s))"
 msgstr "{0} ({1} tasto(i))"
 
-#: ui/config_action_dialogs.py:139
+#: ui/config_action_dialogs.py:139 ui/config_editor_window.py:286
 msgid "Action Type"
 msgstr "Tipo di azione"
 
@@ -657,11 +1359,15 @@ msgstr "Aggiungere"
 msgid "Draft with AI..."
 msgstr "Bozza con IA..."
 
+#: ui/config_action_dialogs.py:166 ui/llm_config_chat_dialog.py:97
+msgid "{0} actions aren't supported by the AI drafting feature yet."
+msgstr "{0} azioni non sono ancora supportate dalla funzione di redazione IA."
+
 #: ui/config_action_dialogs.py:173
 msgid "Mapping Details"
 msgstr "Dettagli della mappatura"
 
-#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:419
+#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:418
 msgid "Name"
 msgstr "Nome"
 
@@ -673,9 +1379,13 @@ msgstr "Proprietà"
 msgid "Add Property"
 msgstr "Aggiungi proprietà"
 
-#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:491
+#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:490
 msgid "Save Mapping"
 msgstr "Salva mappatura"
+
+#: ui/config_action_dialogs.py:281 ui/config_action_dialogs.py:527
+msgid "Mapping name is required."
+msgstr "Il nome della mappatura è obbligatorio."
 
 #: ui/config_action_dialogs.py:292
 msgid "Select Mapping"
@@ -689,68 +1399,118 @@ msgstr "Scegli una mappatura da salvare."
 msgid "Invalid Mapping"
 msgstr "Mappatura non valida"
 
-#: ui/config_action_dialogs.py:370
+#: ui/config_action_dialogs.py:352
+msgid "All mappings must have a name."
+msgstr "Tutte le mappature devono avere un nome."
+
+#: ui/config_action_dialogs.py:355
+msgid "Mapping names must be unique within the action."
+msgstr "I nomi di mapping devono essere unici all'interno dell'azione."
+
+#: ui/config_action_dialogs.py:369
 msgid "Validation failed: {0}"
 msgstr "Validazione non riuscita: {0}"
 
-#: ui/config_action_dialogs.py:379
+#: ui/config_action_dialogs.py:378
 msgid "Backup mappings may include backup_mappings list and options."
 msgstr ""
 "Le mappature di backup possono includere l'elenco backup_mappings e le "
 "opzioni."
 
-#: ui/config_action_dialogs.py:396
+#: ui/config_action_dialogs.py:395
 msgid ""
 "Each mapping defines function, locations, rename rules, and optional flags."
 msgstr ""
 "Ogni mappatura definisce funzione, posizioni, regole di rinomina e flag "
 "opzionali."
 
-#: ui/config_action_dialogs.py:424
+#: ui/config_action_dialogs.py:399
+msgid "New renamer mapping"
+msgstr "Nuova mappatura di rinomina"
+
+#: ui/config_action_dialogs.py:423
 msgid "Function"
 msgstr "Funzione"
 
-#: ui/config_action_dialogs.py:427 ui/renamer_rule_suggester_dialog.py:75
+#: ui/config_action_dialogs.py:426 ui/renamer_rule_suggester_dialog.py:75
 msgid "Options"
 msgstr "Opzioni"
 
-#: ui/config_action_dialogs.py:443
+#: ui/config_action_dialogs.py:442
 msgid "Locations (one root path per line)"
 msgstr "Posizioni (un percorso radice per riga)"
 
-#: ui/config_action_dialogs.py:450
+#: ui/config_action_dialogs.py:449
 msgid "Rename Rules"
 msgstr "Rinominare regole"
 
-#: ui/config_action_dialogs.py:457
+#: ui/config_action_dialogs.py:456
 msgid "Add / Update Rule"
 msgstr "Aggiungi / aggiorna regola"
 
-#: ui/config_action_dialogs.py:460
+#: ui/config_action_dialogs.py:459
 msgid "Remove Rule"
 msgstr "Rimuovi regola"
 
-#: ui/config_action_dialogs.py:463
+#: ui/config_action_dialogs.py:462
 msgid "New Rule Draft"
 msgstr "Nuova bozza di regola"
 
-#: ui/config_action_dialogs.py:466
+#: ui/config_action_dialogs.py:465
 msgid "Suggest Rules..."
 msgstr "Suggerire regole..."
 
-#: ui/config_action_dialogs.py:473
+#: ui/config_action_dialogs.py:472
 msgid "pattern or comma-separated patterns"
 msgstr "modello o modelli separati da virgole"
 
-#: ui/config_action_dialogs.py:476
+#: ui/config_action_dialogs.py:475
 msgid "optional; one glob per line"
 msgstr "opzionale; un glob per riga"
 
-#: ui/config_action_dialogs.py:679
+#: ui/config_action_dialogs.py:479
+msgid "also match OS/browser duplicate-download copies, e.g. \"name (1).ext\""
+msgstr ""
+"corrispondi anche le copie duplicate di download OS/browser, es. \"name "
+"(1).ext\""
+
+#: ui/config_action_dialogs.py:536
+msgid "At least one location root is required."
+msgstr "È richiesta almeno una radice di posizione."
+
+#: ui/config_action_dialogs.py:543
+msgid "At least one rename rule is required."
+msgstr "È necessaria almeno una regola di rinominazione."
+
+#: ui/config_action_dialogs.py:576
+msgid "{0} pattern(s)"
+msgstr "{0} modello(i)"
+
+#: ui/config_action_dialogs.py:579
+msgid "(auto per-pattern)"
+msgstr "(automatico per modello)"
+
+#: ui/config_action_dialogs.py:585
+msgid "{0} exclude(s)"
+msgstr "{0} escluso(i)"
+
+#: ui/config_action_dialogs.py:634
+msgid "search_patterns is required."
+msgstr "search_patterns è obbligatorio."
+
+#: ui/config_action_dialogs.py:653
+msgid ""
+"rename_tag is required when a search pattern uses a \"{{...}}\" template or "
+"custom function reference."
+msgstr ""
+"rename_tag è obbligatorio quando un modello di ricerca utilizza un template "
+"\"{{...}}\" o un riferimento a funzione personalizzata."
+
+#: ui/config_action_dialogs.py:686
 msgid "Invalid Rule"
 msgstr "Regola non valida"
 
-#: ui/config_action_dialogs.py:745
+#: ui/config_action_dialogs.py:752
 msgid ""
 "Duplicate remover mappings usually contain source dirs and exclusion "
 "settings."
@@ -758,7 +1518,7 @@ msgstr ""
 "Le mappature del rimuovi duplicati solitamente contengono directory di "
 "origine e impostazioni di esclusione."
 
-#: ui/config_action_dialogs.py:761
+#: ui/config_action_dialogs.py:768
 msgid ""
 "Directory observer mappings usually contain sortable/extra/parent dirs and "
 "file_types."
@@ -766,21 +1526,21 @@ msgstr ""
 "Le mappature dell'osservatore di directory contengono solitamente directory "
 "ordinabili/extra/genitore e file_types."
 
-#: ui/config_action_dialogs.py:776
+#: ui/config_action_dialogs.py:783
 msgid ""
 "Directory flattener mappings usually include location and search_patterns."
 msgstr ""
 "Le mappature del flattening della directory includono solitamente posizione "
 "e search_patterns."
 
-#: ui/config_action_dialogs.py:790
+#: ui/config_action_dialogs.py:797
 msgid ""
 "Image categorizer mappings include source_dir, categories, and filters."
 msgstr ""
 "Le mappature del classificatore di immagini includono source_dir, categories"
 " e filters."
 
-#: ui/config_action_dialogs.py:808
+#: ui/config_action_dialogs.py:815
 msgid ""
 "Collects files from nested folders whose basename is in subdir_names into "
 "root/<name>/. For subdir_names use comma-separated folder names in this "
@@ -796,24 +1556,46 @@ msgstr ""
 "subdir_depth (default 1): solo root/<top-level-child>/<label>/; valori "
 "maggiori consentono più cartelle intermedie; -1 indica qualsiasi profondità."
 
-#: ui/config_action_dialogs.py:864
+#: ui/config_action_dialogs.py:824
+msgid "named_subdir_collector mapping"
+msgstr "Mappatura del raccoglitore di sottodirectory nominato"
+
+#: ui/config_action_dialogs.py:836
+msgid ""
+"subdir_names is required and must not be empty (comma-separated names, or "
+"YAML list in the saved file)."
+msgstr ""
+"subdir_names è obbligatorio e non deve essere vuoto (nomi separati da "
+"virgola o elenco YAML nel file salvato)."
+
+#: ui/config_action_dialogs.py:873
 msgid ""
 "Extracts ZIP archives matching pattern under search_dir into target_dir. "
 "target_dir is created if missing and always skipped while searching, so "
 "extracted files are never re-ingested; it cannot be search_dir or a parent "
 "of it. preserve_structure: keep each archive's folders under "
 "target_dir/<archive stem>/ (default off writes everything flat, tagging a "
-"collision with the archive's name). delete_sources: trash an archive once "
-"all of its members extracted."
+"collision with the archive's name). delete_sources (default on): trash an "
+"archive once all of its members extracted; set it false to keep the "
+"archives."
 msgstr ""
 "Estrae gli archivi ZIP che corrispondono al modello sotto search_dir in "
 "target_dir. target_dir viene creato se manca e viene sempre escluso durante "
-"la ricerca, così i file estratti non vengono mai reimportati; non può essere"
-" search_dir né una sua cartella superiore. preserve_structure: mantiene le "
-"cartelle di ogni archivio sotto target_dir/<nome archivio>/ (per default "
-"tutto piatto, in caso di collisione si aggiunge il nome dell'archivio). "
-"delete_sources: elimina (sposta nel cestino) un archivio una volta estratti "
-"tutti i suoi elementi."
+"la ricerca, quindi i file estratti non vengono mai re‑importati; non può "
+"essere search_dir né una sua directory padre. preserve_structure: mantiene "
+"le cartelle di ogni archivio sotto target_dir/<archive stem>/ (default "
+"disattivato scrive tutto in forma piatta, contrassegnando una collisione con"
+" il nome dell'archivio). delete_sources (default attivo): sposta nell'elenco"
+" dei cestini un archivio una volta estratti tutti i suoi elementi; impostalo"
+" a false per mantenere gli archivi."
+
+#: ui/config_action_dialogs.py:884
+msgid "archive_extractor mapping"
+msgstr "mappatura di archive_extractor"
+
+#: ui/config_editor_window.py:44
+msgid "Config Editor"
+msgstr "Editor di configurazione"
 
 #: ui/config_editor_window.py:61
 msgid "New Config"
@@ -907,6 +1689,10 @@ msgstr ""
 "Configurazione non trovata:\n"
 "{0}"
 
+#: ui/config_editor_window.py:243
+msgid "Top-level YAML must be a dictionary."
+msgstr "Lo YAML di livello superiore deve essere un dizionario."
+
 #: ui/config_editor_window.py:249
 msgid "Load Error"
 msgstr "Errore di caricamento"
@@ -914,6 +1700,10 @@ msgstr "Errore di caricamento"
 #: ui/config_editor_window.py:281
 msgid "{0}. {1} ({2} mapping(s))"
 msgstr "{0}. {1} ({2} mappatura(e))"
+
+#: ui/config_editor_window.py:286
+msgid "Choose Action Type"
+msgstr "Seleziona tipo di azione"
 
 #: ui/config_editor_window.py:306 ui/config_editor_window.py:328
 msgid "Select Action"
@@ -934,6 +1724,18 @@ msgstr "Tipo di azione non supportato: {0}"
 #: ui/config_editor_window.py:328
 msgid "Choose an action to remove."
 msgstr "Scegli un'azione da rimuovere."
+
+#: ui/config_editor_window.py:354
+msgid "filename_mapping_functions must be a list."
+msgstr "filename_mapping_functions deve essere un elenco."
+
+#: ui/config_editor_window.py:359
+msgid "filetype_definitions must be a list."
+msgstr "filetype_definitions deve essere un elenco."
+
+#: ui/config_editor_window.py:362
+msgid "Invalid YAML block: {0}"
+msgstr "Blocco YAML non valido: {0}"
 
 #: ui/config_editor_window.py:375
 msgid "Save Error"
@@ -967,15 +1769,20 @@ msgstr ""
 "Configurazione salvata:\n"
 "{0}"
 
-#: ui/custom_title_bar.py:99
+#: ui/custom_title_bar.py:100
 msgid "Minimize"
 msgstr "Minimizza"
 
-#: ui/custom_title_bar.py:104 ui/custom_title_bar.py:125
+#: ui/custom_title_bar.py:105 ui/custom_title_bar.py:126
 msgid "Maximize"
 msgstr "Massimizza"
 
-#: ui/custom_title_bar.py:122
+#: ui/custom_title_bar.py:110 ui/llm_config_chat_dialog.py:153
+#: ui/test_results_window.py:197
+msgid "Close"
+msgstr "Chiudi"
+
+#: ui/custom_title_bar.py:123
 msgid "Restore"
 msgstr "Ripristina"
 
@@ -983,69 +1790,179 @@ msgstr "Ripristina"
 msgid "Uncheck any files you do not want to remove."
 msgstr "Deseleziona i file che non vuoi rimuovere."
 
-#: ui/duplicate_review_dialogs.py:60
+#: ui/duplicate_review_dialogs.py:44
+msgid "[Group {0}] Keep: {1} | Obvious: Yes"
+msgstr "[Gruppo {0}] Conserva: {1} | Ovvio: Sì"
+
+#: ui/duplicate_review_dialogs.py:46
+msgid "[Group {0}] Keep: {1} | Obvious: No"
+msgstr "[Gruppo {0} Mantieni: {1} | Ovvio: No]"
+
+#: ui/duplicate_review_dialogs.py:51
+msgid "  remove -> {0}"
+msgstr "  Rimuovi -> {0}"
+
+#: ui/duplicate_review_dialogs.py:59 ui/test_results_window.py:522
+msgid "Select All"
+msgstr "Seleziona tutto"
+
+#: ui/duplicate_review_dialogs.py:62
 msgid "Select None"
 msgstr "Seleziona nessuno"
 
-#: ui/duplicate_review_dialogs.py:133
+#: ui/duplicate_review_dialogs.py:101
+msgid "Duplicate Removal Review"
+msgstr "Revisione rimozione duplicati"
+
+#: ui/duplicate_review_dialogs.py:120
+msgid ""
+"Do you want to remove all ({0}) duplicate files?\n"
+"All duplicates appear to be valid."
+msgstr ""
+"Vuoi rimuovere tutti i ({0}) file duplicati?\n"
+"Tutti i duplicati sembrano validi."
+
+#: ui/duplicate_review_dialogs.py:125
+msgid ""
+"Found {0} duplicate files.\n"
+"- {1} are index-obvious duplicates.\n"
+"- {2} are non-obvious by filename."
+msgstr ""
+"Trovati {0} file duplicati.\n"
+"- {1} sono duplicati ovvi nell'indice.\n"
+"- {2} non sono ovvi per nome file."
+
+#: ui/duplicate_review_dialogs.py:135
 msgid "Remove All ({0})"
 msgstr "Rimuovi tutto ({0})"
 
-#: ui/duplicate_review_dialogs.py:137
+#: ui/duplicate_review_dialogs.py:139
 msgid "Review All ({0})"
 msgstr "Revisiona tutto ({0})"
 
-#: ui/duplicate_review_dialogs.py:142
+#: ui/duplicate_review_dialogs.py:144
 msgid "Review Non-Obvious ({0})"
 msgstr "Rivedi Non Ovvio ({0})"
 
-#: ui/llm_config_chat_dialog.py:113
+#: ui/duplicate_review_dialogs.py:167
+msgid "Review All Duplicate Files"
+msgstr "Esamina tutti i file duplicati"
+
+#: ui/duplicate_review_dialogs.py:174
+msgid "Review Non-Obvious Duplicate Files"
+msgstr "Esaminare i file duplicati non evidenti"
+
+#: ui/llm_config_chat_dialog.py:76
+msgid "Draft {0} Action with AI"
+msgstr "Bozza {0} Azione con IA"
+
+#: ui/llm_config_chat_dialog.py:92
+msgid ""
+"Describe the {0} action you want in plain language. Nothing is written to "
+"the config until you click Apply below."
+msgstr ""
+"Descrivi l’azione {0} che desideri in linguaggio semplice. Non viene scritto"
+" nulla nella configurazione finché non clicchi su Applica qui sotto."
+
+#: ui/llm_config_chat_dialog.py:105
+msgid "e.g. \"Move every screenshot in Downloads into a Screenshots folder\""
+msgstr "Sposta ogni screenshot in Scaricati nella cartella Screenshot"
+
+#: ui/llm_config_chat_dialog.py:112
 msgid "Model"
 msgstr "Modello"
 
-#: ui/llm_config_chat_dialog.py:116
+#: ui/llm_config_chat_dialog.py:115
 msgid "Endpoint override"
 msgstr "Sovrascrittura endpoint"
 
-#: ui/llm_config_chat_dialog.py:118
+#: ui/llm_config_chat_dialog.py:117
 msgid "blank = default local Ollama endpoint"
 msgstr "blank = endpoint locale predefinito di Ollama"
 
-#: ui/llm_config_chat_dialog.py:122
+#: ui/llm_config_chat_dialog.py:121
 msgid "Draft"
 msgstr "Bozza"
 
-#: ui/llm_config_chat_dialog.py:127
+#: ui/llm_config_chat_dialog.py:126
 msgid "Conversation"
 msgstr "Conversazione"
 
-#: ui/llm_config_chat_dialog.py:134
+#: ui/llm_config_chat_dialog.py:133
 msgid "Current Draft"
 msgstr "Bozza attuale"
 
-#: ui/llm_config_chat_dialog.py:141
+#: ui/llm_config_chat_dialog.py:140
 msgid "Preview (what this would touch)"
 msgstr "Anteprima (ciò che toccherà)"
 
-#: ui/llm_config_chat_dialog.py:149
+#: ui/llm_config_chat_dialog.py:148
 msgid "Apply"
 msgstr "Applica"
 
-#: ui/llm_config_chat_dialog.py:166
+#: ui/llm_config_chat_dialog.py:165
 msgid "Description Required"
 msgstr "Descrizione richiesta"
 
-#: ui/llm_config_chat_dialog.py:166
+#: ui/llm_config_chat_dialog.py:165
 msgid "Describe the action you want first."
 msgstr "Descrivi prima l'azione che desideri."
 
-#: ui/llm_config_chat_dialog.py:245
+#: ui/llm_config_chat_dialog.py:212
+msgid "Attempt {0}: parse error — {1}"
+msgstr "Tentativo {0}: errore di parsing — {1}"
+
+#: ui/llm_config_chat_dialog.py:216
+msgid "Attempt {0}: validation failed — {1}"
+msgstr "Tentativo {0}: convalida non riuscita — {1}"
+
+#: ui/llm_config_chat_dialog.py:219
+msgid "Attempt {0}: OK"
+msgstr "Tentativo {0}: OK"
+
+#: ui/llm_config_chat_dialog.py:224
+msgid "Warnings: {0}"
+msgstr "Avvisi: {0}"
+
+#: ui/llm_config_chat_dialog.py:231
+msgid "Preview unavailable: {0}"
+msgstr "Anteprima non disponibile: {0}"
+
+#: ui/llm_config_chat_dialog.py:242
+msgid "Error: {0}"
+msgstr "Errore: {0}"
+
+#: ui/llm_config_chat_dialog.py:248
 msgid "No Draft"
 msgstr "Nessuna bozza"
 
-#: ui/llm_config_chat_dialog.py:245
+#: ui/llm_config_chat_dialog.py:248
 msgid "Draft an action first."
 msgstr "Prima redigi un'azione."
+
+#: ui/llm_config_chat_dialog.py:253
+msgid "Applied."
+msgstr "Applicato."
+
+#: ui/log_panel.py:123
+msgid "Log"
+msgstr "Registro"
+
+#: ui/log_panel.py:127
+msgid "Level"
+msgstr "Livello"
+
+#: ui/log_panel.py:130
+msgid "Debug"
+msgstr "Debug"
+
+#: ui/log_panel.py:132
+msgid "Warning"
+msgstr "Attenzione"
+
+#: ui/renamer_rule_suggester_dialog.py:42
+msgid "Renamer Auto-Rule Suggestions"
+msgstr "Suggerimenti regole automatiche per Renamer"
 
 #: ui/renamer_rule_suggester_dialog.py:53
 msgid "Common Patterns (no directory needed)"
@@ -1058,10 +1975,6 @@ msgstr "Rilevato dai file"
 #: ui/renamer_rule_suggester_dialog.py:68
 msgid "Browse"
 msgstr "Sfoglia"
-
-#: ui/renamer_rule_suggester_dialog.py:71
-msgid "Directory"
-msgstr "Cartella"
 
 #: ui/renamer_rule_suggester_dialog.py:73
 msgid "Scan recursively"
@@ -1103,23 +2016,133 @@ msgstr ""
 msgid "No strong filename patterns detected."
 msgstr "Nessun modello di nome file forte rilevato."
 
-#: ui/renamer_rule_suggester_dialog.py:197
+#: ui/renamer_rule_suggester_dialog.py:132
+msgid "{0}. [{1}%] {2}  ({3} files, {4}%)"
+msgstr "{0}. [{1}%] {2}  ({3} file, {4}%)"
+
+#: ui/renamer_rule_suggester_dialog.py:149
+#: ui/renamer_rule_suggester_dialog.py:180
+#: ui/renamer_rule_suggester_dialog.py:219
+msgid "n/a"
+msgstr "n/d"
+
+#: ui/renamer_rule_suggester_dialog.py:151
+#: ui/renamer_rule_suggester_dialog.py:180
+msgid "Reason: {0}"
+msgstr "Motivo: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:152
+#: ui/renamer_rule_suggester_dialog.py:185
+msgid "Pattern: {0}"
+msgstr "Modello: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:155
+msgid "Suggested rename_tag: {0}"
+msgstr "rename_tag suggerito: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:157
+msgid ""
+"rename_tag: auto-derived per pattern (each literal pattern becomes its own "
+"tag)"
+msgstr ""
+"rename_tag: derivato automaticamente per modello (ogni modello letterale "
+"diventa un proprio tag)"
+
+#: ui/renamer_rule_suggester_dialog.py:160
+msgid ""
+"Suggested function: {0} (set this yourself in the Function dropdown; it's "
+"not applied automatically)"
+msgstr ""
+"Funzione suggerita: {0} (impostala manualmente nel menu a discesa Funzione; "
+"non viene applicata automaticamente)"
+
+#: ui/renamer_rule_suggester_dialog.py:165
+msgid "Also matches OS/browser duplicate-download copies, e.g. \"R (1).png\"."
+msgstr ""
+"Riconosce anche le copie di download duplicate da OS/browser, es. \"R "
+"(1).png\"."
+
+#: ui/renamer_rule_suggester_dialog.py:181
+msgid "Confidence: {0}%"
+msgstr "Fiducia: {0}%"
+
+#: ui/renamer_rule_suggester_dialog.py:182
+msgid "Affected: {0} files ({1}%)"
+msgstr "Coinvolti: {0} file ({1}%)"
+
+#: ui/renamer_rule_suggester_dialog.py:186
+msgid "Top subdirs: {0}"
+msgstr "Sottodirectory principali: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:200
 msgid "Select Suggestion"
 msgstr "Seleziona suggerimento"
 
-#: ui/renamer_rule_suggester_dialog.py:197
+#: ui/renamer_rule_suggester_dialog.py:200
 msgid "Pick a suggestion first."
 msgstr "Scegli prima un suggerimento."
 
-#: ui/renamer_rule_suggester_dialog.py:201
+#: ui/renamer_rule_suggester_dialog.py:204
 msgid "Invalid Suggestion"
 msgstr "Suggerimento non valido"
 
-#: ui/renamer_rule_suggester_dialog.py:201
+#: ui/renamer_rule_suggester_dialog.py:204
 msgid "Selected suggestion has no usable pattern."
 msgstr "Il suggerimento selezionato non ha un modello utilizzabile."
 
-#: ui/test_results_window.py:262
+#: ui/test_results_window.py:81
+msgid "Verification tests"
+msgstr "Test di verifica"
+
+#: ui/test_results_window.py:114
+msgid "Verification test results"
+msgstr "Risultati del test di verifica"
+
+#: ui/test_results_window.py:121
+msgid "Suite directory"
+msgstr "Directory suite"
+
+#: ui/test_results_window.py:126
+msgid "All suites"
+msgstr "Tutte le suite"
+
+#: ui/test_results_window.py:137
+msgid "Click Run suite to start."
+msgstr "Fai clic su Run suite per avviare."
+
+#: ui/test_results_window.py:173
+msgid "Total Tests: 0"
+msgstr "Test totali: 0"
+
+#: ui/test_results_window.py:176
+msgid "Passed: 0"
+msgstr "Passato: 0"
+
+#: ui/test_results_window.py:180
+msgid "Failed: 0"
+msgstr "Mancato: 0"
+
+#: ui/test_results_window.py:184
+msgid "Time: 0:00"
+msgstr "Tempo: 0:00"
+
+#: ui/test_results_window.py:193
+msgid "Run suite"
+msgstr "Esegui suite"
+
+#: ui/test_results_window.py:201
+msgid "Save Results"
+msgstr "Salvare i risultati"
+
+#: ui/test_results_window.py:218
+msgid "Running tests..."
+msgstr "Esecuzione dei test..."
+
+#: ui/test_results_window.py:260
+msgid "Test tree not found: {0}"
+msgstr "Albero di test non trovato: {0}"
+
+#: ui/test_results_window.py:268
 msgid ""
 "Excluding Qt UI tests (marker \"ui\") from All suites: they drive real "
 "widgets via the app's own QApplication and would hang running inside it."
@@ -1127,3 +2150,124 @@ msgstr ""
 "Escludere i test UI Qt (marcatore \\\"ui\\\") da tutte le suite: guidano "
 "widget reali tramite la QApplication dell'applicazione e si bloccherebbero "
 "se eseguiti al suo interno."
+
+#: ui/test_results_window.py:280
+msgid "Test suite directory not found: {0}"
+msgstr "Cartella della suite di test non trovata: {0}"
+
+#: ui/test_results_window.py:299
+msgid "Backup test directory not found (required for fixtures): {0}"
+msgstr ""
+"Directory di test del backup non trovata (richiesta per i fixture): {0}"
+
+#: ui/test_results_window.py:313
+msgid "Base directory: "
+msgstr "Directory di base: "
+
+#: ui/test_results_window.py:315
+msgid "Pytest targets: "
+msgstr "Obiettivi Pytest: "
+
+#: ui/test_results_window.py:319
+msgid "Backup fixtures directory: "
+msgstr "Directory dei fixture di backup: "
+
+#: ui/test_results_window.py:321
+msgid "Python path: "
+msgstr "Percorso Python: "
+
+#: ui/test_results_window.py:326
+msgid "Test target not found: {0}"
+msgstr "Obiettivo di test non trovato: {0}"
+
+#: ui/test_results_window.py:334
+msgid "Found test target: "
+msgstr "Obiettivo di test trovato: "
+
+#: ui/test_results_window.py:338
+msgid "No test targets remain to run."
+msgstr "Nessun target di test rimasto da eseguire."
+
+#: ui/test_results_window.py:350
+msgid "Analyzing test suite..."
+msgstr "Analisi della suite di test..."
+
+#: ui/test_results_window.py:369
+msgid "Found {0} tests in {1}"
+msgstr "Trovato {0} test in {1}"
+
+#: ui/test_results_window.py:375
+msgid "Error collecting tests from {0}: {1}"
+msgstr "Test di raccolta di errori da {0}: {1}"
+
+#: ui/test_results_window.py:395
+msgid "Running tests from {0}..."
+msgstr "Esecuzione di test da {0}..."
+
+#: ui/test_results_window.py:399
+msgid "Running tests from {0}:"
+msgstr "Test in esecuzione da {0}:"
+
+#: ui/test_results_window.py:426
+msgid "Error in {0}:"
+msgstr "Errore in {0}:"
+
+#: ui/test_results_window.py:444
+msgid "Error running tests in {0}: {1}"
+msgstr "Test di errore in esecuzione in {0}: {1}"
+
+#: ui/test_results_window.py:459
+msgid "Unexpected error running tests: {0}"
+msgstr "Test di errore inaspettati in esecuzione: {0}"
+
+#: ui/test_results_window.py:487
+msgid "Save Test Results"
+msgstr "Salva i risultati del test"
+
+#: ui/test_results_window.py:489
+msgid "Text Files (*.txt);;All Files (*)"
+msgstr "File di testo (*.txt);;Tutti i file (*)"
+
+#: ui/test_results_window.py:519
+msgid "Copy"
+msgstr "Copia"
+
+#: ui/test_results_window.py:568
+msgid "Total Tests: {0}"
+msgstr "Totale test: {0}"
+
+#: ui/test_results_window.py:569
+msgid "Passed: {0}"
+msgstr "Passato: {0}"
+
+#: ui/test_results_window.py:570
+msgid "Failed: {0}"
+msgstr "Fallito: {0}"
+
+#: ui/test_results_window.py:576
+msgid "Time: {0}:{1:02d}"
+msgstr "Tempo trascorso: {0}:{1:02d}"
+
+#: ui/test_results_window.py:586
+msgid "Test Run Complete - "
+msgstr "Prova completata - "
+
+#: ui/test_results_window.py:587
+msgid "Total Tests: "
+msgstr "Test totali: "
+
+#: ui/test_results_window.py:588
+msgid "Passed: "
+msgstr "Passato: "
+
+#: ui/test_results_window.py:589
+msgid "Failed: "
+msgstr "Fallito: "
+
+#: ui/test_results_window.py:592
+msgid "All tests passed successfully!"
+msgstr "Tutti i test sono passati con successo!"
+
+#: ui/test_results_window.py:592
+msgid "Some tests failed - check results"
+msgstr "Alcuni test falliti - verifica risultati"

@@ -43,6 +43,7 @@ from refacdir.llm.redundancy import (
 )
 from refacdir.utils.cache_paths import refacdir_cache_dir
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import LocalizedText
 
 logger = setup_logger("llm_client")
 
@@ -621,7 +622,7 @@ class LLM:
         except Exception as e:
             logger.error(f"Failed to generate LLM response: {e}")
             self.increment_failure_count()
-            raise LLMResponseException(f"Failed to generate LLM response: {e}")
+            raise LLMResponseException(LocalizedText("Failed to generate LLM response: {0}", e))
 
     def _track_prompt_response(
         self,
@@ -744,7 +745,7 @@ class LLM:
         # Handle the result
         if self._exception:
             logger.error(f"Failed to generate LLM response: {self._exception}")
-            raise LLMResponseException(f"Failed to generate LLM response: {self._exception}")
+            raise LLMResponseException(LocalizedText("Failed to generate LLM response: {0}", self._exception))
 
         return self._result
 
@@ -774,7 +775,7 @@ class LLM:
             interrupt_on_skip=interrupt_on_skip,
         )
         if result is None:
-            raise LLMResponseException("Failed to generate LLM response - Result is None")
+            raise LLMResponseException(LocalizedText("Failed to generate LLM response - Result is None"))
         return result._get_json_attr(json_key)
 
     # Model name prefixes known to use <think>…</think> reasoning blocks.

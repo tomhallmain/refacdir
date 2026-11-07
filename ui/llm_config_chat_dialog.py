@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
 
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
-from refacdir.utils.translations import _
+from refacdir.utils.translations import _, localized_str
 
 from refacdir.llm.config_schema import supported_action_types
 from refacdir.llm.conversation import DEFAULT_MAX_ATTEMPTS, draft_action
@@ -73,7 +73,7 @@ class LLMConfigChatDialog(SmartDialog):
         super().__init__(
             parent=parent,
             position_parent=parent,
-            title=f"Draft {action_type.value} Action with AI",
+            title=_("Draft {0} Action with AI").format(action_type.value),
             geometry="820x720",
             center=True,
         )
@@ -102,7 +102,7 @@ class LLMConfigChatDialog(SmartDialog):
 
         self.description_edit = QTextEdit()
         self.description_edit.setPlaceholderText(
-            'e.g. "Move every screenshot in Downloads into a Screenshots folder"'
+            _('e.g. "Move every screenshot in Downloads into a Screenshots folder"')
         )
         self.description_edit.setMinimumHeight(80)
         self.description_edit.setEnabled(self._supported)
@@ -182,7 +182,7 @@ class LLMConfigChatDialog(SmartDialog):
                 draft_result, preview_result = self._run_draft(description, model_name, endpoint)
                 signals.finished.emit(draft_result, preview_result)
             except Exception as exc:
-                signals.failed.emit(str(exc))
+                signals.failed.emit(localized_str(exc))
 
         threading.Thread(target=run_worker, daemon=True).start()
 
@@ -208,34 +208,38 @@ class LLMConfigChatDialog(SmartDialog):
 
         for idx, attempt in enumerate(draft_result.attempts, start=1):
             if attempt.parse_error:
-                self.conversation_log.append(f"Attempt {idx}: parse error — {attempt.parse_error}")
+                self.conversation_log.append(
+                    _("Attempt {0}: parse error — {1}").format(idx, localized_str(attempt.parse_error))
+                )
             elif attempt.validation is not None and not attempt.validation.valid:
                 self.conversation_log.append(
-                    f"Attempt {idx}: validation failed — {attempt.validation.error_summary()}"
+                    _("Attempt {0}: validation failed — {1}").format(idx, attempt.validation.localized_error_summary())
                 )
             else:
-                self.conversation_log.append(f"Attempt {idx}: OK")
+                self.conversation_log.append(_("Attempt {0}: OK").format(idx))
 
         if draft_result.success:
             self.draft_view.setPlainText(json.dumps(draft_result.action_dict, indent=2))
             if draft_result.warnings:
-                self.conversation_log.append("Warnings: " + "; ".join(draft_result.warnings))
+                self.conversation_log.append(_("Warnings: {0}").format("; ".join(localized_str(w) for w in draft_result.warnings)))
             if preview_result is not None:
                 if preview_result.available:
                     self.preview_view.setPlainText(
                         preview_result.summary + "\n\n" + json.dumps(preview_result.details, indent=2, default=str)
                     )
                 else:
-                    self.preview_view.setPlainText(f"Preview unavailable: {preview_result.reason}")
+                    self.preview_view.setPlainText(_("Preview unavailable: {0}").format(localized_str(preview_result.reason)))
             self.apply_btn.setEnabled(True)
         else:
             self.conversation_log.append(
-                f"Failed after {draft_result.attempt_count} attempt(s): {draft_result.last_error_summary()}"
+                _("Failed after {0} attempt(s): {1}").format(
+                    draft_result.attempt_count, draft_result.localized_last_error_summary()
+                )
             )
 
     def _on_worker_failed(self, message: str):
         self.draft_btn.setEnabled(True)
-        self.conversation_log.append(f"Error: {message}")
+        self.conversation_log.append(_("Error: {0}").format(message))
 
     # -- Apply ------------------------------------------------------------------
 
@@ -246,7 +250,7 @@ class LLMConfigChatDialog(SmartDialog):
         # Apply without closing, matching RenamerRuleSuggesterDialog — the
         # user may want to describe and apply another action next.
         self.action_drafted.emit(self._draft_result.action_dict)
-        self.conversation_log.append("Applied.")
+        self.conversation_log.append(_("Applied."))
         self.apply_btn.setEnabled(False)
         self._draft_result = None
         self._preview_result = None

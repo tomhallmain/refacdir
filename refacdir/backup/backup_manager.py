@@ -54,7 +54,7 @@ class BackupManager:
         return (mapping_index + max(0.0, min(1.0, local_progress))) / max(1, total_mappings)
 
     def run_backups(self):
-        logger.info("TESTING BACKUPS" if self.test else "RUNNING BACKUPS")
+        logger.info(_("TESTING BACKUPS") if self.test else _("RUNNING BACKUPS"))
         logger.info("The following backups will be run:")
         for mapping in self.backup_mappings:
             if mapping.will_run:
@@ -67,7 +67,7 @@ class BackupManager:
             return
 
         if not self.skip_confirm and not self.confirm_backups(runnable):
-            logger.info("Backup cancelled by user; no change made.")
+            logger.info(_("Backup cancelled by user; no change made."))
             self._job_progress(1.0)
             return
 
@@ -81,7 +81,7 @@ class BackupManager:
                     )
 
             logger.info(
-                "Starting backup mapping %s (%s/%s): %s -> %s",
+                _("Starting backup mapping %s (%s/%s): %s -> %s"),
                 mapping.name,
                 i + 1,
                 m,
@@ -119,9 +119,9 @@ class BackupManager:
             self.app_actions,
             _("Confirm backup"),
             message.format(self.name, len(mappings)),
-            details="\n".join(str(mapping) for mapping in mappings),
+            details="\n\n".join(mapping.describe() for mapping in mappings),
             acknowledgement=_("I have checked these mappings"),
         )
         if confirmed:
-            logger.info("Confirmation received, running backups.")
+            logger.info(_("Confirmation received, running backups."))
         return confirmed

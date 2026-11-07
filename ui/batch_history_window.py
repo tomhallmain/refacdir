@@ -28,7 +28,7 @@ from refacdir.batch_job_history import (
     reverse_job,
 )
 from refacdir.lib.multi_display import SmartWindow
-from refacdir.utils.translations import _
+from refacdir.utils.translations import _, localized_str
 
 
 def _format_job_summary(job: dict) -> str:
@@ -41,8 +41,11 @@ def _format_job_summary(job: dict) -> str:
     configs = ", ".join(job.get("configs") or []) or _("(none)")
     op_count = len(job.get("operations") or [])
     rev_count = job.get("reversible_operation_count", 0)
-    cancelled = _(" (cancelled)") if job.get("cancelled") else ""
-    return f"{started}{cancelled} — {configs} — {op_count} op(s), {rev_count} reversible"
+    if job.get("cancelled"):
+        return _("{0} (cancelled) — {1} — {2} op(s), {3} reversible").format(
+            started, configs, op_count, rev_count
+        )
+    return _("{0} — {1} — {2} op(s), {3} reversible").format(started, configs, op_count, rev_count)
 
 
 def _format_mapping_label(group: dict) -> str:
@@ -50,25 +53,25 @@ def _format_mapping_label(group: dict) -> str:
     name = group.get("mapping_name") or _("(untagged)")
     op_count = group.get("operation_count", 0)
     rev_count = group.get("reversible_count", 0)
-    return f"{config} / {name} — {op_count} op(s), {rev_count} reversible"
+    return _("{0} / {1} — {2} op(s), {3} reversible").format(config, name, op_count, rev_count)
 
 
 def _format_job_detail(job: dict, *, mapping_filter: tuple[str, str] | None = None) -> str:
     lines = [
-        f"Job ID: {job.get('job_id', '')}",
-        f"Started: {job.get('started_at', '')}",
-        f"Finished: {job.get('finished_at', '')}",
-        f"Configs: {', '.join(job.get('configs') or [])}",
-        f"Cancelled: {job.get('cancelled', False)}",
+        _("Job ID: {0}").format(job.get("job_id", "")),
+        _("Started: {0}").format(job.get("started_at", "")),
+        _("Finished: {0}").format(job.get("finished_at", "")),
+        _("Configs: {0}").format(", ".join(job.get("configs") or [])),
+        _("Cancelled: Yes") if job.get("cancelled", False) else _("Cancelled: No"),
         "",
-        "Action counts:",
+        _("Action counts:"),
     ]
     for action, count in (job.get("action_counts") or {}).items():
         if count:
             lines.append(f"  {action}: {count}")
     failures = job.get("failures") or []
     if failures:
-        lines.extend(["", "Failures:"])
+        lines.extend(["", _("Failures:")])
         lines.extend(f"  - {f}" for f in failures)
 
     filter_label = _("(all mappings)")
@@ -77,7 +80,7 @@ def _format_job_detail(job: dict, *, mapping_filter: tuple[str, str] | None = No
         config_label = config or _("(unknown config)")
         mapping_label = mapping_name or _("(untagged)")
         filter_label = f"{config_label} / {mapping_label}"
-    lines.extend(["", f"File operations — {filter_label}:"])
+    lines.extend(["", _("File operations — {0}:").format(filter_label)])
 
     for i, op in enumerate(job.get("operations") or [], 1):
         meta = op.get("meta") or {}
@@ -92,15 +95,15 @@ def _format_job_detail(job: dict, *, mapping_filter: tuple[str, str] | None = No
 
         status = ""
         if op.get("reversed"):
-            status = " [reversed]"
+            status = " " + _("[reversed]")
         elif op.get("reversible"):
             dest = op.get("dest", "")
             if dest and os.path.isfile(dest):
-                status = " [can reverse]"
+                status = " " + _("[can reverse]")
             else:
-                status = " [missing at dest]"
+                status = " " + _("[missing at dest]")
         elif not op.get("reversible"):
-            status = " [not reversible]"
+            status = " " + _("[not reversible]")
         lines.append(
             f"  {i}. [{op_config} / {mapping_label}] {op.get('type', '?')}: "
             f"{op.get('source', '')} -> {op.get('dest', '')}{status}"
@@ -335,7 +338,7 @@ class BatchHistoryWindow(SmartWindow):
             rescue_legacy_relative_paths(job_id)
             result = reverse_job(job_id, config=config, mapping_name=mapping_name, dry_run=dry_run)
         except ValueError as exc:
-            QMessageBox.warning(self, _("Batch history"), str(exc))
+            QMessageBox.warning(self, _("Batch history"), localized_str(exc))
             return
 
         if mapping_only:
@@ -348,6 +351,6 @@ class BatchHistoryWindow(SmartWindow):
         if result.errors:
             msg += "\n\n" + "\n".join(result.errors[:20])
             if len(result.errors) > 20:
-                msg += f"\n... and {len(result.errors) - 20} more"
+                msg += "\n" + _("... and {0} more").format(len(result.errors) - 20)
         QMessageBox.information(self, title, msg)
         self.refresh()

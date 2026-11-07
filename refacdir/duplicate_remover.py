@@ -11,7 +11,7 @@ from typing import Iterable
 from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.utils import Utils
 from refacdir.utils.confirm import confirm_action
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _
 from refacdir.utils.logger import setup_logger
 
 # Set up logger for duplicate remover
@@ -147,7 +147,7 @@ class DuplicateRemover:
             for d in exclude_dirs:
                 full_path = self._find_full_path(d)
                 if not Utils.isdir_with_retry(full_path):
-                    raise Exception("Invalid exclude directory: " + d)
+                    raise Exception(LocalizedText("Invalid exclude directory: {0}", d))
                 logger.info(full_path)
                 self.exclude_dirs.append(full_path)
         if len(preferred_delete_dirs) > 0:
@@ -155,7 +155,7 @@ class DuplicateRemover:
             for d in preferred_delete_dirs:
                 full_path = self._find_full_path(d)
                 if not Utils.isdir_with_retry(full_path):
-                    raise Exception("Invalid preferred delete directory: " + d)
+                    raise Exception(LocalizedText("Invalid preferred delete directory: {0}", d))
                 logger.info(full_path)
                 self.preferred_delete_dirs.append(full_path)
 
@@ -171,22 +171,22 @@ class DuplicateRemover:
         return ""
 
     def run(self):
-        logger.info(f"Running duplicate removal for: {self.source_folders}")
+        logger.info(_("Running duplicate removal for: {0}").format(self.source_folders))
         if self.find_duplicates():
             if self.test:
-                logger.info(f"TEST {self.name}: logging duplicates, removing nothing")
+                logger.info(_("TEST {0}: logging duplicates, removing nothing").format(self.name))
                 self.handle_duplicates(testing=True)
                 return
 
             if self.skip_confirm:
-                logger.info("skip_confirm set. Removing all duplicates without prompt.")
+                logger.info(_("skip_confirm set. Removing all duplicates without prompt."))
                 self.handle_duplicates(testing=False, skip_confirm=True)
                 return
 
             if self.app_actions and hasattr(self.app_actions, "review_duplicates"):
                 review_payload = self.build_review_payload()
                 if review_payload.get("total_duplicate_files", 0) == 0:
-                    logger.info("No duplicates found after review payload generation.")
+                    logger.info(_("No duplicates found after review payload generation."))
                     return
                 decision = self.app_actions.review_duplicates(review_payload)
                 action = (decision or {}).get("action", "cancel")
@@ -197,26 +197,26 @@ class DuplicateRemover:
                 if action == "remove_selected":
                     self.remove_files(selected_files)
                     return
-                logger.info("Duplicate review cancelled by user.")
+                logger.info(_("Duplicate review cancelled by user."))
                 return
 
             self.handle_duplicates(testing=True)
             title = _("Confirm duplicate removal")
             if confirm_action(self.app_actions, title, _("Remove all duplicates listed above?")):
-                logger.info("User confirmed removal of all duplicates")
+                logger.info(_("User confirmed removal of all duplicates"))
                 self.handle_duplicates(testing=False)
                 return
-            logger.info("No change made.")
+            logger.info(_("No change made."))
             if confirm_action(self.app_actions, title, _("Remove duplicates with confirmation one by one?")):
-                logger.info("User chose to remove duplicates with individual confirmation")
+                logger.info(_("User chose to remove duplicates with individual confirmation"))
                 self.handle_duplicates(testing=False, skip_confirm=False)
                 return
-            logger.info("No change made.")
+            logger.info(_("No change made."))
             if confirm_action(self.app_actions, title, _("Save duplicates report?")):
-                logger.info("User chose to save duplicates report")
+                logger.info(_("User chose to save duplicates report"))
                 self.save_report()
         else:
-            logger.info("No duplicates found.")
+            logger.info(_("No duplicates found."))
 
     def _remove_index_suffix(self, basename_no_ext: str) -> str:
         return re.sub(r'\s\(\d+\)$', '', basename_no_ext)
@@ -268,11 +268,11 @@ class DuplicateRemover:
 
     def remove_files(self, files: Iterable[str]):
         for file_path in files:
-            logger.info("Removing file: " + file_path)
+            logger.info(_("Removing file: {0}").format(file_path))
             try:
                 os.remove(file_path)
             except Exception as e:
-                logger.error(f"Failed to remove file {file_path}: {e}")
+                logger.error(_("Failed to remove file {0}: {1}").format(file_path, e))
 
     def is_excluded(self, file_path):
         for d in self.exclude_dirs:
@@ -302,9 +302,9 @@ class DuplicateRemover:
                             file_mtime = entry_stat.st_mtime
                             yield file_path, file_mtime
                         except Exception as e:
-                            logger.error(f"Error reading file info for \"{file_path}\": {e}")
+                            logger.error(_("Error reading file info for \"{0}\": {1}").format(file_path, e))
             except Exception as e:
-                logger.error(f"Error scanning directory \"{folder}\": {e}")
+                logger.error(_("Error scanning directory \"{0}\": {1}").format(folder, e))
 
     def find_duplicates(self):
         file_dict = defaultdict(list)
@@ -319,14 +319,14 @@ class DuplicateRemover:
                     file_hash = self.hash_cache.get_file_hash(source_folder, file_path, file_mtime, self.use_hash_cache)
                     file_dict[file_hash].append(file_path)
                 except Exception as e: # FileNotFound error is possible
-                    logger.error(f"Error generating hash for \"{file_path}\": {e}")
+                    logger.error(_("Error generating hash for \"{0}\": {1}").format(file_path, e))
             if self.use_hash_cache:
                 self.hash_cache.write_hash_cache_entry(source_folder)
         if self.use_hash_cache:
             self.hash_cache.finalize_and_persist(self.source_folders)
         self.duplicates = {k: v for k, v in file_dict.items() if len(v) > 1}
         if self.has_duplicates():
-            logger.info(f"Found {len(self.duplicates)} sets of duplicate files")
+            logger.info(_("Found {0} sets of duplicate files").format(len(self.duplicates)))
         return self.has_duplicates()
 
     def has_duplicates(self):
@@ -348,12 +348,12 @@ class DuplicateRemover:
             if self.match_dir and len(duplicates_to_remove) == 0:
                 continue
             if testing:
-                logger.info("Keeping file:               " + best_duplicate)
-                logger.info("Removing duplicate files: " + str(duplicates_to_remove))
+                logger.info(_("Keeping file: {0}").format(best_duplicate))
+                logger.info(_("Removing duplicate files: {0}").format(str(duplicates_to_remove)))
             else:
                 if not skip_confirm:
-                    logger.info("Keeping file:               " + best_duplicate)
-                    logger.info("Removing duplicate files: " + str(duplicates_to_remove))
+                    logger.info(_("Keeping file: {0}").format(best_duplicate))
+                    logger.info(_("Removing duplicate files: {0}").format(str(duplicates_to_remove)))
                     if not confirm_action(
                         self.app_actions,
                         _("Confirm duplicate removal"),
@@ -362,7 +362,7 @@ class DuplicateRemover:
                         ),
                         details="\n".join(duplicates_to_remove),
                     ):
-                        logger.info("User skipped removal of duplicates")
+                        logger.info(_("User skipped removal of duplicates"))
                         continue
                 self.remove_files(duplicates_to_remove)
 
@@ -429,7 +429,7 @@ class DuplicateRemover:
                     if duplicate != best:
                         f.write(f'{duplicate}\n')
                 f.write('\n')
-        logger.info(f'Report saved at {report_path}')
+        logger.info(_("Report saved at {0}").format(report_path))
 
 def dups_main(directory_path=".", select_deepest=False, match_dir=False, recursive=True, 
               exclude_dir_string="", preferred_delete_dirs_string="", use_hash_cache=True):
@@ -443,8 +443,8 @@ def dups_main(directory_path=".", select_deepest=False, match_dir=False, recursi
     remover.run()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Remove duplicate files in a directory.')
-    parser.add_argument('dir', help='Directory to search for duplicate files')
+    parser = argparse.ArgumentParser(description=_('Remove duplicate files in a directory.'))
+    parser.add_argument('dir', help=_('Directory to search for duplicate files'))
     args = parser.parse_args()
     dups_main(args.dir)
 

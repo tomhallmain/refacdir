@@ -18,7 +18,7 @@ from pathlib import Path
 from refacdir.file_renamer import FileRenamer
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.confirm import confirm_action
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _
 from refacdir.utils.utils import Utils
 
 logger = setup_logger("named_subdir_collector")
@@ -108,7 +108,7 @@ def _allocate_unique_for_test(dest_dir: str, basename: str, occupied: set[str]) 
             return cand
         attempts += 1
         if attempts > 99999:
-            raise Exception("Unable to find a unique filename: " + basename)
+            raise Exception(LocalizedText("Unable to find a unique filename: {0}", basename))
 
 
 class NamedSubdirCollector:
@@ -131,7 +131,9 @@ class NamedSubdirCollector:
         """
         if not isinstance(subdir_depth, int) or subdir_depth < -1:
             raise Exception(
-                f"subdir_depth must be an integer >= -1 (use -1 for unlimited depth), got {subdir_depth!r}"
+                LocalizedText(
+                    "subdir_depth must be an integer >= -1 (use -1 for unlimited depth), got {0!r}", subdir_depth
+                )
             )
         self.name = name
         self.root = os.path.abspath(Utils.fix_path(root))
@@ -187,19 +189,19 @@ class NamedSubdirCollector:
 
     def run(self):
         if not Utils.isdir_with_retry(self.root):
-            raise Exception(f"Invalid root directory: {self.root}")
+            raise Exception(LocalizedText("Invalid root directory: {0}", self.root))
         if len(self.subdir_names) == 0:
-            raise Exception("subdir_names must be a non-empty list")
+            raise Exception(LocalizedText("subdir_names must be a non-empty list"))
 
         work_items, sources_to_clear = self._collect_work()
 
         if len(work_items) == 0:
-            logger.warning(f"{self.name}: no files found to collect under {self.root}")
+            logger.warning(_("{0}: no files found to collect under {1}").format(self.name, self.root))
             return
 
         if self.test:
             logger.info(
-                f"|=============== TEST (dry run) {self.name}: no files moved or dirs cleared ===============|"
+                "|=============== " + _("TEST (dry run) {0}: no files moved or dirs cleared").format(self.name) + " ===============|"
             )
             occupied_by_label: dict[str, set[str]] = {label: set() for label in self.subdir_names}
             for label in self.subdir_names:
@@ -211,19 +213,19 @@ class NamedSubdirCollector:
                             occupied_by_label[label].add(fn)
 
             logger.info(
-                f"TEST {self.name}: would move {len(work_items)} file(s) under {self.root}"
+                _("TEST {0}: would move {1} file(s) under {2}").format(self.name, len(work_items), self.root)
             )
             for label, src_file in work_items[:50]:
                 dest_dir = os.path.join(self.root, label)
                 bn = os.path.basename(src_file)
                 unique = _allocate_unique_for_test(dest_dir, bn, occupied_by_label[label])
-                logger.info(f"TEST move {src_file} -> {os.path.join(dest_dir, unique)}")
+                logger.info(_("TEST move {0} -> {1}").format(src_file, os.path.join(dest_dir, unique)))
             if len(work_items) > 50:
-                logger.info(f"TEST ... and {len(work_items) - 50} more")
+                logger.info(_("TEST ... and {0} more").format(len(work_items) - 50))
             return
 
         logger.info(
-            f"{self.name}: collecting {len(work_items)} file(s) into bucket folders at {self.root}"
+            _("{0}: collecting {1} file(s) into bucket folders at {2}").format(self.name, len(work_items), self.root)
         )
         if not self.skip_confirm and not confirm_action(
             self.app_actions,
@@ -232,7 +234,7 @@ class NamedSubdirCollector:
                 self.name, len(work_items), ", ".join(self.subdir_names), self.root
             ),
         ):
-            logger.info("Operation cancelled by user")
+            logger.info(_("Operation cancelled by user"))
             return
 
         for label in self.subdir_names:
@@ -247,7 +249,7 @@ class NamedSubdirCollector:
             if os.path.normcase(os.path.abspath(src_file)) == os.path.normcase(dest_path):
                 continue
             Utils.move(src_file, dest_path)
-            logger.info(f"moved {src_file} -> {dest_path}")
+            logger.info(_("moved {0} -> {1}").format(src_file, dest_path))
 
         if self.clear_sources:
             for source_dir in sorted(sources_to_clear, key=lambda p: len(p), reverse=True):

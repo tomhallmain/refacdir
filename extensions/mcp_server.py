@@ -55,6 +55,7 @@ leaving remote access out of scope. The proxy is the recommendation.
 from typing import Any, Callable, Optional
 
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import _
 
 logger = setup_logger("mcp_server")
 
@@ -442,8 +443,9 @@ class MCPServerExtension:
             return {
                 "action_type": action_type.name,
                 "valid": result.valid,
-                "errors": list(result.errors),
-                "warnings": list(result.warnings),
+                # Plain English str: the agent gets the same text as the LLM retry prompt.
+                "errors": [str(error) for error in result.errors],
+                "warnings": [str(warning) for warning in result.warnings],
             }
 
         from refacdir.llm.preview import preview_action
@@ -453,7 +455,7 @@ class MCPServerExtension:
             "action_type": action_type.name,
             "available": result.available,
             "summary": result.summary,
-            "reason": result.reason,
+            "reason": str(result.reason),
             "details": result.details,
         }
 
@@ -493,7 +495,7 @@ class MCPServerExtension:
     def run_batch_approval_message(self, duplicate_policy: str = "cancel") -> str:
         """What a live run would do, for the client to put to the user."""
         session = self._resolve_session()
-        lines = ["Run these configs live? Files may be moved, renamed or deleted."]
+        lines = [_("Run these configs live? Files may be moved, renamed or deleted.")]
         for entry in session.list_configs():
             if not entry.get("selected_for_run", entry.get("will_run")):
                 continue
@@ -501,14 +503,14 @@ class MCPServerExtension:
             try:
                 actions = (session.read_config(entry["path"]) or {}).get("actions") or []
             except Exception as e:
-                lines.append(f"    (could not read: {e})")
+                lines.append("    " + _("(could not read: {0})").format(e))
                 continue
             for action in actions:
                 names = [
                     str(m.get("name", "?")) for m in action.get("mappings") or [] if isinstance(m, dict)
                 ]
                 lines.append(f"    {action.get('type', '?')}: {', '.join(names)}")
-        lines.append(f"Duplicate policy: {duplicate_policy}")
+        lines.append(_("Duplicate policy: {0}").format(duplicate_policy))
         return "\n".join(lines)
 
     def apply_run_approval(self, arguments: dict, answer: str) -> dict:
@@ -541,7 +543,7 @@ class MCPServerExtension:
         from pydantic import BaseModel, Field
 
         class Approval(BaseModel):
-            approve: bool = Field(description="Run this batch for real")
+            approve: bool = Field(description=_("Run this batch for real"))
 
         try:
             result = await ctx.elicit(message=message, schema=Approval)

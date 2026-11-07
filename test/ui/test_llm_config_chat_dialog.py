@@ -19,6 +19,7 @@ from refacdir.batch import ActionType
 from refacdir.llm.validation import ValidationResult
 from refacdir.llm.conversation import DraftResult
 from refacdir.llm.preview import PreviewResult
+from refacdir.utils.translations import _
 import ui.llm_config_chat_dialog as llm_config_chat_dialog
 from ui.llm_config_chat_dialog import LLMConfigChatDialog
 
@@ -176,10 +177,14 @@ def test_worker_finished_with_failure_disables_apply(qtbot):
     dialog = LLMConfigChatDialog(action_type=ActionType.RENAMER)
     qtbot.addWidget(dialog)
 
-    dialog._on_worker_finished(_failed_draft_result(), None)
+    draft_result = _failed_draft_result()
+    dialog._on_worker_finished(draft_result, None)
 
     assert dialog.apply_btn.isEnabled() is False
-    assert "Failed after" in dialog.conversation_log.toPlainText()
+    expected = _("Failed after {0} attempt(s): {1}").format(
+        draft_result.attempt_count, draft_result.localized_last_error_summary()
+    )
+    assert expected in dialog.conversation_log.toPlainText()
 
 
 def test_worker_failed_reenables_draft_button_and_logs_error(qtbot):

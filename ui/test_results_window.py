@@ -494,7 +494,7 @@ class TestResultsWindow(SmartWindow):
                 with open(file_name, 'w') as f:
                     f.write(self.results_text.toPlainText())
             except Exception as e:
-                self.alert("Error", str(e), "error")
+                self.alert(_("Error"), str(e), "error")
                 
     def alert(self, title: str, message: str, kind: str = "info"):
         """Show an alert dialog"""

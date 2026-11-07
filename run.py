@@ -2,10 +2,13 @@ import getopt
 import sys
 
 from refacdir.batch import BatchArgs, BatchJob
+from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 
 
-help_text = """Edit configuration YAML files in configs directory to configure file management batch actions.
+def _help_text():
+    return _(
+        """Edit configuration YAML files in configs directory to configure file management batch actions.
 
 Once desired configurations are set, run with:
 python run.py [args]
@@ -32,6 +35,7 @@ python run.py [args]
         Keep filename_mapping_functions / filetype_definitions registries across batch runs
         in the same process (default is to clear them at each run for a clean YAML-only view)
 """
+    )
 
 
 def main(args):
@@ -56,13 +60,13 @@ if __name__ == "__main__":
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err)  # will print something like "option -a not recognized"
-        print(help_text)
+        print(_help_text())
         sys.exit(2)
 
     for o, a in opts:
         # basic options
         if o in ("-h", "--help"):
-            print(help_text)
+            print(_help_text())
             sys.exit()
         elif o in ("-v", "--verbose"):
             batch_args.verbose = True
@@ -73,7 +77,7 @@ if __name__ == "__main__":
         elif o in ("-c", "--configs"):
             string_list = a.strip()
             if string_list == "":
-                raise Exception("Expected config file paths list not found")
+                raise Exception(_("Expected config file paths list not found"))
             try:
                 config_list = Utils.get_list_from_string(string_list)
                 batch_args.configs = {
@@ -82,7 +86,7 @@ if __name__ == "__main__":
                     if str(path).strip()
                 }
             except Exception as e:
-                raise Exception(f"Invalid config list provided: {e}")
+                raise Exception(_("Invalid config list provided: {0}").format(e))
         elif o in ("-o", "--only-observers"):
             batch_args.only_observers = True
         elif o == "--persist-definition-caches":

@@ -4,7 +4,7 @@ import re
 import sys
 from refacdir.filename_ops import FilenameMappingDefinition
 from refacdir.utils.logger import setup_logger
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _
 from refacdir.utils.utils import Utils
 
 # Set up logger for file renamer
@@ -41,7 +41,7 @@ class FileRenamer:
     
     def __init__(self, root=".", test=False, log_changes=True, preserve_alpha=True, exclude_dirs=[], find_unused_filenames=False):
         if not Utils.isdir_with_retry(root):
-            raise Exception(f"Invalid root directory {root}")
+            raise Exception(LocalizedText("Invalid root directory {0}", root))
         self.root = root
         self.test = test
         self.log_changes = log_changes
@@ -51,7 +51,7 @@ class FileRenamer:
         self.check_exclusions = len(exclude_dirs) > 0
         for d in exclude_dirs:
             if not Utils.isdir_with_retry(os.path.join(root, d)):
-                raise Exception(f"Invalid exclude directory: {d}")
+                raise Exception(LocalizedText("Invalid exclude directory: {0}", d))
             self.exclude_dirs.append(os.path.normpath(d))
 
     def set_target_dir(self, target_dir):
@@ -91,16 +91,16 @@ class FileRenamer:
             count += 1
             if self.log_changes:
                 if self.test:
-                    logger.info(f"TEST rename {filename} to {new_filename_full_path}")
+                    logger.info(_("TEST rename {0} to {1}").format(filename, new_filename_full_path))
                 elif target_dir is not None:
-                    logger.info(f"moved {filename} to {target_dir}")
+                    logger.info(_("moved {0} to {1}").format(filename, target_dir))
                 else:
-                    logger.info(f"renamed {filename} to {new_filename_full_path}")
+                    logger.info(_("renamed {0} to {1}").format(filename, new_filename_full_path))
         except OSError as e:
             if FileRenamer.FILE_EXISTS_MESSAGE in str(e):
                 if not made_dirs:
                     raise e
-            logger.error(f"Failed to rename {filename} to {new_filename_full_path}")
+            logger.error(_("Failed to rename {0} to {1}").format(filename, new_filename_full_path))
             logger.error(str(e))
             failures.append(filename)
         return count
@@ -113,7 +113,7 @@ class FileRenamer:
                 return f"{basename}_{attempts}{ext}"
             attempts += 1
             if attempts > 99999:
-                raise Exception("Unable to find a unique filename: " + new_filename)
+                raise Exception(LocalizedText("Unable to find a unique filename: {0}", new_filename))
 
     def rename_by_func_unique_filename(self, rename_func, filename, failures, count):
         attempts = 0
@@ -196,14 +196,14 @@ class FileRenamer:
                 # (see BatchRenamer._dedupe_cross_pattern_matches) and another
                 # pattern already renamed/moved it away, os.stat here (inside
                 # rename_func) would otherwise raise and abort the whole action.
-                logger.info(f"Skipping {filename}: no longer present (likely already renamed earlier in this run)")
+                logger.info(_("Skipping {0}: no longer present (likely already renamed earlier in this run)").format(filename))
                 continue
             try:
                 count = self.rename_file(filename, new_filename, count, None, failures)
             except OSError as e0:
                 if not FileRenamer.FILE_EXISTS_MESSAGE in str(e0):
                     raise e0
-                logger.info(f"Exact time for new filename \"{new_filename}\" matches another file, will try to find a close value.")
+                logger.info(_("Exact time for new filename \"{0}\" matches another file, will try to find a close value.").format(new_filename))
                 count = self.rename_by_func_unique_filename(rename_func, filename, failures, count)
 
     def os_stat_rename_func(self, attr, rename_base):
@@ -350,17 +350,17 @@ class FileRenamer:
     def print_summary(self, count, strategy, glob_exp, rename_base, recursive):
         if self.test:
             if count > 0:
-                logger.info(f"TEST rename {str(count)} files in {self.root} by {strategy}. glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+                logger.info(_("TEST rename {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, recursive={5}").format(str(count), self.root, strategy, glob_exp, rename_base, recursive))
             else:
-                logger.info(f"No files found to rename at {self.root} for glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+                logger.info(_("No files found to rename at {0} for glob_exp={1}, rename_base={2}, recursive={3}").format(self.root, glob_exp, rename_base, recursive))
         elif count > 0:
-            logger.info(f"Renamed {str(count)} files in {self.root} by {strategy}. glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+            logger.info(_("Renamed {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, recursive={5}").format(str(count), self.root, strategy, glob_exp, rename_base, recursive))
         else:
-            logger.info(f"No files found to rename at {self.root} for glob_exp={glob_exp}, rename_base={rename_base}, recursive={recursive}")
+            logger.info(_("No files found to rename at {0} for glob_exp={1}, rename_base={2}, recursive={3}").format(self.root, glob_exp, rename_base, recursive))
 
     def print_failures(self, failures):
         if len(failures) > 0:
-            logger.warning("Some renaming operations failed. The following files may still be present:")
+            logger.warning(_("Some renaming operations failed. The following files may still be present:"))
             for filename in failures:
                 logger.warning(filename)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import refacdir.backup.backup_mapping as backup_mapping_module
 from refacdir.backup.backup_manager import BackupManager
 from refacdir.backup.backup_mapping import BackupMapping, BackupMode
 from refacdir.utils.headless_app_actions import build_headless_app_actions
@@ -58,3 +59,19 @@ def test_dry_run_backup_still_asks(tmp_path):
 
     assert len(asked) == 1
     assert not (target / "a.txt").exists()
+
+
+def test_confirmation_details_are_the_translated_description(tmp_path, monkeypatch):
+    # The test locale's catalog returns English unchanged; mark translated text instead.
+    monkeypatch.setattr(backup_mapping_module, "_", lambda text: "<translated>" + text)
+    asked = []
+    manager, _target = _manager(tmp_path, False, asked)
+
+    manager.run()
+
+    mapping = manager.backup_mappings[0]
+    _title, _message, details, _acknowledgement = asked[0]
+    assert details == mapping.describe()
+    assert details.startswith("<translated>")
+    assert str(mapping).startswith("BackupMapping{")
+    assert "<translated>" not in str(mapping)

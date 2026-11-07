@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-20 18:47-0400\n"
-"PO-Revision-Date: 2026-09-20 18:47-0400\n"
-"Last-Translator: Translator Name <translator@example.com>\n"
+"POT-Creation-Date: 2026-11-07 18:12-0500\n"
+"PO-Revision-Date: 2026-11-07 18:12-0500\n"
+"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
 "Language-Team: ko Team <<EMAIL>>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -12,81 +12,118 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app_qt.py:74 app_qt.py:126 app_qt.py:188
+#: app_headless.py:254
+msgid ""
+"Hold a RefacDir session open with no GUI and serve it over MCP, for an agent"
+" to drive."
+msgstr "GUI 없이 RefacDir 세션을 열어 두고 MCP를 통해 제공하여 에이전트가 제어하도록 합니다."
+
+#: app_headless.py:262
+msgid ""
+"Comma-separated config paths to select. Default: discover them, each with "
+"the will_run its own YAML sets."
+msgstr "선택할 콤마로 구분된 구성 경로. 기본값: 경로를 자동으로 검색하고 각 경로마다 자체 YAML 세트를 가집니다."
+
+#: app_headless.py:266 app_headless.py:267 app_headless.py:268
+msgid "default: {0}"
+msgstr "기본값: {0}"
+
+#: app_headless.py:271
+msgid "Check that this build can serve, then exit without serving."
+msgstr "이 빌드가 서비스를 제공할 수 있는지 확인한 후, 서비스를 제공하지 않고 종료합니다."
+
+#: app_headless.py:275
+msgid "With --smoke-test: fail if OQS key encapsulation is unavailable."
+msgstr "--smoke-test 사용: OQS 키 캡슐화가 없을 경우 실패합니다."
+
+#: app_qt.py:89 app_qt.py:153 app_qt.py:215
 msgid "RefacDir"
 msgstr "RefacDir"
 
-#: app_qt.py:192
+#: app_qt.py:219
 msgid "File Management"
 msgstr "파일 관리"
 
-#: app_qt.py:205
+#: app_qt.py:232
 msgid "Toggle Theme"
 msgstr "테마 전환"
 
-#: app_qt.py:210
+#: app_qt.py:237
 msgid "Run tests"
 msgstr "테스트 실행"
 
-#: app_qt.py:215
+#: app_qt.py:242
 msgid "Run Operations"
 msgstr "운영 실행"
 
-#: app_qt.py:220
+#: app_qt.py:248
 msgid "Edit Configs"
 msgstr "구성 편집"
 
-#: app_qt.py:225
+#: app_qt.py:253
 msgid "Job History"
 msgstr "작업 기록"
 
-#: app_qt.py:237
+#: app_qt.py:260
+msgid "Idle shutdown"
+msgstr "유휴 종료"
+
+#: app_qt.py:263
+msgid " min"
+msgstr " 분"
+
+#: app_qt.py:264
+msgid ""
+"Close the UI after this many minutes without keyboard or mouse activity."
+msgstr "키보드나 마우스 입력이 없을 경우, 이만큼의 분이 지나면 UI를 닫습니다."
+
+#: app_qt.py:276
 msgid "Search Configurations"
 msgstr "구성 설정 검색"
 
-#: app_qt.py:242
+#: app_qt.py:281
 msgid "Type to filter..."
 msgstr "필터링할 텍스트를 입력하세요..."
 
-#: app_qt.py:253
+#: app_qt.py:292
 msgid "Available Configurations"
 msgstr "사용 가능한 구성"
 
-#: app_qt.py:300
+#: app_qt.py:333
 msgid "File Management Dashboard"
 msgstr "파일 관리 대시보드"
 
-#: app_qt.py:304
+#: app_qt.py:337
 msgid ""
 "Configure and run file management operations with ease. Select "
 "configurations from the sidebar and customize options below."
 msgstr "파일 관리 작업을 쉽게 구성하고 실행하세요. 사이드바에서 구성 옵션을 선택하고 아래에서 옵션을 맞춤 설정하세요."
 
-#: app_qt.py:320
+#: app_qt.py:353
 msgid "Operation Settings"
 msgstr "작동 설정"
 
-#: app_qt.py:328
+#: app_qt.py:362
 msgid "Recur Selected Actions"
 msgstr "선택한 작업 반복"
 
-#: app_qt.py:332
+#: app_qt.py:366
 msgid "Test Mode"
 msgstr "테스트 모드"
 
-#: app_qt.py:336
+#: app_qt.py:370
 msgid "Skip Confirmations"
 msgstr "확인 건너뛰기"
 
-#: app_qt.py:340
+#: app_qt.py:374
 msgid "Only Observers"
 msgstr "관찰자만"
 
-#: app_qt.py:345
+#: app_qt.py:379
 msgid "Persist YAML definition caches between batch runs"
 msgstr "배치 실행 사이에 YAML 정의 캐시를 유지"
 
-#: app_qt.py:349
+#: app_qt.py:383
 msgid ""
 "Unchecked (default): at each run, clear filename_mapping_functions and "
 "filetype_definitions registries before loading configs in this run. Checked:"
@@ -96,215 +133,1116 @@ msgstr ""
 "레지스트리를 비우고 이번 실행에서 설정을 로드하기 전에 초기화합니다. Checked: 이 세션의 이전 실행에서 정의를 "
 "유지합니다(레거시)."
 
-#: app_qt.py:361
-msgid " min"
-msgstr " 분"
-
-#: app_qt.py:362
-msgid ""
-"Close the UI after this many minutes without keyboard or mouse activity."
-msgstr "키보드나 마우스 입력이 없을 경우, 이만큼의 분이 지나면 UI를 닫습니다."
-
-#: app_qt.py:364
-msgid "Idle shutdown"
-msgstr "유휴 종료"
-
-#: app_qt.py:379
+#: app_qt.py:404
 msgid "Operation Status"
 msgstr "운영 상태"
 
-#: app_qt.py:383 app_qt.py:566 app_qt.py:886
+#: app_qt.py:408 app_qt.py:611 app_qt.py:1090
 msgid "Ready"
 msgstr "준비됨"
 
-#: app_qt.py:527
+#: app_qt.py:439
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_toggle_theme.py:31
+#: test/ui/test_main_window_toggle_theme.py:31
+msgid "Theme switched to dark."
+msgstr "테마가 다크 모드로 전환되었습니다."
+
+#: app_qt.py:439
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_toggle_theme.py:27
+#: test/ui/test_main_window_toggle_theme.py:27
+msgid "Theme switched to light."
+msgstr "테마가 라이트 모드로 전환되었습니다."
+
+#: app_qt.py:563
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:100
+#: test/ui/test_main_window_run_config.py:100
 msgid "Queue full"
 msgstr "큐가 가득 찼습니다"
 
-#: app_qt.py:548
+#: app_qt.py:592
 msgid "Running operations..."
 msgstr "운영 중..."
 
-#: app_qt.py:557
+#: app_qt.py:600 app_qt.py:866
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:65
+#: test/ui/test_main_window_run_config.py:65 ui/log_panel.py:133
+#: ui/test_results_window.py:497
+msgid "Error"
+msgstr "오류"
+
+#: app_qt.py:601
 msgid "Operation failed"
 msgstr "작업이 실패했습니다"
 
-#: app_qt.py:682
-msgid "Failed to set target directory to receive marked files."
-msgstr "표시된 파일을 수신하기 위한 대상 디렉토리를 설정하지 못했습니다."
+#: app_qt.py:751
+msgid "Config saved: {0}"
+msgstr "구성 저장됨: {0}"
 
-#: refacdir/batch.py:266
+#: app_qt.py:814
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_confirm.py:58
+#: test/ui/test_main_window_confirm.py:58
+msgid "Waiting for confirmation: {0}"
+msgstr "확인 대기 중: {0}"
+
+#: app_qt.py:866
+msgid "Config not found: {0}"
+msgstr "구성을 찾을 수 없습니다: {0}"
+
+#: app_qt.py:872
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:74
+#: test/ui/test_main_window_run_config.py:74
+msgid "Config not enabled"
+msgstr "구성이 활성화되지 않음"
+
+#: app_qt.py:873
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:74
+#: test/ui/test_main_window_run_config.py:74
+msgid "Check {0} to run it."
+msgstr "실행하려면 {0}을(를) 확인하십시오."
+
+#: app_qt.py:887
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_source_drift.py:26
+#: test/ui/test_main_window_source_drift.py:26
+msgid "This build differs from its source checkout. Details are in the log."
+msgstr "이 빌드는 소스 체크아웃과 다릅니다. 자세한 내용은 로그에 있습니다."
+
+#: run.py:11
+msgid ""
+"Edit configuration YAML files in configs directory to configure file management batch actions.\n"
+"\n"
+"Once desired configurations are set, run with:\n"
+"python run.py [args]\n"
+"\n"
+"    -h, --help\n"
+"        Print this help text\n"
+"\n"
+"    -v, --verbose\n"
+"        Run in verbose mode\n"
+"\n"
+"    -t, --test\n"
+"        Run file management actions in test mode, without taking any action\n"
+"\n"
+"    -s, --skip-confirm\n"
+"        Run file management actions without confirming\n"
+"\n"
+"        --configs\n"
+"        Specify comma-separated list of config files to run\n"
+"\n"
+"    -o, --only-observers\n"
+"        Load configs but only run any Directory Observer actions defined in them\n"
+"\n"
+"    --persist-definition-caches\n"
+"        Keep filename_mapping_functions / filetype_definitions registries across batch runs\n"
+"        in the same process (default is to clear them at each run for a clean YAML-only view)\n"
+msgstr ""
+"configs 디렉터리의 설정 YAML 파일을 편집하여 파일 관리 배치 작업을 구성합니다.\n"
+"\n"
+"원하는 구성을 모두 지정했으면 다음 명령으로 실행하십시오:\n"
+"python run.py [args]\n"
+"\n"
+"    -h, --help\n"
+"        이 도움말 텍스트 출력\n"
+"\n"
+"    -v, --verbose\n"
+"        자세히 모드로 실행\n"
+"\n"
+"    -t, --test\n"
+"        파일 관리 작업을 테스트 모드로 실행하며 실제로는 아무 작업도 수행하지 않음\n"
+"\n"
+"    -s, --skip-confirm\n"
+"        확인 없이 파일 관리 작업 실행\n"
+"\n"
+"        --configs\n"
+"        실행할 설정 파일을 쉼표로 구분하여 지정\n"
+"\n"
+"    -o, --only-observers\n"
+"        설정을 로드하되 정의된 Directory Observer 작업만 실행\n"
+"\n"
+"    --persist-definition-caches\n"
+"        filename_mapping_functions / filetype_definitions 레지스트리를 동일 프로세스 내 배치 실행 사이에 유지\n"
+"        (기본값은 각 실행 시 지워서 순수 YAML 보기 제공) "
+
+#: run.py:80
+msgid "Expected config file paths list not found"
+msgstr "예상된 구성 파일 경로 목록을 찾을 수 없습니다"
+
+#: run.py:89
+msgid "Invalid config list provided: {0}"
+msgstr "잘못된 구성 목록이 제공되었습니다: {0}"
+
+#: build/nuitka/app_qt.dist/test/ui/test_config_editor_paths.py:94
+#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91
+#: ui/config_editor_window.py:257
+msgid "(new config)"
+msgstr "(새 구성)"
+
+#: build/nuitka/app_qt.dist/test/ui/test_log_panel.py:132
+#: test/ui/test_log_panel.py:132 ui/log_panel.py:140
+msgid "Clear"
+msgstr "지우기"
+
+#: build/nuitka/app_qt.dist/test/ui/test_log_panel.py:133
+#: test/ui/test_log_panel.py:133 ui/log_panel.py:131
+msgid "Info"
+msgstr "정보"
+
+#: extensions/mcp_server.py:498
+msgid "Run these configs live? Files may be moved, renamed or deleted."
+msgstr "이 설정을 실시간으로 실행하시겠습니까? 파일이 이동되거나 이름이 바뀌거나 삭제될 수 있습니다."
+
+#: extensions/mcp_server.py:506
+msgid "(could not read: {0})"
+msgstr "(읽을 수 없습니다: {0})"
+
+#: extensions/mcp_server.py:513
+msgid "Duplicate policy: {0}"
+msgstr "중복 정책: {0}"
+
+#: extensions/mcp_server.py:546
+msgid "Run this batch for real"
+msgstr "이 배치를 실제로 실행"
+
+#: refacdir/archive_extractor.py:220
+msgid "{0}: skipping member with unsafe path {1!r} in {2}"
+msgstr "{0}: {2}에서 안전하지 않은 경로 {1!r}를 가진 멤버를 건너뜁니다"
+
+#: refacdir/archive_extractor.py:278
+msgid "{0}: could not read {1}: {2}"
+msgstr "{0}: {1}을(를) 읽을 수 없습니다: {2}"
+
+#: refacdir/archive_extractor.py:282
+msgid "{0}: no extractable files found for pattern {1} in {2}"
+msgstr "{0}: {2}에서 패턴 {1}에 대한 추출 가능한 파일을 찾을 수 없습니다"
+
+#: refacdir/archive_extractor.py:291
+msgid "TEST (dry run) {0}: nothing extracted or deleted"
+msgstr "TEST (드라이런) {0}: 추출되거나 삭제된 것이 없습니다"
+
+#: refacdir/archive_extractor.py:294
+msgid "TEST {0}: would extract {1} file(s) from {2} archive(s) into {3}"
+msgstr "TEST {0}: {2}개의 아카이브에서 {1}개의 파일을 {3}으로 추출합니다"
+
+#: refacdir/archive_extractor.py:298
+msgid "TEST extract {0} from {1} -> {2}{3}"
+msgstr "TEST {1}에서 {0} 추출 -> {2}{3}"
+
+#: refacdir/archive_extractor.py:300 refacdir/named_subdir_collector.py:224
+msgid "TEST ... and {0} more"
+msgstr "TEST ... 및 {0}개 더"
+
+#: refacdir/archive_extractor.py:302
+msgid "TEST {0}: would remove {1} source archive(s)"
+msgstr "TEST {0}: {1}개의 원본 아카이브를 제거합니다"
+
+#: refacdir/archive_extractor.py:306
+msgid "{0}: extracting {1} file(s) from {2} archive(s) into {3}"
+msgstr "{0}: {2}개의 아카이브에서 {1}개의 파일을 {3}으로 추출 중"
+
+#: refacdir/archive_extractor.py:310
+msgid "Confirm archive extraction"
+msgstr "아카이브 추출 확인"
+
+#: refacdir/archive_extractor.py:311
+msgid "\"{0}\": extract {1} file(s) from {2} archive(s) into {3}?"
+msgstr "\"{0}\": {2} 아카이브에서 {1} 파일을 {3}에 추출하시겠습니까?"
+
+#: refacdir/archive_extractor.py:315
+msgid "Source archives will be deleted afterwards."
+msgstr "소스 아카이브는 이후에 삭제됩니다."
+
+#: refacdir/archive_extractor.py:318 refacdir/batch_renamer.py:227
+#: refacdir/image_categorizer.py:109 refacdir/named_subdir_collector.py:237
+msgid "Operation cancelled by user"
+msgstr "사용자가 작업을 취소했습니다"
+
+#: refacdir/archive_extractor.py:337
+msgid "extracted {0} -> {1} (renamed)"
+msgstr "추출 {0} -> {1} (이름 변경)"
+
+#: refacdir/archive_extractor.py:339
+msgid "extracted {0} -> {1}"
+msgstr "추출된 {0} -> {1}"
+
+#: refacdir/archive_extractor.py:343
+msgid "{0}: failed to extract {1} from {2}: {3}"
+msgstr "{0}: {2}에서 {1} 추출 실패: {3}"
+
+#: refacdir/archive_extractor.py:347
+msgid "{0}: failed to open {1}: {2}"
+msgstr "{0}: {1}을(를) 여는 데 실패했습니다: {2}"
+
+#: refacdir/archive_extractor.py:349
+msgid "{0}: extracted {1} file(s) into {2}"
+msgstr "{0}: {1} 파일을 {2}(으)로 추출했습니다"
+
+#: refacdir/archive_extractor.py:351
+msgid "{0}: {1} file(s) renamed to avoid name collisions"
+msgstr "{0}: 이름 충돌을 방지하기 위해 {1}개의 파일 이름을 변경했습니다"
+
+#: refacdir/archive_extractor.py:361
+msgid "{0}: keeping {1}, not every member extracted successfully"
+msgstr "{0}: {1} 유지, 모든 멤버가 성공적으로 추출된 것은 아닙니다"
+
+#: refacdir/archive_extractor.py:365
+msgid "{0}: removed source archive {1}"
+msgstr "{0}: 소스 아카이브 {1} 삭제됨"
+
+#: refacdir/archive_extractor.py:367
+msgid "{0}: failed to remove source archive {1}"
+msgstr "{0}: 소스 아카이브 {1} 삭제에 실패했습니다"
+
+#: refacdir/batch.py:65
+msgid "No config files found!"
+msgstr "구성 파일을 찾을 수 없습니다!"
+
+#: refacdir/batch.py:291
 msgid "Starting batch operations..."
 msgstr "배치 작업 시작 중..."
 
-#: refacdir/batch.py:282
+#: refacdir/batch.py:302
+msgid "Processing config {0}/{1}: {2}"
+msgstr "구성 {0}/{1} 처리 중: {2}"
+
+#: refacdir/batch.py:307
+msgid "Batch operations completed with {0} skipped actions"
+msgstr "배치 작업이 완료되었습니다, 건너뛴 작업이 {0}개"
+
+#: refacdir/batch.py:308
 msgid "Batch operations completed (skipped {0} actions)"
 msgstr "배치 작업 완료됨 ({0}개 작업 건너뜀)"
 
-#: refacdir/batch.py:285
+#: refacdir/batch.py:310
+msgid "Batch operations completed successfully"
+msgstr "배치 작업이 성공적으로 완료되었습니다"
+
+#: refacdir/batch.py:311
 msgid "Batch operations completed"
 msgstr "배치 작업 완료됨"
 
-#: refacdir/batch.py:293
+#: refacdir/batch.py:316
+msgid "Batch job cancelled"
+msgstr "배치 작업이 취소되었습니다"
+
+#: refacdir/batch.py:318
+msgid "Batch job interrupted by user"
+msgstr "사용자에 의해 배치 작업이 중단되었습니다"
+
+#: refacdir/batch.py:319
+msgid "Exiting prematurely at user request..."
+msgstr "사용자 요청에 따라 조기에 종료합니다..."
+
+#: refacdir/batch.py:322
 msgid "Operations cancelled by user"
 msgstr "사용자에 의해 취소된 작업"
 
-#: refacdir/batch.py:343
+#: refacdir/batch.py:339
+msgid "Config {0} failed to load: {1}"
+msgstr "구성 {0}을(를) 로드하지 못했습니다: {1}"
+
+#: refacdir/batch.py:346
+msgid "{0} is set to will run = False, skipping..."
+msgstr "{0}이(가) will run = False 로 설정되어 건너뜁니다..."
+
+#: refacdir/batch.py:352
+msgid "Config {0} failed to load: no actions found in the config file."
+msgstr "구성 {0}을(를) 불러오지 못했습니다: 구성 파일에 동작이 없습니다."
+
+#: refacdir/batch.py:375
+msgid "Config {0} stopped after {1} actions (skipped {2} actions)"
+msgstr "구성 {0}이(가) {1}개의 작업 후에 중지되었습니다(건너뛴 작업 {2}개)"
+
+#: refacdir/batch.py:377
 msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
 msgstr "구성 {0}/{1}: {2}이 {3}개의 작업 후 중지됨 ({4}개의 작업 건너뜀)"
 
-#: refacdir/batch.py:398
+#: refacdir/batch.py:400
+msgid "{0} {1} job(s) completed"
+msgstr "{0} {1} 작업이 완료되었습니다"
+
+#: refacdir/batch.py:405
+msgid "{0} {1} job(s) failed"
+msgstr "{0} {1} 작업이 실패했습니다"
+
+#: refacdir/batch.py:412
+msgid "{0} completed, {1} skipped."
+msgstr "{0} 완료, {1} 건 건너뜀."
+
+#: refacdir/batch.py:414
+msgid "{0} completed."
+msgstr "{0} 완료되었습니다."
+
+#: refacdir/batch.py:416
+msgid "{0} skipped."
+msgstr "{0} 건이 건너뛰었습니다."
+
+#: refacdir/batch.py:420 ui/batch_history_window.py:74
+msgid "Failures:"
+msgstr "실패:"
+
+#: refacdir/batch.py:424
+msgid "Batch Operations Failed"
+msgstr "배치 작업 실패"
+
+#: refacdir/batch.py:426
+msgid "All operations completed successfully"
+msgstr "모든 작업이 성공적으로 완료되었습니다"
+
+#: refacdir/batch.py:433
+msgid "{0} - Skipping {1} action"
+msgstr "{0} - {1} 작업 건너뛰기"
+
+#: refacdir/batch.py:436
 msgid "Config {0}/{1}: Running {2} action in {3}"
 msgstr "구성 {0}/{1}: {3}에서 {2} 작업 실행 중"
 
-#: refacdir/batch.py:455
+#: refacdir/batch.py:447
+msgid "Invalid action configuration in {0} at index {1}: {2}"
+msgstr "인덱스 {1}에 있는 {0}의 작업 구성이 잘못되었습니다: {2}"
+
+#: refacdir/batch.py:453
+msgid "Failed to run action at index {0} in {1}: {2}"
+msgstr "인덱스 {0}에 있는 {1} 작업 실행에 실패했습니다: {2}"
+
+#: refacdir/batch.py:484
+msgid "Error in {0}, {1} action \"{2}\": {3}"
+msgstr "오류 {0}, {1} 작업 \"{2}\": {3}"
+
+#: refacdir/batch.py:490
+msgid "Error in {0}, {1} action #{2}: {3}"
+msgstr "오류 {0}, {1} 작업 #{2}: {3}"
+
+#: refacdir/batch.py:502
 msgid "Config {0}/{1}: Running {2} {3}/{4} in {5}"
 msgstr "구성 {0}/{1}: {5}에서 {2} {3}/{4} 실행 중"
 
-#: refacdir/batch.py:498
+#: refacdir/batch.py:510
+msgid "{0}: {1} action \"{2}\" failed: {3}"
+msgstr "{0}: {1} 작업 \"{2}\" 실패: {3}"
+
+#: refacdir/batch.py:521
+msgid "{0} - Skipping renamer mapping {1} (will_run=false)"
+msgstr "{0} - 리네이머 매핑 {1} 건너뛰기 (will_run=false)"
+
+#: refacdir/batch.py:533
+msgid "Error in {0}, renamer mapping \"{1}\": {2}"
+msgstr "오류 발생 위치 {0}, 이름 바꾸기 매핑 \"{1}\": {2}"
+
+#: refacdir/batch.py:539
+msgid "Error in {0}, renamer mapping #{1}: {2}"
+msgstr "오류가 {0}에서 발생, 리네이머 매핑 #{1}: {2}"
+
+#: refacdir/batch.py:551
 msgid "Config {0}/{1}: Running renamer mapping {2}/{3} in {4}"
 msgstr "구성 {0}/{1}: {4}에서 매핑 {2}/{3} 실행 중"
 
-#: refacdir/backup/backup_manager.py:77 refacdir/backup/backup_manager.py:94
+#: refacdir/batch.py:563
+msgid "{0}: renamer mapping \"{1}\" failed: {2}"
+msgstr "{0}: 리네이머 매핑 \"{1}\" 실패: {2}"
+
+#: refacdir/batch.py:603
+msgid "Duplicate remover {0}: duplicate_policy is cancel, keeping duplicates"
+msgstr "중복 제거기 {0}: duplicate_policy는 cancel, 중복을 유지합니다"
+
+#: refacdir/batch_renamer.py:164
+msgid ""
+"{0} matches more than one search pattern in this mapping; keeping it under "
+"the first pattern only."
+msgstr "{0} 이(가) 이 매핑에서 둘 이상의 검색 패턴과 일치합니다; 첫 번째 패턴 아래에만 유지합니다."
+
+#: refacdir/batch_renamer.py:199
+msgid "TESTING BATCH RENAME PROCESS: {0} (no change to be made)"
+msgstr "배치 이름 바꾸기 프로세스 테스트: {0} (변경 없음)"
+
+#: refacdir/batch_renamer.py:201
+#: test/renamer/test_batch_renamer_single_scan.py:136
+msgid "{0} - No files found at {1} ({2})"
+msgstr "{0} - {1}에서 파일을 찾을 수 없습니다 ({2})"
+
+#: refacdir/batch_renamer.py:206
+#: test/renamer/test_batch_renamer_single_scan.py:140
+#: test/renamer/test_batch_renamer_single_scan.py:157
+msgid "BATCH RENAME PROCESS STARTED: {0}"
+msgstr "배치 이름 바꾸기 프로세스 시작: {0}"
+
+#: refacdir/batch_renamer.py:223
+msgid "Confirm renaming"
+msgstr "이름 변경 확인"
+
+#: refacdir/batch_renamer.py:224
+msgid "Run \"{0}\" on {1} file(s) found?"
+msgstr "\"{0}\"을(를) 찾은 {1}개의 파일에서 실행하시겠습니까?"
+
+#: refacdir/batch_renamer.py:225
+msgid "Locations:"
+msgstr "위치:"
+
+#: refacdir/batch_renamer.py:237
+#: test/renamer/test_batch_renamer_single_scan.py:158
+msgid "BATCH RENAME PROCESS COMPLETE: {0}"
+msgstr "배치 이름 바꾸기 작업 완료: {0}"
+
+#: refacdir/directory_observer.py:190
+msgid "Current state of directories:"
+msgstr "디렉터리의 현재 상태:"
+
+#: refacdir/directory_observer.py:191
+msgid "Total: {0} files"
+msgstr "총계: {0} 파일"
+
+#: refacdir/directory_observer.py:193 ui/renamer_rule_suggester_dialog.py:71
+msgid "Directory"
+msgstr "디렉터리"
+
+#: refacdir/directory_observer.py:196
+msgid "Other"
+msgstr "기타"
+
+#: refacdir/directory_observer.py:197
+msgid "Total"
+msgstr "합계"
+
+#: refacdir/directory_observer.py:220
+msgid "No matching directory found for exclude directory {0}"
+msgstr "제외 디렉터리 {0}에 일치하는 디렉터리를 찾을 수 없습니다"
+
+#: refacdir/duplicate_remover.py:174
+msgid "Running duplicate removal for: {0}"
+msgstr "중복 제거 중: {0}"
+
+#: refacdir/duplicate_remover.py:177
+msgid "TEST {0}: logging duplicates, removing nothing"
+msgstr "테스트 {0}: 중복 로그 기록, 아무것도 제거하지 않음"
+
+#: refacdir/duplicate_remover.py:182
+msgid "skip_confirm set. Removing all duplicates without prompt."
+msgstr "skip_confirm 설정됨. 프롬프트 없이 모든 중복을 제거합니다."
+
+#: refacdir/duplicate_remover.py:189
+msgid "No duplicates found after review payload generation."
+msgstr "리뷰 페이로드 생성 후 중복이 발견되지 않았습니다."
+
+#: refacdir/duplicate_remover.py:200
+msgid "Duplicate review cancelled by user."
+msgstr "사용자에 의해 중복 검토가 취소되었습니다."
+
+#: refacdir/duplicate_remover.py:204 refacdir/duplicate_remover.py:359
+msgid "Confirm duplicate removal"
+msgstr "중복 제거 확인"
+
+#: refacdir/duplicate_remover.py:205
+msgid "Remove all duplicates listed above?"
+msgstr "위에 나열된 모든 중복을 제거하시겠습니까?"
+
+#: refacdir/duplicate_remover.py:206
+msgid "User confirmed removal of all duplicates"
+msgstr "사용자가 모든 중복 삭제를 확인했습니다"
+
+#: refacdir/duplicate_remover.py:209 refacdir/duplicate_remover.py:214
+msgid "No change made."
+msgstr "변경 사항이 없습니다."
+
+#: refacdir/duplicate_remover.py:210
+msgid "Remove duplicates with confirmation one by one?"
+msgstr "중복 항목을 하나씩 확인하면서 삭제하시겠습니까?"
+
+#: refacdir/duplicate_remover.py:211
+msgid "User chose to remove duplicates with individual confirmation"
+msgstr "사용자가 개별 확인으로 중복을 제거하도록 선택했습니다"
+
+#: refacdir/duplicate_remover.py:215
+msgid "Save duplicates report?"
+msgstr "중복 보고서를 저장하시겠습니까?"
+
+#: refacdir/duplicate_remover.py:216
+msgid "User chose to save duplicates report"
+msgstr "사용자가 중복 보고서를 저장하도록 선택했습니다"
+
+#: refacdir/duplicate_remover.py:219 ui/duplicate_review_dialogs.py:117
+msgid "No duplicates found."
+msgstr "중복이 없습니다."
+
+#: refacdir/duplicate_remover.py:271
+msgid "Removing file: {0}"
+msgstr "파일 삭제 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:632 refacdir/duplicate_remover.py:275
+msgid "Failed to remove file {0}: {1}"
+msgstr "파일 {0} 삭제 실패: {1}"
+
+#: refacdir/duplicate_remover.py:305
+msgid "Error reading file info for \"{0}\": {1}"
+msgstr "파일 \"{0}\" 정보 읽기 오류: {1}"
+
+#: refacdir/duplicate_remover.py:307
+msgid "Error scanning directory \"{0}\": {1}"
+msgstr "디렉터리 \"{0}\" 스캔 오류: {1}"
+
+#: refacdir/duplicate_remover.py:322
+msgid "Error generating hash for \"{0}\": {1}"
+msgstr "\"{0}\"에 대한 해시 생성 오류: {1}"
+
+#: refacdir/duplicate_remover.py:329
+msgid "Found {0} sets of duplicate files"
+msgstr "{0}개의 중복 파일 세트를 찾았습니다"
+
+#: refacdir/duplicate_remover.py:351 refacdir/duplicate_remover.py:355
+msgid "Keeping file: {0}"
+msgstr "파일 보관 중: {0}"
+
+#: refacdir/duplicate_remover.py:352 refacdir/duplicate_remover.py:356
+msgid "Removing duplicate files: {0}"
+msgstr "중복 파일 삭제 중: {0}"
+
+#: refacdir/duplicate_remover.py:360
+msgid "Keep {0} and remove {1} duplicate(s)?"
+msgstr "{0}을(를) 유지하고 {1}개의 중복을 삭제하시겠습니까?"
+
+#: refacdir/duplicate_remover.py:365
+msgid "User skipped removal of duplicates"
+msgstr "사용자가 중복 제거를 건너뛰었습니다"
+
+#: refacdir/duplicate_remover.py:432
+msgid "Report saved at {0}"
+msgstr "보고서가 {0}에 저장되었습니다"
+
+#: refacdir/duplicate_remover.py:446
+msgid "Remove duplicate files in a directory."
+msgstr "디렉터리에서 중복 파일을 제거합니다."
+
+#: refacdir/duplicate_remover.py:447
+msgid "Directory to search for duplicate files"
+msgstr "중복 파일을 검색할 디렉터리"
+
+#: refacdir/file_renamer.py:94
+msgid "TEST rename {0} to {1}"
+msgstr "TEST {0}을(를) {1}로 이름 바꾸기"
+
+#: refacdir/file_renamer.py:96
+msgid "moved {0} to {1}"
+msgstr "{0}을(를) {1}으로 이동했습니다"
+
+#: refacdir/file_renamer.py:98
+msgid "renamed {0} to {1}"
+msgstr "{0}을(를) {1}(으)로 이름 변경"
+
+#: refacdir/file_renamer.py:103
+msgid "Failed to rename {0} to {1}"
+msgstr "{0}을(를) {1}(으)로 이름 바꾸기 실패"
+
+#: refacdir/file_renamer.py:199
+msgid ""
+"Skipping {0}: no longer present (likely already renamed earlier in this run)"
+msgstr "건너뛰기 {0}: 더 이상 존재하지 않음 (이번 실행에서 이미 이름이 바뀐 것으로 추정됨)"
+
+#: refacdir/file_renamer.py:206
+msgid ""
+"Exact time for new filename \"{0}\" matches another file, will try to find a"
+" close value."
+msgstr "새 파일 이름 \"{0}\"의 정확한 시간이 다른 파일과 일치합니다. 근접 값을 찾습니다."
+
+#: refacdir/file_renamer.py:353
+msgid ""
+"TEST rename {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+msgstr ""
+"TEST {0}개의 파일을 {1}에서 {2}(으)로 이름 바꾸기. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+
+#: refacdir/file_renamer.py:355 refacdir/file_renamer.py:359
+msgid ""
+"No files found to rename at {0} for glob_exp={1}, rename_base={2}, "
+"recursive={3}"
+msgstr ""
+"{0}에서 glob_exp={1}, rename_base={2}, recursive={3}에 해당하는 이름을 바꿀 파일이 없습니다"
+
+#: refacdir/file_renamer.py:357
+msgid ""
+"Renamed {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+msgstr ""
+"{1}에서 {0}개의 파일을 {2}가 이름 변경했습니다. glob_exp={3}, rename_base={4}, recursive={5}"
+
+#: refacdir/file_renamer.py:363
+msgid ""
+"Some renaming operations failed. The following files may still be present:"
+msgstr "일부 이름 바꾸기 작업이 실패했습니다. 다음 파일이 여전히 존재할 수 있습니다:"
+
+#: refacdir/file_renamer.py:384
+msgid "Rename all files in {0}? Confirm (y/n): "
+msgstr "{0} 안의 모든 파일 이름을 바꾸시겠습니까? 확인 (y/n): "
+
+#: refacdir/file_renamer.py:386
+msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
+msgstr "파일을 glob 패턴 {0}에 따라 {1}에서 이름을 바꾸시겠습니까? 확인 (y/n): "
+
+#: refacdir/image_categorizer.py:89
+msgid "{0}: no images found to categorize under {1}"
+msgstr "{0}: {1} 아래에 분류할 이미지가 없습니다"
+
+#: refacdir/image_categorizer.py:94
+msgid "TEST (dry run) {0}: no files moved"
+msgstr "TEST (드라이런) {0}: 파일이 이동되지 않음"
+
+#: refacdir/image_categorizer.py:96
+msgid "TEST {0}: would categorize {1} image(s)"
+msgstr "TEST {0}: {1}개의 이미지를 분류합니다"
+
+#: refacdir/image_categorizer.py:98 refacdir/named_subdir_collector.py:222
+msgid "TEST move {0} -> {1}"
+msgstr "TEST 이동 {0} -> {1}"
+
+#: refacdir/image_categorizer.py:101
+msgid "{0}: categorizing {1} image(s) under {2}"
+msgstr "{0}: {2} 아래에 {1} 이미지 분류 중"
+
+#: refacdir/image_categorizer.py:104
+msgid "Confirm image categorization"
+msgstr "이미지 분류 확인"
+
+#: refacdir/image_categorizer.py:105
+msgid "\"{0}\": move {1} image(s) under {2} into categories {3}?"
+msgstr "\"{0}\": {1} 이미지(들)를 {2} 아래의 카테고리 {3} 로 이동하시겠습니까?"
+
+#: refacdir/image_categorizer.py:118
+msgid "File already exists: {0}"
+msgstr "파일이 이미 존재합니다: {0}"
+
+#: refacdir/image_categorizer.py:121 refacdir/named_subdir_collector.py:252
+msgid "moved {0} -> {1}"
+msgstr "이동 {0} -> {1}"
+
+#: refacdir/named_subdir_collector.py:199
+msgid "{0}: no files found to collect under {1}"
+msgstr "{0}: {1} 아래에서 수집할 파일이 없습니다"
+
+#: refacdir/named_subdir_collector.py:204
+msgid "TEST (dry run) {0}: no files moved or dirs cleared"
+msgstr "테스트(드라이런) {0}: 파일이 이동되지 않았으며 디렉터리도 정리되지 않음"
+
+#: refacdir/named_subdir_collector.py:216
+msgid "TEST {0}: would move {1} file(s) under {2}"
+msgstr "TEST {0}: {1}개의 파일을 {2} 아래로 이동합니다"
+
+#: refacdir/named_subdir_collector.py:228
+msgid "{0}: collecting {1} file(s) into bucket folders at {2}"
+msgstr "{0}: {1} 파일을 {2}의 버킷 폴더에 수집 중"
+
+#: refacdir/named_subdir_collector.py:232
+msgid "Confirm named subdir collection"
+msgstr "이름이 지정된 하위 디렉터리 컬렉션 확인"
+
+#: refacdir/named_subdir_collector.py:233
+msgid "\"{0}\": move {1} file(s) into folders {2} under {3}?"
+msgstr "\"{0}\": {1} 파일을 폴더 {2} 아래 {3} 로 이동하시겠습니까?"
+
+#: refacdir/user_search_funcs.py:67
+msgid "User search functions not loaded"
+msgstr "사용자 검색 기능을 불러오지 못했습니다"
+
+#: refacdir/user_search_funcs.py:68
+msgid ""
+"{0}\n"
+"\n"
+"This run uses the built-in search functions only."
+msgstr ""
+"{0}\n"
+"\n"
+"이 실행에서는 내장 검색 기능만 사용합니다."
+
+#: refacdir/backup/backup_manager.py:57
+msgid "TESTING BACKUPS"
+msgstr "백업 테스트"
+
+#: refacdir/backup/backup_manager.py:57
+msgid "RUNNING BACKUPS"
+msgstr "백업 실행 중"
+
+#: refacdir/backup/backup_manager.py:70
+msgid "Backup cancelled by user; no change made."
+msgstr "백업이 사용자가 취소했습니다; 변경 사항이 없습니다."
+
+#: refacdir/backup/backup_manager.py:80 refacdir/backup/backup_manager.py:97
 msgid "Backup \"{0}\" ({1}/{2}): {3}"
 msgstr "백업 \"{0}\" ({1}/{2}) : {3}"
 
-#: refacdir/utils/translations.py:40
+#: refacdir/backup/backup_manager.py:84
+msgid "Starting backup mapping %s (%s/%s): %s -> %s"
+msgstr "백업 매핑 %s 시작 (%s/%s): %s -> %s"
+
+#: refacdir/backup/backup_manager.py:115
+msgid "\"{0}\": dry run of {1} backup mapping(s)?"
+msgstr "\"{0}\": {1} 백업 매핑의 드라이런인가요?"
+
+#: refacdir/backup/backup_manager.py:117
+msgid ""
+"\"{0}\": run {1} backup mapping(s)? Files will be copied, moved or removed."
+msgstr "\"{0}\": {1}개의 백업 매핑을 실행하시겠습니까? 파일이 복사, 이동 또는 삭제됩니다."
+
+#: refacdir/backup/backup_manager.py:120
+msgid "Confirm backup"
+msgstr "백업 확인"
+
+#: refacdir/backup/backup_manager.py:123
+msgid "I have checked these mappings"
+msgstr "이 매핑들을 확인했습니다"
+
+#: refacdir/backup/backup_manager.py:126
+msgid "Confirmation received, running backups."
+msgstr "확인 완료, 백업 실행 중."
+
+#: refacdir/backup/backup_mapping.py:200 test/backup/test_backup.py:371
+msgid "Duplicate content hash {0}... : {1}"
+msgstr "중복된 콘텐츠 해시 {0}... : {1}"
+
+#: refacdir/backup/backup_mapping.py:202
+msgid "scan complete"
+msgstr "스캔 완료"
+
+#: refacdir/backup/backup_mapping.py:241
+msgid "counting files to scan…"
+msgstr "스캔할 파일을 세는 중…"
+
+#: refacdir/backup/backup_mapping.py:251
+msgid "counted {0} files; hashing…"
+msgstr "계산된 {0} 파일; 해싱…"
+
+#: refacdir/backup/backup_mapping.py:268
+msgid "hashed {0}/{1} files"
+msgstr "해시된 {0}/{1} 파일"
+
+#: refacdir/backup/backup_mapping.py:311
+msgid "nothing to hash"
+msgstr "해시할 것이 없습니다"
+
+#: refacdir/backup/backup_mapping.py:329
+msgid "Creating directory: {0}"
+msgstr "디렉터리 생성 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:361
+msgid "Moving file within external dir to: {0} - previous location: {1}"
+msgstr "외부 디렉터리 내 파일 이동: {0} - 이전 위치: {1}"
+
+#: refacdir/backup/backup_mapping.py:364
+msgid "Replacing file: {0}"
+msgstr "파일 교체 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:366
+msgid "Creating file: {0}"
+msgstr "파일 생성 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:387
+msgid "Removing file already backed up: {0}"
+msgstr "이미 백업된 파일을 삭제 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:446 refacdir/backup/backup_mapping.py:460
+msgid "Making new directory: {0}"
+msgstr "새 디렉터리 생성 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:452
+msgid "directory structure only"
+msgstr "디렉터리 구조만"
+
+#: refacdir/backup/backup_mapping.py:471
+msgid "nothing to sync"
+msgstr "동기화할 것이 없습니다"
+
+#: refacdir/backup/backup_mapping.py:478
+msgid "sync {0}/{1} content groups"
+msgstr "동기화 {0}/{1} 콘텐츠 그룹"
+
+#: refacdir/backup/backup_mapping.py:500
+msgid "Removing stale file: {0}"
+msgstr "오래된 파일 제거 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:517
+msgid "Removing stale empty directory: {0}"
+msgstr "오래된 빈 디렉터리를 삭제 중: {0}"
+
+#: refacdir/backup/backup_mapping.py:623
+msgid "No failures encountered for mapping: {0} -> {1}"
+msgstr "매핑에 오류가 없습니다: {0} -> {1}"
+
+#: refacdir/backup/backup_mapping.py:625
+msgid "Failures encountered for mapping: {0} -> {1}"
+msgstr "매핑 중 오류 발생: {0} -> {1}"
+
+#: refacdir/backup/backup_mapping.py:630
+msgid "Failed to move {0} to {1}: {2}"
+msgstr "{0}을(를) {1}으로 이동하지 못했습니다: {2}"
+
+#: refacdir/backup/backup_mapping.py:634
+msgid "Failed to remove file {0} (target missing): {1}"
+msgstr "파일 {0} 삭제 실패 (대상 누락): {1}"
+
+#: refacdir/backup/backup_mapping.py:636
+msgid "Failed to remove stale file {0}: {1}"
+msgstr "오래된 파일 {0}을(를) 삭제하지 못했습니다: {1}"
+
+#: refacdir/backup/backup_mapping.py:638
+msgid "Failed to remove stale directory {0}: {1}"
+msgstr "오래된 디렉터리 {0} 삭제에 실패했습니다: {1}"
+
+#: refacdir/backup/backup_mapping.py:647
+msgid "Saved failure data to {0}"
+msgstr "실패 데이터를 {0}에 저장함"
+
+#: refacdir/backup/backup_mapping.py:649
+msgid "Could not write failure log: {0}"
+msgstr "실패 로그를 기록할 수 없습니다: {0}"
+
+#: refacdir/backup/backup_mapping.py:675
+msgid ""
+"Name: {0}\n"
+"Source: {1}\n"
+"Target: {2}\n"
+"Mode: {3}\n"
+"File types: {4}\n"
+"Exclude dirs: {5}\n"
+"Exclude removal dirs: {6}"
+msgstr ""
+"이름: {0}\n"
+"소스: {1}\n"
+"대상: {2}\n"
+"모드: {3}\n"
+"파일 형식: {4}\n"
+"제외 디렉터리: {5}\n"
+"제외 삭제 디렉터리: {6}"
+
+#: refacdir/llm/preview.py:54
+msgid "{0} file(s) matched across {1} location(s)."
+msgstr "{0} 개의 파일이 {1} 개의 위치와 일치했습니다."
+
+#: refacdir/llm/preview.py:73
+msgid ""
+"{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
+"removed (mirror-mode mappings only)."
+msgstr "{0} 파일이 추가/업데이트되고, {1} 오래된 파일/디렉터리가 제거됩니다(미러 모드 매핑만)."
+
+#: refacdir/llm/preview.py:83
+msgid "{0} duplicate file(s) would be removed across {1} group(s)."
+msgstr "{0}개의 중복 파일이 {1} 그룹에 걸쳐 삭제됩니다."
+
+#: refacdir/llm/preview.py:93
+msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
+msgstr "{0}/{1} 개의 전체 파일이 추적된 유형과 일치하며 {2} 디렉터리에 걸쳐 있습니다."
+
+#: refacdir/llm/preview.py:101
+msgid "{0} file(s) would be collected into {1} named subdir(s)."
+msgstr "{0} 파일이 {1} 이름의 하위 디렉터리(들)로 수집됩니다."
+
+#: refacdir/llm/preview.py:109
+msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
+msgstr "{0} 파일이 {1} 아카이브에서 {2}(으)로 추출됩니다."
+
+#: refacdir/llm/preview.py:113
+msgid "{0} archive(s) could not be read."
+msgstr "{0}개의 아카이브를 읽을 수 없습니다."
+
+#: refacdir/utils/confirm.py:56
+msgid "{0} (y/n): "
+msgstr "{0} (y/n): "
+
+#: refacdir/utils/translations.py:41
 msgid "Monday"
 msgstr "월요일"
 
-#: refacdir/utils/translations.py:42
+#: refacdir/utils/translations.py:43
 msgid "Tuesday"
 msgstr "화요일"
 
-#: refacdir/utils/translations.py:44
+#: refacdir/utils/translations.py:45
 msgid "Wednesday"
 msgstr "수요일"
 
-#: refacdir/utils/translations.py:46
+#: refacdir/utils/translations.py:47
 msgid "Thursday"
 msgstr "목요일"
 
-#: refacdir/utils/translations.py:48
+#: refacdir/utils/translations.py:49
 msgid "Friday"
 msgstr "금요일"
 
-#: refacdir/utils/translations.py:50
+#: refacdir/utils/translations.py:51
 msgid "Saturday"
 msgstr "토요일"
 
-#: refacdir/utils/translations.py:52
+#: refacdir/utils/translations.py:53
 msgid "Sunday"
 msgstr "일요일"
 
-#: refacdir/utils/translations.py:64
+#: refacdir/utils/translations.py:65
 msgid "seconds"
 msgstr "초"
 
-#: refacdir/utils/translations.py:66
+#: refacdir/utils/translations.py:67
 msgid "minutes"
 msgstr "분"
 
-#: refacdir/utils/translations.py:68
+#: refacdir/utils/translations.py:69
 msgid "hours"
 msgstr "시간"
 
-#: refacdir/utils/translations.py:70
+#: refacdir/utils/translations.py:71
 msgid "days"
 msgstr "일"
 
-#: refacdir/utils/translations.py:72
+#: refacdir/utils/translations.py:73
 msgid "weeks"
 msgstr "주"
 
-#: refacdir/utils/translations.py:74
+#: refacdir/utils/translations.py:75
 msgid "months"
 msgstr "개월"
 
-#: refacdir/utils/translations.py:76
+#: refacdir/utils/translations.py:77
 msgid "years"
 msgstr "년"
+
+#: test/ui/test_llm_config_chat_dialog.py:184 ui/llm_config_chat_dialog.py:235
+msgid "Failed after {0} attempt(s): {1}"
+msgstr "시도 {0}회 후 실패: {1}"
+
+#: test/ui/test_renamer_action_dialog_chain.py:55
+#: ui/config_action_dialogs.py:587
+msgid "chained"
+msgstr "연결된"
 
 #: ui/batch_history_window.py:41
 msgid "(none)"
 msgstr "(없음)"
 
-#: ui/batch_history_window.py:44
-msgid " (cancelled)"
-msgstr " (취소됨)"
+#: ui/batch_history_window.py:45
+msgid "{0} (cancelled) — {1} — {2} op(s), {3} reversible"
+msgstr "{0} (취소됨) — {1} — {2} 작업, {3} 가역"
 
-#: ui/batch_history_window.py:49 ui/batch_history_window.py:77
+#: ui/batch_history_window.py:48
+msgid "{0} — {1} — {2} op(s), {3} reversible"
+msgstr "{0} — {1} — {2} 작업, {3} 되돌릴 수 있음"
+
+#: ui/batch_history_window.py:52 ui/batch_history_window.py:80
 msgid "(unknown config)"
 msgstr "(알 수 없는 구성)"
 
-#: ui/batch_history_window.py:50 ui/batch_history_window.py:78
-#: ui/batch_history_window.py:91
+#: ui/batch_history_window.py:53 ui/batch_history_window.py:81
+#: ui/batch_history_window.py:94
 msgid "(untagged)"
 msgstr "（태그 없음）"
 
-#: ui/batch_history_window.py:74
+#: ui/batch_history_window.py:56
+msgid "{0} / {1} — {2} op(s), {3} reversible"
+msgstr "{0} / {1} — {2} 작업, {3} 가역"
+
+#: ui/batch_history_window.py:61
+msgid "Job ID: {0}"
+msgstr "작업 ID: {0}"
+
+#: ui/batch_history_window.py:62
+msgid "Started: {0}"
+msgstr "시작됨: {0}"
+
+#: ui/batch_history_window.py:63
+msgid "Finished: {0}"
+msgstr "완료: {0}"
+
+#: ui/batch_history_window.py:64
+msgid "Configs: {0}"
+msgstr "구성: {0}"
+
+#: ui/batch_history_window.py:65
+msgid "Cancelled: Yes"
+msgstr "취소됨: 예"
+
+#: ui/batch_history_window.py:65
+msgid "Cancelled: No"
+msgstr "취소: 아니오"
+
+#: ui/batch_history_window.py:67
+msgid "Action counts:"
+msgstr "액션 수:"
+
+#: ui/batch_history_window.py:77
 msgid "(all mappings)"
 msgstr "(모든 매핑)"
 
-#: ui/batch_history_window.py:118
+#: ui/batch_history_window.py:83
+msgid "File operations — {0}:"
+msgstr "파일 작업 — {0}:"
+
+#: ui/batch_history_window.py:98
+msgid "[reversed]"
+msgstr "[역전]"
+
+#: ui/batch_history_window.py:102
+msgid "[can reverse]"
+msgstr "[역전 가능]"
+
+#: ui/batch_history_window.py:104
+msgid "[missing at dest]"
+msgstr "[목적지에서 누락됨]"
+
+#: ui/batch_history_window.py:106
+msgid "[not reversible]"
+msgstr "[되돌릴 수 없음]"
+
+#: ui/batch_history_window.py:121
 msgid "Batch Job History"
 msgstr "배치 작업 기록"
 
-#: ui/batch_history_window.py:132
+#: ui/batch_history_window.py:135
 msgid ""
 "Last {0} batch jobs (stored in encrypted cache). Reverse an entire job or a "
 "single renamer mapping."
 msgstr "마지막 {0} 배치 작업(암호화된 캐시에 저장). 전체 작업 또는 단일 리네이머 매핑을 역전시킵니다."
 
-#: ui/batch_history_window.py:158
+#: ui/batch_history_window.py:161
 msgid "Refresh"
 msgstr "새로고침"
 
-#: ui/batch_history_window.py:162 ui/batch_history_window.py:342
+#: ui/batch_history_window.py:165 ui/batch_history_window.py:345
 msgid "Preview reverse mapping"
 msgstr "역매핑 미리보기"
 
-#: ui/batch_history_window.py:166 ui/batch_history_window.py:313
-#: ui/batch_history_window.py:342
+#: ui/batch_history_window.py:169 ui/batch_history_window.py:316
+#: ui/batch_history_window.py:345
 msgid "Reverse mapping"
 msgstr "매핑 뒤집기"
 
-#: ui/batch_history_window.py:170 ui/batch_history_window.py:344
+#: ui/batch_history_window.py:173 ui/batch_history_window.py:347
 msgid "Preview reverse job"
 msgstr "리버스 작업 미리보기"
 
-#: ui/batch_history_window.py:174 ui/batch_history_window.py:319
-#: ui/batch_history_window.py:344
+#: ui/batch_history_window.py:177 ui/batch_history_window.py:322
+#: ui/batch_history_window.py:347
 msgid "Reverse entire job"
 msgstr "전체 작업 뒤집기"
 
-#: ui/batch_history_window.py:193
+#: ui/batch_history_window.py:196
 msgid ""
 "No batch jobs recorded yet. Run operations (non test mode) to build history."
 msgstr "아직 배치 작업이 기록되지 않았습니다. 테스트 모드가 아닌 상태에서 작업을 실행하여 기록을 만드세요."
 
-#: ui/batch_history_window.py:277
+#: ui/batch_history_window.py:280
 msgid "Job not found (history may have changed)."
 msgstr "작업을 찾을 수 없습니다 (기록이 변경되었을 수 있습니다)."
 
-#: ui/batch_history_window.py:288 ui/batch_history_window.py:295
-#: ui/batch_history_window.py:301 ui/batch_history_window.py:338
+#: ui/batch_history_window.py:291 ui/batch_history_window.py:298
+#: ui/batch_history_window.py:304 ui/batch_history_window.py:341
 msgid "Batch history"
 msgstr "배치 기록"
 
-#: ui/batch_history_window.py:288
+#: ui/batch_history_window.py:291
 msgid "Select a job first."
 msgstr "먼저 작업을 선택하세요."
 
-#: ui/batch_history_window.py:295
+#: ui/batch_history_window.py:298
 msgid "Select a renamer mapping first."
 msgstr "먼저 리네이머 매핑을 선택하십시오."
 
-#: ui/batch_history_window.py:302
+#: ui/batch_history_window.py:305
 msgid "This job has no mapping tags; use Reverse entire job instead."
 msgstr "이 작업에는 매핑 태그가 없습니다; 대신 Reverse entire job을 사용하세요."
 
-#: ui/batch_history_window.py:309
+#: ui/batch_history_window.py:312
 msgid ""
 "Move files back for mapping \"{0}\" in config \"{1}\"?\n"
 "Only operations from this mapping are reversed (newest first). If a later mapping renamed the same file, reverse that mapping first."
@@ -312,7 +1250,7 @@ msgstr ""
 "구성 \"{1}\"의 매핑 \"{0}\"에 대한 파일을 되돌리시겠습니까?\n"
 "이 매핑의 작업만(최신 순) 되돌립니다. 나중에 같은 파일을 이름 바꾼 매핑이 있다면, 먼저 해당 매핑을 되돌리세요."
 
-#: ui/batch_history_window.py:316
+#: ui/batch_history_window.py:319
 msgid ""
 "Move files back along all recorded rename/move paths for this job?\n"
 "Operations are applied newest-first. Files must still exist at their destination."
@@ -320,7 +1258,7 @@ msgstr ""
 "이 작업에 대해 기록된 모든 이름 변경/이동 경로를 따라 파일을 되돌리시겠습니까?\n"
 "작업은 최신 순으로 적용됩니다. 파일은 여전히 대상에 존재해야 합니다."
 
-#: ui/batch_history_window.py:346
+#: ui/batch_history_window.py:349
 msgid ""
 "Attempted: {0}\n"
 "Succeeded: {1}\n"
@@ -332,273 +1270,9 @@ msgstr ""
 "실패: {2}\n"
 "건너뛰기(복구 불가능하거나 누락): {3}"
 
-#: ui/test_results_window.py:79
-msgid "Verification tests"
-msgstr "검증 테스트"
-
-#: ui/test_results_window.py:112
-msgid "Verification test results"
-msgstr "검증 테스트 결과"
-
-#: ui/test_results_window.py:119
-msgid "Suite directory"
-msgstr "스위트 디렉터리"
-
-#: ui/test_results_window.py:124
-msgid "All suites"
-msgstr "모든 스위트"
-
-#: ui/test_results_window.py:135
-msgid "Click Run suite to start."
-msgstr "Run suite를 클릭하여 시작합니다."
-
-#: ui/test_results_window.py:171
-msgid "Total Tests: 0"
-msgstr "총 시험: 0"
-
-#: ui/test_results_window.py:174
-msgid "Passed: 0"
-msgstr "통과: 0"
-
-#: ui/test_results_window.py:178
-msgid "Failed: 0"
-msgstr "실패: 0"
-
-#: ui/test_results_window.py:182
-msgid "Time: 0:00"
-msgstr "시각: 0:00"
-
-#: ui/test_results_window.py:191
-msgid "Run suite"
-msgstr "스위트 실행"
-
-#: ui/custom_title_bar.py:109 ui/llm_config_chat_dialog.py:154
-#: ui/test_results_window.py:195
-msgid "Close"
-msgstr "창 닫기"
-
-#: ui/test_results_window.py:199
-msgid "Save Results"
-msgstr "결과 저장"
-
-#: ui/test_results_window.py:216
-msgid "Running tests..."
-msgstr "테스트 실행 중..."
-
-#: ui/test_results_window.py:254
-msgid "Test tree not found: {0}"
-msgstr "테스트 트리를 찾을 수 없습니다: {0}"
-
-#: ui/test_results_window.py:274
-msgid "Test suite directory not found: {0}"
-msgstr "테스트 스위트 디렉터리를 찾을 수 없습니다: {0}"
-
-#: ui/test_results_window.py:293
-msgid "Backup test directory not found (required for fixtures): {0}"
-msgstr "백업 테스트 디렉터리를 찾을 수 없습니다(고정 데이터를 위해 필요): {0}"
-
-#: ui/test_results_window.py:307
-msgid "Base directory: "
-msgstr "기본 디렉토리: "
-
-#: ui/test_results_window.py:309
-msgid "Pytest targets: "
-msgstr "Pytest 대상: "
-
-#: ui/test_results_window.py:313
-msgid "Backup fixtures directory: "
-msgstr "백업 픽스처 디렉터리: "
-
-#: ui/test_results_window.py:315
-msgid "Python path: "
-msgstr "파이썬 경로: "
-
-#: ui/test_results_window.py:320
-msgid "Test target not found: {0}"
-msgstr "테스트 대상이 없습니다: {0}"
-
-#: ui/test_results_window.py:328
-msgid "Found test target: "
-msgstr "테스트 대상 찾음: "
-
-#: ui/test_results_window.py:332
-msgid "No test targets remain to run."
-msgstr "실행할 테스트 대상이 남아 있지 않습니다."
-
-#: ui/test_results_window.py:344
-msgid "Analyzing test suite..."
-msgstr "테스트 스위트 분석 중..."
-
-#: ui/test_results_window.py:363
-msgid "Found {0} tests in {1}"
-msgstr "{1}에서 {0}개의 테스트를 찾았습니다"
-
-#: ui/test_results_window.py:369
-msgid "Error collecting tests from {0}: {1}"
-msgstr "오류 수집 테스트 {0}: {1}"
-
-#: ui/test_results_window.py:389
-msgid "Running tests from {0}..."
-msgstr "{0}에서 테스트 실행 중..."
-
-#: ui/test_results_window.py:393
-msgid "Running tests from {0}:"
-msgstr "{0}에서 실행된 테스트:"
-
-#: ui/test_results_window.py:420
-msgid "Error in {0}:"
-msgstr "오류 {0}:"
-
-#: ui/test_results_window.py:438
-msgid "Error running tests in {0}: {1}"
-msgstr "{0}에서 테스트 실행 중 오류: {1}"
-
-#: ui/test_results_window.py:453
-msgid "Unexpected error running tests: {0}"
-msgstr "테스트 실행 중 예상치 못한 오류가 발생했습니다: {0}"
-
-#: ui/test_results_window.py:478
-msgid "Save Test Results"
-msgstr "테스트 결과 저장"
-
-#: ui/test_results_window.py:480
-msgid "Text Files (*.txt);;All Files (*)"
-msgstr "텍스트 파일 (*.txt);;모든 파일 (*)"
-
-#: ui/test_results_window.py:510
-msgid "Copy"
-msgstr "복사"
-
-#: ui/duplicate_review_dialogs.py:57 ui/test_results_window.py:513
-msgid "Select All"
-msgstr "모두 선택"
-
-#: ui/test_results_window.py:559
-msgid "Total Tests: {0}"
-msgstr "총 검사 수: {0}"
-
-#: ui/test_results_window.py:560
-msgid "Passed: {0}"
-msgstr "통과됨: {0}"
-
-#: ui/test_results_window.py:561
-msgid "Failed: {0}"
-msgstr "실패: {0}"
-
-#: ui/test_results_window.py:567
-msgid "Time: {0}:{1:02d}"
-msgstr "시간: {0}:{1:02d}"
-
-#: ui/test_results_window.py:577
-msgid "Test Run Complete - "
-msgstr "테스트 실행 완료 - "
-
-#: ui/test_results_window.py:578
-msgid "Total Tests: "
-msgstr "총 시험: "
-
-#: ui/test_results_window.py:579
-msgid "Passed: "
-msgstr "통과: "
-
-#: ui/test_results_window.py:580
-msgid "Failed: "
-msgstr "실패: "
-
-#: ui/test_results_window.py:583
-msgid "All tests passed successfully!"
-msgstr "모든 시험은 성공적으로 통과했습니다!"
-
-#: ui/test_results_window.py:583
-msgid "Some tests failed - check results"
-msgstr "일부 테스트 실패 - 결과 확인"
-
-#: refacdir/archive_extractor.py:300
-msgid "Confirm extraction of {0} file(s) from {1} archive(s) into {2} (y/n): "
-msgstr "{0} 파일을 {1} 아카이브에서 {2} 로 추출하는 것을 확인하시겠습니까 (y/n): "
-
-#: refacdir/batch_renamer.py:208
-msgid "Confirm (y/n) "
-msgstr "확인 (y/n) "
-
-#: refacdir/duplicate_remover.py:197
-msgid "Confirm all duplicates removal (Y/n): "
-msgstr "모든 중복 제거 확인 (Y/n): "
-
-#: refacdir/duplicate_remover.py:203
-msgid "Remove duplicates with confirmation one by one? (Y/n): "
-msgstr "중복 항목을 하나씩 확인하면서 제거하시겠습니까? (Y/n): "
-
-#: refacdir/duplicate_remover.py:209
-msgid "Save duplicates report? (Y/n): "
-msgstr "중복 보고서를 저장하시겠습니까? (Y/n): "
-
-#: refacdir/duplicate_remover.py:352
-msgid "OK to remove? (Y/n): "
-msgstr "삭제하시겠습니까? (Y/n): "
-
-#: refacdir/file_renamer.py:384
-msgid "Rename all files in {0}? Confirm (y/n): "
-msgstr "{0} 안의 모든 파일 이름을 바꾸시겠습니까? 확인 (y/n): "
-
-#: refacdir/file_renamer.py:386
-msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
-msgstr "파일을 glob 패턴 {0}에 따라 {1}에서 이름을 바꾸시겠습니까? 확인 (y/n): "
-
-#: refacdir/image_categorizer.py:102
-msgid "Confirm categorization of {0} image(s) into {1} categories (y/n): "
-msgstr "이미지 {0} 를 {1} 카테고리로 분류하는 것을 확인하시겠습니까 (y/n): "
-
-#: refacdir/named_subdir_collector.py:227
-msgid "Confirm named subdir collection (y/n): "
-msgstr "명명된 하위 디렉터리 컬렉션 확인 (y/n): "
-
-#: refacdir/backup/backup_manager.py:110
-msgid ""
-"\n"
-"CONFIRM BACKUP (y/n): "
-msgstr " 백업 확인 (y/n): "
-
-#: refacdir/backup/backup_manager.py:114
-msgid ""
-"\n"
-"CONFIRM BACKUP AGAIN (y/n): "
-msgstr " 백업을 다시 확인 (y/n): "
-
-#: refacdir/llm/preview.py:55
-msgid "{0} file(s) matched across {1} location(s)."
-msgstr "{0} 개의 파일이 {1} 개의 위치와 일치했습니다."
-
-#: refacdir/llm/preview.py:74
-msgid ""
-"{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
-"removed (mirror-mode mappings only)."
-msgstr "{0} 파일이 추가/업데이트되고, {1} 오래된 파일/디렉터리가 제거됩니다(미러 모드 매핑만)."
-
-#: refacdir/llm/preview.py:84
-msgid "{0} duplicate file(s) would be removed across {1} group(s)."
-msgstr "{0}개의 중복 파일이 {1} 그룹에 걸쳐 삭제됩니다."
-
-#: refacdir/llm/preview.py:94
-msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
-msgstr "{0}/{1} 개의 전체 파일이 추적된 유형과 일치하며 {2} 디렉터리에 걸쳐 있습니다."
-
-#: refacdir/llm/preview.py:102
-msgid "{0} file(s) would be collected into {1} named subdir(s)."
-msgstr "{0} 파일이 {1} 이름의 하위 디렉터리(들)로 수집됩니다."
-
-#: refacdir/llm/preview.py:110
-msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
-msgstr "{0} 파일이 {1} 아카이브에서 {2}(으)로 추출됩니다."
-
-#: refacdir/llm/preview.py:114
-msgid "{0} archive(s) could not be read."
-msgstr "{0}개의 아카이브를 읽을 수 없습니다."
-
-#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91
-#: ui/config_editor_window.py:257
-msgid "(new config)"
-msgstr "(새 구성)"
+#: ui/batch_history_window.py:354
+msgid "... and {0} more"
+msgstr "... 및 {0}개 더"
 
 #: ui/config_action_dialogs.py:74 ui/config_action_dialogs.py:158
 msgid "Remove"
@@ -616,7 +1290,7 @@ msgstr "(이름 없음)"
 msgid "{0} ({1} key(s))"
 msgstr "{0} ({1} 키)"
 
-#: ui/config_action_dialogs.py:139
+#: ui/config_action_dialogs.py:139 ui/config_editor_window.py:286
 msgid "Action Type"
 msgstr "액션 유형"
 
@@ -636,11 +1310,15 @@ msgstr "추가"
 msgid "Draft with AI..."
 msgstr "AI 초안..."
 
+#: ui/config_action_dialogs.py:166 ui/llm_config_chat_dialog.py:97
+msgid "{0} actions aren't supported by the AI drafting feature yet."
+msgstr "{0} 작업은 아직 AI 초안 작성 기능에서 지원되지 않습니다."
+
 #: ui/config_action_dialogs.py:173
 msgid "Mapping Details"
 msgstr "매핑 세부 정보"
 
-#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:419
+#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:418
 msgid "Name"
 msgstr "이름"
 
@@ -652,9 +1330,13 @@ msgstr "속성"
 msgid "Add Property"
 msgstr "속성 추가"
 
-#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:491
+#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:490
 msgid "Save Mapping"
 msgstr "매핑 저장"
+
+#: ui/config_action_dialogs.py:281 ui/config_action_dialogs.py:527
+msgid "Mapping name is required."
+msgstr "매핑 이름은 필수입니다."
 
 #: ui/config_action_dialogs.py:292
 msgid "Select Mapping"
@@ -668,86 +1350,132 @@ msgstr "저장할 매핑을 선택하십시오."
 msgid "Invalid Mapping"
 msgstr "잘못된 매핑"
 
-#: ui/config_action_dialogs.py:370
+#: ui/config_action_dialogs.py:352
+msgid "All mappings must have a name."
+msgstr "모든 매핑에는 이름이 있어야 합니다."
+
+#: ui/config_action_dialogs.py:355
+msgid "Mapping names must be unique within the action."
+msgstr "매핑 이름은 작업 내에서 고유해야 합니다."
+
+#: ui/config_action_dialogs.py:369
 msgid "Validation failed: {0}"
 msgstr "유효성 검사 실패: {0}"
 
-#: ui/config_action_dialogs.py:379
+#: ui/config_action_dialogs.py:378
 msgid "Backup mappings may include backup_mappings list and options."
 msgstr "백업 매핑에는 backup_mappings 목록과 옵션이 포함될 수 있습니다."
 
-#: ui/config_action_dialogs.py:396
+#: ui/config_action_dialogs.py:395
 msgid ""
 "Each mapping defines function, locations, rename rules, and optional flags."
 msgstr "각 매핑은 기능, 위치, 이름 바꾸기 규칙 및 선택적 플래그를 정의합니다."
 
-#: ui/config_action_dialogs.py:424
+#: ui/config_action_dialogs.py:399
+msgid "New renamer mapping"
+msgstr "새 이름 바꾸기 매핑"
+
+#: ui/config_action_dialogs.py:423
 msgid "Function"
 msgstr "기능"
 
-#: ui/config_action_dialogs.py:427 ui/renamer_rule_suggester_dialog.py:75
+#: ui/config_action_dialogs.py:426 ui/renamer_rule_suggester_dialog.py:75
 msgid "Options"
 msgstr "옵션"
 
-#: ui/config_action_dialogs.py:443
+#: ui/config_action_dialogs.py:442
 msgid "Locations (one root path per line)"
 msgstr "위치(줄당 루트 경로 하나)"
 
-#: ui/config_action_dialogs.py:450
+#: ui/config_action_dialogs.py:449
 msgid "Rename Rules"
 msgstr "규칙 이름 변경"
 
-#: ui/config_action_dialogs.py:457
+#: ui/config_action_dialogs.py:456
 msgid "Add / Update Rule"
 msgstr "규칙 추가 / 업데이트"
 
-#: ui/config_action_dialogs.py:460
+#: ui/config_action_dialogs.py:459
 msgid "Remove Rule"
 msgstr "규칙 제거"
 
-#: ui/config_action_dialogs.py:463
+#: ui/config_action_dialogs.py:462
 msgid "New Rule Draft"
 msgstr "새 규칙 초안"
 
-#: ui/config_action_dialogs.py:466
+#: ui/config_action_dialogs.py:465
 msgid "Suggest Rules..."
 msgstr "규칙 제안..."
 
-#: ui/config_action_dialogs.py:473
+#: ui/config_action_dialogs.py:472
 msgid "pattern or comma-separated patterns"
 msgstr "패턴 또는 쉼표로 구분된 패턴"
 
-#: ui/config_action_dialogs.py:476
+#: ui/config_action_dialogs.py:475
 msgid "optional; one glob per line"
 msgstr "선택 사항; 줄당 하나의 glob"
 
-#: ui/config_action_dialogs.py:679
+#: ui/config_action_dialogs.py:479
+msgid "also match OS/browser duplicate-download copies, e.g. \"name (1).ext\""
+msgstr "OS/브라우저 중복 다운로드 파일도 일치시킵니다(예: \"name (1).ext\")"
+
+#: ui/config_action_dialogs.py:536
+msgid "At least one location root is required."
+msgstr "최소 하나의 위치 루트가 필요합니다."
+
+#: ui/config_action_dialogs.py:543
+msgid "At least one rename rule is required."
+msgstr "최소 하나의 이름 바꾸기 규칙이 필요합니다."
+
+#: ui/config_action_dialogs.py:576
+msgid "{0} pattern(s)"
+msgstr "{0} 패턴"
+
+#: ui/config_action_dialogs.py:579
+msgid "(auto per-pattern)"
+msgstr "(패턴별 자동)"
+
+#: ui/config_action_dialogs.py:585
+msgid "{0} exclude(s)"
+msgstr "{0} 제외"
+
+#: ui/config_action_dialogs.py:634
+msgid "search_patterns is required."
+msgstr "search_patterns은(는) 필수입니다."
+
+#: ui/config_action_dialogs.py:653
+msgid ""
+"rename_tag is required when a search pattern uses a \"{{...}}\" template or "
+"custom function reference."
+msgstr "검색 패턴이 \"{{...}}\" 템플릿이나 커스텀 함수 참조를 사용하는 경우 rename_tag가 필요합니다."
+
+#: ui/config_action_dialogs.py:686
 msgid "Invalid Rule"
 msgstr "잘못된 규칙"
 
-#: ui/config_action_dialogs.py:745
+#: ui/config_action_dialogs.py:752
 msgid ""
 "Duplicate remover mappings usually contain source dirs and exclusion "
 "settings."
 msgstr "중복 제거 매핑은 일반적으로 소스 디렉터리와 제외 설정을 포함합니다."
 
-#: ui/config_action_dialogs.py:761
+#: ui/config_action_dialogs.py:768
 msgid ""
 "Directory observer mappings usually contain sortable/extra/parent dirs and "
 "file_types."
 msgstr "디렉터리 옵저버 매핑은 일반적으로 정렬 가능/추가/부모 디렉터리 및 file_types 를 포함합니다."
 
-#: ui/config_action_dialogs.py:776
+#: ui/config_action_dialogs.py:783
 msgid ""
 "Directory flattener mappings usually include location and search_patterns."
 msgstr "디렉터리 플래터 매핑은 일반적으로 위치와 search_patterns를 포함합니다."
 
-#: ui/config_action_dialogs.py:790
+#: ui/config_action_dialogs.py:797
 msgid ""
 "Image categorizer mappings include source_dir, categories, and filters."
 msgstr "이미지 분류기 매핑에는 source_dir, categories 및 filters가 포함됩니다."
 
-#: ui/config_action_dialogs.py:808
+#: ui/config_action_dialogs.py:815
 msgid ""
 "Collects files from nested folders whose basename is in subdir_names into "
 "root/<name>/. For subdir_names use comma-separated folder names in this "
@@ -761,21 +1489,40 @@ msgstr ""
 "clear_sources: 이동 후 비어 있는 중첩 디렉터리를 제거합니다. subdir_depth(기본값 1): root/<top-"
 "level-child>/<label>/만; 값을 높이면 중간 폴더가 더 많이 허용됩니다; -1은 모든 깊이를 의미합니다."
 
-#: ui/config_action_dialogs.py:864
+#: ui/config_action_dialogs.py:824
+msgid "named_subdir_collector mapping"
+msgstr "명명된 하위 디렉터리 컬렉터 매핑"
+
+#: ui/config_action_dialogs.py:836
+msgid ""
+"subdir_names is required and must not be empty (comma-separated names, or "
+"YAML list in the saved file)."
+msgstr "subdir_names 는 필수이며 비어 있으면 안 됩니다(쉼표로 구분된 이름 또는 저장 파일의 YAML 목록)."
+
+#: ui/config_action_dialogs.py:873
 msgid ""
 "Extracts ZIP archives matching pattern under search_dir into target_dir. "
 "target_dir is created if missing and always skipped while searching, so "
 "extracted files are never re-ingested; it cannot be search_dir or a parent "
 "of it. preserve_structure: keep each archive's folders under "
 "target_dir/<archive stem>/ (default off writes everything flat, tagging a "
-"collision with the archive's name). delete_sources: trash an archive once "
-"all of its members extracted."
+"collision with the archive's name). delete_sources (default on): trash an "
+"archive once all of its members extracted; set it false to keep the "
+"archives."
 msgstr ""
-"search_dir 아래에서 패턴에 맞는 ZIP 아카이브를 target_dir에 추출합니다. target_dir가 없으면 생성되며 검색 "
-"중에는 항상 제외되어 추출된 파일이 다시 입력되지 않습니다; target_dir는 search_dir 자체이거나 그 상위 디렉터리가 될 "
-"수 없습니다. preserve_structure: 각 아카이브의 폴더를 target_dir/<아카이브 이름>/ 아래에 보관합니다(기본값은"
-" 평탄화 쓰기, 충돌 시 아카이브 이름을 태그합니다). delete_sources: 모든 멤버가 추출된 후 아카이브를 휴지통으로 "
-"이동합니다."
+"search_dir 아래에서 패턴과 일치하는 ZIP 아카이브를 target_dir에 추출합니다. target_dir는 없을 경우 생성되며"
+" 검색 중 항상 건너뛰므로 추출된 파일이 다시 처리되지 않습니다; target_dir는 search_dir이거나 그 상위 디렉터리가 될 "
+"수 없습니다. preserve_structure: 각 아카이브의 폴더를 target_dir/<archive stem>/ 아래에 "
+"유지합니다(기본값 비활성화 시 모든 파일을 평면으로 기록하고, 충돌 시 아카이브 이름으로 태그 지정). delete_sources(기본값"
+" 활성화): 모든 멤버가 추출된 후 아카이브를 휴지통으로 이동합니다; false로 설정하면 아카이브를 유지합니다."
+
+#: ui/config_action_dialogs.py:884
+msgid "archive_extractor mapping"
+msgstr "archive_extractor 매핑"
+
+#: ui/config_editor_window.py:44
+msgid "Config Editor"
+msgstr "구성 편집기"
 
 #: ui/config_editor_window.py:61
 msgid "New Config"
@@ -869,6 +1616,10 @@ msgstr ""
 "구성을 찾을 수 없습니다:\n"
 "{0}"
 
+#: ui/config_editor_window.py:243
+msgid "Top-level YAML must be a dictionary."
+msgstr "최상위 YAML은 사전이어야 합니다."
+
 #: ui/config_editor_window.py:249
 msgid "Load Error"
 msgstr "로드 오류"
@@ -876,6 +1627,10 @@ msgstr "로드 오류"
 #: ui/config_editor_window.py:281
 msgid "{0}. {1} ({2} mapping(s))"
 msgstr "{0}. {1} ({2} 매핑)"
+
+#: ui/config_editor_window.py:286
+msgid "Choose Action Type"
+msgstr "작업 유형 선택"
 
 #: ui/config_editor_window.py:306 ui/config_editor_window.py:328
 msgid "Select Action"
@@ -896,6 +1651,18 @@ msgstr "지원되지 않는 작업 유형: {0}"
 #: ui/config_editor_window.py:328
 msgid "Choose an action to remove."
 msgstr "제거할 작업을 선택하세요."
+
+#: ui/config_editor_window.py:354
+msgid "filename_mapping_functions must be a list."
+msgstr "filename_mapping_functions은(는) 목록이어야 합니다."
+
+#: ui/config_editor_window.py:359
+msgid "filetype_definitions must be a list."
+msgstr "filetype_definitions 은(는) 목록이어야 합니다."
+
+#: ui/config_editor_window.py:362
+msgid "Invalid YAML block: {0}"
+msgstr "잘못된 YAML 블록: {0}"
 
 #: ui/config_editor_window.py:375
 msgid "Save Error"
@@ -929,15 +1696,20 @@ msgstr ""
 "저장된 설정:\n"
 "{0}"
 
-#: ui/custom_title_bar.py:99
+#: ui/custom_title_bar.py:100
 msgid "Minimize"
 msgstr "최소화"
 
-#: ui/custom_title_bar.py:104 ui/custom_title_bar.py:125
+#: ui/custom_title_bar.py:105 ui/custom_title_bar.py:126
 msgid "Maximize"
 msgstr "최대화"
 
-#: ui/custom_title_bar.py:122
+#: ui/custom_title_bar.py:110 ui/llm_config_chat_dialog.py:153
+#: ui/test_results_window.py:197
+msgid "Close"
+msgstr "창 닫기"
+
+#: ui/custom_title_bar.py:123
 msgid "Restore"
 msgstr "복원"
 
@@ -945,69 +1717,177 @@ msgstr "복원"
 msgid "Uncheck any files you do not want to remove."
 msgstr "제거하지 않을 파일의 선택을 해제하세요."
 
-#: ui/duplicate_review_dialogs.py:60
+#: ui/duplicate_review_dialogs.py:44
+msgid "[Group {0}] Keep: {1} | Obvious: Yes"
+msgstr "[그룹 {0}] 유지: {1} | 명백함: 예"
+
+#: ui/duplicate_review_dialogs.py:46
+msgid "[Group {0}] Keep: {1} | Obvious: No"
+msgstr "[그룹 {0} 유지: {1} | 명백: 아니요]"
+
+#: ui/duplicate_review_dialogs.py:51
+msgid "  remove -> {0}"
+msgstr "  제거 -> {0}"
+
+#: ui/duplicate_review_dialogs.py:59 ui/test_results_window.py:522
+msgid "Select All"
+msgstr "모두 선택"
+
+#: ui/duplicate_review_dialogs.py:62
 msgid "Select None"
 msgstr "선택 안 함"
 
-#: ui/duplicate_review_dialogs.py:133
+#: ui/duplicate_review_dialogs.py:101
+msgid "Duplicate Removal Review"
+msgstr "중복 제거 검토"
+
+#: ui/duplicate_review_dialogs.py:120
+msgid ""
+"Do you want to remove all ({0}) duplicate files?\n"
+"All duplicates appear to be valid."
+msgstr ""
+"모든 ({0}) 중복 파일을 제거하시겠습니까?\n"
+"모든 중복 파일이 유효한 것으로 보입니다."
+
+#: ui/duplicate_review_dialogs.py:125
+msgid ""
+"Found {0} duplicate files.\n"
+"- {1} are index-obvious duplicates.\n"
+"- {2} are non-obvious by filename."
+msgstr ""
+"{0}개의 중복 파일을 찾았습니다.\n"
+"- {1}은(는) 인덱스상 명확한 중복입니다.\n"
+"- {2}은(는) 파일명으로는 명확하지 않은 중복입니다."
+
+#: ui/duplicate_review_dialogs.py:135
 msgid "Remove All ({0})"
 msgstr "전체 삭제 ({0})"
 
-#: ui/duplicate_review_dialogs.py:137
+#: ui/duplicate_review_dialogs.py:139
 msgid "Review All ({0})"
 msgstr "전체 검토 ({0})"
 
-#: ui/duplicate_review_dialogs.py:142
+#: ui/duplicate_review_dialogs.py:144
 msgid "Review Non-Obvious ({0})"
 msgstr "비자명 검토 ({0})"
 
-#: ui/llm_config_chat_dialog.py:113
+#: ui/duplicate_review_dialogs.py:167
+msgid "Review All Duplicate Files"
+msgstr "모든 중복 파일 검토"
+
+#: ui/duplicate_review_dialogs.py:174
+msgid "Review Non-Obvious Duplicate Files"
+msgstr "명확하지 않은 중복 파일 검토"
+
+#: ui/llm_config_chat_dialog.py:76
+msgid "Draft {0} Action with AI"
+msgstr "AI와 함께 {0} 작업 초안"
+
+#: ui/llm_config_chat_dialog.py:92
+msgid ""
+"Describe the {0} action you want in plain language. Nothing is written to "
+"the config until you click Apply below."
+msgstr "{0} 작업을 평이한 언어로 설명하십시오. 아래의 적용 버튼을 클릭하기 전까지는 설정에 아무 것도 저장되지 않습니다."
+
+#: ui/llm_config_chat_dialog.py:105
+msgid "e.g. \"Move every screenshot in Downloads into a Screenshots folder\""
+msgstr "다운로드에 있는 모든 스크린샷을 Screenshots 폴더로 이동"
+
+#: ui/llm_config_chat_dialog.py:112
 msgid "Model"
 msgstr "모델"
 
-#: ui/llm_config_chat_dialog.py:116
+#: ui/llm_config_chat_dialog.py:115
 msgid "Endpoint override"
 msgstr "엔드포인트 재정의"
 
-#: ui/llm_config_chat_dialog.py:118
+#: ui/llm_config_chat_dialog.py:117
 msgid "blank = default local Ollama endpoint"
 msgstr "blank = 기본 로컬 Ollama 엔드포인트"
 
-#: ui/llm_config_chat_dialog.py:122
+#: ui/llm_config_chat_dialog.py:121
 msgid "Draft"
 msgstr "초안"
 
-#: ui/llm_config_chat_dialog.py:127
+#: ui/llm_config_chat_dialog.py:126
 msgid "Conversation"
 msgstr "대화"
 
-#: ui/llm_config_chat_dialog.py:134
+#: ui/llm_config_chat_dialog.py:133
 msgid "Current Draft"
 msgstr "현재 초안"
 
-#: ui/llm_config_chat_dialog.py:141
+#: ui/llm_config_chat_dialog.py:140
 msgid "Preview (what this would touch)"
 msgstr "미리보기 (영향을 받을 항목)"
 
-#: ui/llm_config_chat_dialog.py:149
+#: ui/llm_config_chat_dialog.py:148
 msgid "Apply"
 msgstr "적용"
 
-#: ui/llm_config_chat_dialog.py:166
+#: ui/llm_config_chat_dialog.py:165
 msgid "Description Required"
 msgstr "설명이 필요합니다"
 
-#: ui/llm_config_chat_dialog.py:166
+#: ui/llm_config_chat_dialog.py:165
 msgid "Describe the action you want first."
 msgstr "먼저 원하는 작업을 설명하십시오."
 
-#: ui/llm_config_chat_dialog.py:245
+#: ui/llm_config_chat_dialog.py:212
+msgid "Attempt {0}: parse error — {1}"
+msgstr "시도 {0}: 구문 오류 — {1}"
+
+#: ui/llm_config_chat_dialog.py:216
+msgid "Attempt {0}: validation failed — {1}"
+msgstr "시도 {0}: 유효성 검사 실패 — {1}"
+
+#: ui/llm_config_chat_dialog.py:219
+msgid "Attempt {0}: OK"
+msgstr "시도 {0}: OK"
+
+#: ui/llm_config_chat_dialog.py:224
+msgid "Warnings: {0}"
+msgstr "경고: {0}"
+
+#: ui/llm_config_chat_dialog.py:231
+msgid "Preview unavailable: {0}"
+msgstr "미리보기 사용할 수 없음: {0}"
+
+#: ui/llm_config_chat_dialog.py:242
+msgid "Error: {0}"
+msgstr "오류: {0}"
+
+#: ui/llm_config_chat_dialog.py:248
 msgid "No Draft"
 msgstr "초안 없음"
 
-#: ui/llm_config_chat_dialog.py:245
+#: ui/llm_config_chat_dialog.py:248
 msgid "Draft an action first."
 msgstr "먼저 작업을 초안 작성하세요."
+
+#: ui/llm_config_chat_dialog.py:253
+msgid "Applied."
+msgstr "적용됨."
+
+#: ui/log_panel.py:123
+msgid "Log"
+msgstr "로그"
+
+#: ui/log_panel.py:127
+msgid "Level"
+msgstr "레벨"
+
+#: ui/log_panel.py:130
+msgid "Debug"
+msgstr "디버그"
+
+#: ui/log_panel.py:132
+msgid "Warning"
+msgstr "경고"
+
+#: ui/renamer_rule_suggester_dialog.py:42
+msgid "Renamer Auto-Rule Suggestions"
+msgstr "Renamer 자동 규칙 제안"
 
 #: ui/renamer_rule_suggester_dialog.py:53
 msgid "Common Patterns (no directory needed)"
@@ -1020,10 +1900,6 @@ msgstr "파일에서 감지"
 #: ui/renamer_rule_suggester_dialog.py:68
 msgid "Browse"
 msgstr "찾아보기"
-
-#: ui/renamer_rule_suggester_dialog.py:71
-msgid "Directory"
-msgstr "디렉터리"
 
 #: ui/renamer_rule_suggester_dialog.py:73
 msgid "Scan recursively"
@@ -1065,26 +1941,250 @@ msgstr ""
 msgid "No strong filename patterns detected."
 msgstr "강력한 파일명 패턴이 감지되지 않았습니다."
 
-#: ui/renamer_rule_suggester_dialog.py:197
+#: ui/renamer_rule_suggester_dialog.py:132
+msgid "{0}. [{1}%] {2}  ({3} files, {4}%)"
+msgstr "{0}. [{1}%] {2}  ({3} 파일, {4}%)"
+
+#: ui/renamer_rule_suggester_dialog.py:149
+#: ui/renamer_rule_suggester_dialog.py:180
+#: ui/renamer_rule_suggester_dialog.py:219
+msgid "n/a"
+msgstr "해당 없음"
+
+#: ui/renamer_rule_suggester_dialog.py:151
+#: ui/renamer_rule_suggester_dialog.py:180
+msgid "Reason: {0}"
+msgstr "이유: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:152
+#: ui/renamer_rule_suggester_dialog.py:185
+msgid "Pattern: {0}"
+msgstr "패턴: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:155
+msgid "Suggested rename_tag: {0}"
+msgstr "제안된 rename_tag: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:157
+msgid ""
+"rename_tag: auto-derived per pattern (each literal pattern becomes its own "
+"tag)"
+msgstr "rename_tag: 패턴별 자동 파생(각 리터럴 패턴이 자체 태그가 됨)"
+
+#: ui/renamer_rule_suggester_dialog.py:160
+msgid ""
+"Suggested function: {0} (set this yourself in the Function dropdown; it's "
+"not applied automatically)"
+msgstr "추천 함수: {0} (함수 드롭다운에서 직접 설정하세요; 자동으로 적용되지 않습니다)"
+
+#: ui/renamer_rule_suggester_dialog.py:165
+msgid "Also matches OS/browser duplicate-download copies, e.g. \"R (1).png\"."
+msgstr "OS/브라우저에서 만든 중복 다운로드 복사본도 일치합니다. 예: \"R (1).png\"."
+
+#: ui/renamer_rule_suggester_dialog.py:181
+msgid "Confidence: {0}%"
+msgstr "신뢰도: {0}%"
+
+#: ui/renamer_rule_suggester_dialog.py:182
+msgid "Affected: {0} files ({1}%)"
+msgstr "영향받은 파일: {0}개 ({1}%)"
+
+#: ui/renamer_rule_suggester_dialog.py:186
+msgid "Top subdirs: {0}"
+msgstr "상위 하위 디렉터리: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:200
 msgid "Select Suggestion"
 msgstr "제안 선택"
 
-#: ui/renamer_rule_suggester_dialog.py:197
+#: ui/renamer_rule_suggester_dialog.py:200
 msgid "Pick a suggestion first."
 msgstr "먼저 제안을 선택하세요."
 
-#: ui/renamer_rule_suggester_dialog.py:201
+#: ui/renamer_rule_suggester_dialog.py:204
 msgid "Invalid Suggestion"
 msgstr "잘못된 제안"
 
-#: ui/renamer_rule_suggester_dialog.py:201
+#: ui/renamer_rule_suggester_dialog.py:204
 msgid "Selected suggestion has no usable pattern."
 msgstr "선택한 제안에 사용 가능한 패턴이 없습니다."
 
-#: ui/test_results_window.py:262
+#: ui/test_results_window.py:81
+msgid "Verification tests"
+msgstr "검증 테스트"
+
+#: ui/test_results_window.py:114
+msgid "Verification test results"
+msgstr "검증 테스트 결과"
+
+#: ui/test_results_window.py:121
+msgid "Suite directory"
+msgstr "스위트 디렉터리"
+
+#: ui/test_results_window.py:126
+msgid "All suites"
+msgstr "모든 스위트"
+
+#: ui/test_results_window.py:137
+msgid "Click Run suite to start."
+msgstr "Run suite를 클릭하여 시작합니다."
+
+#: ui/test_results_window.py:173
+msgid "Total Tests: 0"
+msgstr "총 시험: 0"
+
+#: ui/test_results_window.py:176
+msgid "Passed: 0"
+msgstr "통과: 0"
+
+#: ui/test_results_window.py:180
+msgid "Failed: 0"
+msgstr "실패: 0"
+
+#: ui/test_results_window.py:184
+msgid "Time: 0:00"
+msgstr "시각: 0:00"
+
+#: ui/test_results_window.py:193
+msgid "Run suite"
+msgstr "스위트 실행"
+
+#: ui/test_results_window.py:201
+msgid "Save Results"
+msgstr "결과 저장"
+
+#: ui/test_results_window.py:218
+msgid "Running tests..."
+msgstr "테스트 실행 중..."
+
+#: ui/test_results_window.py:260
+msgid "Test tree not found: {0}"
+msgstr "테스트 트리를 찾을 수 없습니다: {0}"
+
+#: ui/test_results_window.py:268
 msgid ""
 "Excluding Qt UI tests (marker \"ui\") from All suites: they drive real "
 "widgets via the app's own QApplication and would hang running inside it."
 msgstr ""
 "Qt UI 테스트(마커 \\\"ui\\\")를 모든 스위트에서 제외합니다: 앱 자체의 QApplication을 통해 실제 위젯을 구동하며"
 " 내부에서 실행하면 멈출 수 있습니다."
+
+#: ui/test_results_window.py:280
+msgid "Test suite directory not found: {0}"
+msgstr "테스트 스위트 디렉터리를 찾을 수 없습니다: {0}"
+
+#: ui/test_results_window.py:299
+msgid "Backup test directory not found (required for fixtures): {0}"
+msgstr "백업 테스트 디렉터리를 찾을 수 없습니다(고정 데이터를 위해 필요): {0}"
+
+#: ui/test_results_window.py:313
+msgid "Base directory: "
+msgstr "기본 디렉토리: "
+
+#: ui/test_results_window.py:315
+msgid "Pytest targets: "
+msgstr "Pytest 대상: "
+
+#: ui/test_results_window.py:319
+msgid "Backup fixtures directory: "
+msgstr "백업 픽스처 디렉터리: "
+
+#: ui/test_results_window.py:321
+msgid "Python path: "
+msgstr "파이썬 경로: "
+
+#: ui/test_results_window.py:326
+msgid "Test target not found: {0}"
+msgstr "테스트 대상이 없습니다: {0}"
+
+#: ui/test_results_window.py:334
+msgid "Found test target: "
+msgstr "테스트 대상 찾음: "
+
+#: ui/test_results_window.py:338
+msgid "No test targets remain to run."
+msgstr "실행할 테스트 대상이 남아 있지 않습니다."
+
+#: ui/test_results_window.py:350
+msgid "Analyzing test suite..."
+msgstr "테스트 스위트 분석 중..."
+
+#: ui/test_results_window.py:369
+msgid "Found {0} tests in {1}"
+msgstr "{1}에서 {0}개의 테스트를 찾았습니다"
+
+#: ui/test_results_window.py:375
+msgid "Error collecting tests from {0}: {1}"
+msgstr "오류 수집 테스트 {0}: {1}"
+
+#: ui/test_results_window.py:395
+msgid "Running tests from {0}..."
+msgstr "{0}에서 테스트 실행 중..."
+
+#: ui/test_results_window.py:399
+msgid "Running tests from {0}:"
+msgstr "{0}에서 실행된 테스트:"
+
+#: ui/test_results_window.py:426
+msgid "Error in {0}:"
+msgstr "오류 {0}:"
+
+#: ui/test_results_window.py:444
+msgid "Error running tests in {0}: {1}"
+msgstr "{0}에서 테스트 실행 중 오류: {1}"
+
+#: ui/test_results_window.py:459
+msgid "Unexpected error running tests: {0}"
+msgstr "테스트 실행 중 예상치 못한 오류가 발생했습니다: {0}"
+
+#: ui/test_results_window.py:487
+msgid "Save Test Results"
+msgstr "테스트 결과 저장"
+
+#: ui/test_results_window.py:489
+msgid "Text Files (*.txt);;All Files (*)"
+msgstr "텍스트 파일 (*.txt);;모든 파일 (*)"
+
+#: ui/test_results_window.py:519
+msgid "Copy"
+msgstr "복사"
+
+#: ui/test_results_window.py:568
+msgid "Total Tests: {0}"
+msgstr "총 검사 수: {0}"
+
+#: ui/test_results_window.py:569
+msgid "Passed: {0}"
+msgstr "통과됨: {0}"
+
+#: ui/test_results_window.py:570
+msgid "Failed: {0}"
+msgstr "실패: {0}"
+
+#: ui/test_results_window.py:576
+msgid "Time: {0}:{1:02d}"
+msgstr "시간: {0}:{1:02d}"
+
+#: ui/test_results_window.py:586
+msgid "Test Run Complete - "
+msgstr "테스트 실행 완료 - "
+
+#: ui/test_results_window.py:587
+msgid "Total Tests: "
+msgstr "총 시험: "
+
+#: ui/test_results_window.py:588
+msgid "Passed: "
+msgstr "통과: "
+
+#: ui/test_results_window.py:589
+msgid "Failed: "
+msgstr "실패: "
+
+#: ui/test_results_window.py:592
+msgid "All tests passed successfully!"
+msgstr "모든 시험은 성공적으로 통과했습니다!"
+
+#: ui/test_results_window.py:592
+msgid "Some tests failed - check results"
+msgstr "일부 테스트 실패 - 결과 확인"

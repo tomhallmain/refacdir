@@ -40,13 +40,15 @@ class DuplicateDetailsDialog(SmartDialog):
         for group_idx, group in enumerate(self._groups, start=1):
             keep_file = group.get("keep_file", "")
             obvious = group.get("obvious", False)
-            header = QListWidgetItem(
-                f"[Group {group_idx}] Keep: {keep_file} | Obvious: {'Yes' if obvious else 'No'}"
-            )
+            if obvious:
+                header_text = _("[Group {0}] Keep: {1} | Obvious: Yes").format(group_idx, keep_file)
+            else:
+                header_text = _("[Group {0}] Keep: {1} | Obvious: No").format(group_idx, keep_file)
+            header = QListWidgetItem(header_text)
             header.setFlags(Qt.NoItemFlags)
             self.list_widget.addItem(header)
             for file_path in group.get("remove_files", []):
-                item = QListWidgetItem(f"  remove -> {file_path}")
+                item = QListWidgetItem(_("  remove -> {0}").format(file_path))
                 item.setData(Qt.UserRole, file_path)
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
                 item.setCheckState(Qt.Checked)
@@ -96,7 +98,7 @@ class DuplicateSummaryDialog(SmartDialog):
         super().__init__(
             parent=parent,
             position_parent=parent,
-            title="Duplicate Removal Review",
+            title=_("Duplicate Removal Review"),
             geometry="760x360",
             center=True,
         )
@@ -112,18 +114,18 @@ class DuplicateSummaryDialog(SmartDialog):
         non_obvious = self.payload.get("non_obvious_count", 0)
 
         if total == 0:
-            message = "No duplicates found."
+            message = _("No duplicates found.")
         elif non_obvious == 0:
-            message = (
-                f"Do you want to remove all ({total}) duplicate files?\n"
+            message = _(
+                "Do you want to remove all ({0}) duplicate files?\n"
                 "All duplicates appear to be valid."
-            )
+            ).format(total)
         else:
-            message = (
-                f"Found {total} duplicate files.\n"
-                f"- {obvious} are index-obvious duplicates.\n"
-                f"- {non_obvious} are non-obvious by filename."
-            )
+            message = _(
+                "Found {0} duplicate files.\n"
+                "- {1} are index-obvious duplicates.\n"
+                "- {2} are non-obvious by filename."
+            ).format(total, obvious, non_obvious)
 
         label = QLabel(message)
         label.setWordWrap(True)
@@ -162,14 +164,14 @@ class DuplicateSummaryDialog(SmartDialog):
 
     def _on_review_all(self):
         groups = self.payload.get("groups", [])
-        dlg = DuplicateDetailsDialog(self, groups, "Review All Duplicate Files")
+        dlg = DuplicateDetailsDialog(self, groups, _("Review All Duplicate Files"))
         if dlg.exec() == QDialog.Accepted:
             self.result_payload = {"action": "remove_selected", "files": dlg.selected_files()}
             self.accept()
 
     def _on_review_non_obvious(self):
         groups = [g for g in self.payload.get("groups", []) if not g.get("obvious", False)]
-        dlg = DuplicateDetailsDialog(self, groups, "Review Non-Obvious Duplicate Files")
+        dlg = DuplicateDetailsDialog(self, groups, _("Review Non-Obvious Duplicate Files"))
         if dlg.exec() == QDialog.Accepted:
             self.result_payload = {"action": "remove_selected", "files": dlg.selected_files()}
             self.accept()

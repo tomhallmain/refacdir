@@ -2,9 +2,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
-"POT-Creation-Date: 2026-09-20 18:47-0400\n"
-"PO-Revision-Date: 2026-09-20 18:47-0400\n"
-"Last-Translator: Translator Name <translator@example.com>\n"
+"POT-Creation-Date: 2026-11-07 18:12-0500\n"
+"PO-Revision-Date: 2026-11-07 18:12-0500\n"
+"Last-Translator: Thomas Hall <tomhall.main@gmail.com>\n"
 "Language-Team: zh Team <<EMAIL>>\n"
 "Language: zh\n"
 "MIME-Version: 1.0\n"
@@ -12,81 +12,118 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app_qt.py:74 app_qt.py:126 app_qt.py:188
+#: app_headless.py:254
+msgid ""
+"Hold a RefacDir session open with no GUI and serve it over MCP, for an agent"
+" to drive."
+msgstr "保持 RefacDir 会话打开且无 GUI，通过 MCP 提供，以便代理驱动。"
+
+#: app_headless.py:262
+msgid ""
+"Comma-separated config paths to select. Default: discover them, each with "
+"the will_run its own YAML sets."
+msgstr "以逗号分隔的配置路径以供选择。默认：自动发现它们，每个路径都有各自的 YAML 集合。"
+
+#: app_headless.py:266 app_headless.py:267 app_headless.py:268
+msgid "default: {0}"
+msgstr "默认值: {0}"
+
+#: app_headless.py:271
+msgid "Check that this build can serve, then exit without serving."
+msgstr "检查此构建是否可以提供服务，然后在不提供服务的情况下退出。"
+
+#: app_headless.py:275
+msgid "With --smoke-test: fail if OQS key encapsulation is unavailable."
+msgstr "使用 --smoke-test：如果 OQS 密钥封装不可用则失败。"
+
+#: app_qt.py:89 app_qt.py:153 app_qt.py:215
 msgid "RefacDir"
 msgstr "RefacDir"
 
-#: app_qt.py:192
+#: app_qt.py:219
 msgid "File Management"
 msgstr "文件管理"
 
-#: app_qt.py:205
+#: app_qt.py:232
 msgid "Toggle Theme"
 msgstr "切换主题"
 
-#: app_qt.py:210
+#: app_qt.py:237
 msgid "Run tests"
 msgstr "运行测试"
 
-#: app_qt.py:215
+#: app_qt.py:242
 msgid "Run Operations"
 msgstr "运行操作"
 
-#: app_qt.py:220
+#: app_qt.py:248
 msgid "Edit Configs"
 msgstr "编辑配置"
 
-#: app_qt.py:225
+#: app_qt.py:253
 msgid "Job History"
 msgstr "作业历史"
 
-#: app_qt.py:237
+#: app_qt.py:260
+msgid "Idle shutdown"
+msgstr "空闲关机"
+
+#: app_qt.py:263
+msgid " min"
+msgstr " 分钟"
+
+#: app_qt.py:264
+msgid ""
+"Close the UI after this many minutes without keyboard or mouse activity."
+msgstr "在键盘或鼠标无操作的情况下，经过此分钟数后关闭 UI。"
+
+#: app_qt.py:276
 msgid "Search Configurations"
 msgstr "搜索配置"
 
-#: app_qt.py:242
+#: app_qt.py:281
 msgid "Type to filter..."
 msgstr "输入文本进行筛选..."
 
-#: app_qt.py:253
+#: app_qt.py:292
 msgid "Available Configurations"
 msgstr "可用配置"
 
-#: app_qt.py:300
+#: app_qt.py:333
 msgid "File Management Dashboard"
 msgstr "文件管理仪表板"
 
-#: app_qt.py:304
+#: app_qt.py:337
 msgid ""
 "Configure and run file management operations with ease. Select "
 "configurations from the sidebar and customize options below."
 msgstr "轻松配置并执行文件管理操作。从侧边栏选择配置选项，并在下方自定义相关设置。"
 
-#: app_qt.py:320
+#: app_qt.py:353
 msgid "Operation Settings"
 msgstr "操作设置"
 
-#: app_qt.py:328
+#: app_qt.py:362
 msgid "Recur Selected Actions"
 msgstr "重复选中的动作"
 
-#: app_qt.py:332
+#: app_qt.py:366
 msgid "Test Mode"
 msgstr "测试模式"
 
-#: app_qt.py:336
+#: app_qt.py:370
 msgid "Skip Confirmations"
 msgstr "跳过确认"
 
-#: app_qt.py:340
+#: app_qt.py:374
 msgid "Only Observers"
 msgstr "只有观察员"
 
-#: app_qt.py:345
+#: app_qt.py:379
 msgid "Persist YAML definition caches between batch runs"
 msgstr "在批处理运行之间持久化 YAML 定义缓存"
 
-#: app_qt.py:349
+#: app_qt.py:383
 msgid ""
 "Unchecked (default): at each run, clear filename_mapping_functions and "
 "filetype_definitions registries before loading configs in this run. Checked:"
@@ -95,215 +132,1114 @@ msgstr ""
 "Unchecked（默认）: 每次运行时，在加载本次运行的配置之前，清除 filename_mapping_functions 和 "
 "filetype_definitions 注册表。Checked: 保留本会话中先前运行的定义（遗留）。"
 
-#: app_qt.py:361
-msgid " min"
-msgstr " 分钟"
-
-#: app_qt.py:362
-msgid ""
-"Close the UI after this many minutes without keyboard or mouse activity."
-msgstr "在键盘或鼠标无操作的情况下，经过此分钟数后关闭 UI。"
-
-#: app_qt.py:364
-msgid "Idle shutdown"
-msgstr "空闲关机"
-
-#: app_qt.py:379
+#: app_qt.py:404
 msgid "Operation Status"
 msgstr "运行状态"
 
-#: app_qt.py:383 app_qt.py:566 app_qt.py:886
+#: app_qt.py:408 app_qt.py:611 app_qt.py:1090
 msgid "Ready"
 msgstr "准备"
 
-#: app_qt.py:527
+#: app_qt.py:439
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_toggle_theme.py:31
+#: test/ui/test_main_window_toggle_theme.py:31
+msgid "Theme switched to dark."
+msgstr "主题已切换为暗色。"
+
+#: app_qt.py:439
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_toggle_theme.py:27
+#: test/ui/test_main_window_toggle_theme.py:27
+msgid "Theme switched to light."
+msgstr "主题已切换为浅色。"
+
+#: app_qt.py:563
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:100
+#: test/ui/test_main_window_run_config.py:100
 msgid "Queue full"
 msgstr "队列已满"
 
-#: app_qt.py:548
+#: app_qt.py:592
 msgid "Running operations..."
 msgstr "正在运行操作..."
 
-#: app_qt.py:557
+#: app_qt.py:600 app_qt.py:866
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:65
+#: test/ui/test_main_window_run_config.py:65 ui/log_panel.py:133
+#: ui/test_results_window.py:497
+msgid "Error"
+msgstr "错误"
+
+#: app_qt.py:601
 msgid "Operation failed"
 msgstr "操作失败"
 
-#: app_qt.py:682
-msgid "Failed to set target directory to receive marked files."
-msgstr "无法将目标目录设置为接收标记的文件。"
+#: app_qt.py:751
+msgid "Config saved: {0}"
+msgstr "配置已保存：{0}"
 
-#: refacdir/batch.py:266
+#: app_qt.py:814
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_confirm.py:58
+#: test/ui/test_main_window_confirm.py:58
+msgid "Waiting for confirmation: {0}"
+msgstr "等待确认: {0}"
+
+#: app_qt.py:866
+msgid "Config not found: {0}"
+msgstr "未找到配置：{0}"
+
+#: app_qt.py:872
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:74
+#: test/ui/test_main_window_run_config.py:74
+msgid "Config not enabled"
+msgstr "配置未启用"
+
+#: app_qt.py:873
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_run_config.py:74
+#: test/ui/test_main_window_run_config.py:74
+msgid "Check {0} to run it."
+msgstr "检查{0}以运行它。"
+
+#: app_qt.py:887
+#: build/nuitka/app_qt.dist/test/ui/test_main_window_source_drift.py:26
+#: test/ui/test_main_window_source_drift.py:26
+msgid "This build differs from its source checkout. Details are in the log."
+msgstr "此构建与其源代码检出不同。详细信息在日志中。"
+
+#: run.py:11
+msgid ""
+"Edit configuration YAML files in configs directory to configure file management batch actions.\n"
+"\n"
+"Once desired configurations are set, run with:\n"
+"python run.py [args]\n"
+"\n"
+"    -h, --help\n"
+"        Print this help text\n"
+"\n"
+"    -v, --verbose\n"
+"        Run in verbose mode\n"
+"\n"
+"    -t, --test\n"
+"        Run file management actions in test mode, without taking any action\n"
+"\n"
+"    -s, --skip-confirm\n"
+"        Run file management actions without confirming\n"
+"\n"
+"        --configs\n"
+"        Specify comma-separated list of config files to run\n"
+"\n"
+"    -o, --only-observers\n"
+"        Load configs but only run any Directory Observer actions defined in them\n"
+"\n"
+"    --persist-definition-caches\n"
+"        Keep filename_mapping_functions / filetype_definitions registries across batch runs\n"
+"        in the same process (default is to clear them at each run for a clean YAML-only view)\n"
+msgstr ""
+"编辑 configs 目录下的配置 YAML 文件，以配置文件管理批处理操作。\n"
+"\n"
+"配置完成后，使用以下方式运行：\n"
+"python run.py [args]\n"
+"\n"
+"    -h, --help\n"
+"        打印此帮助文本\n"
+"\n"
+"    -v, --verbose\n"
+"        以详细模式运行\n"
+"\n"
+"    -t, --test\n"
+"        在测试模式下运行文件管理操作，不执行任何实际操作\n"
+"\n"
+"    -s, --skip-confirm\n"
+"        在不确认的情况下运行文件管理操作\n"
+"\n"
+"        --configs\n"
+"        指定以逗号分隔的要运行的配置文件列表\n"
+"\n"
+"    -o, --only-observers\n"
+"        加载配置但仅运行其中定义的 Directory Observer 操作\n"
+"\n"
+"    --persist-definition-caches\n"
+"        在同一进程的批处理运行之间保持 filename_mapping_functions / filetype_definitions 注册表\n"
+"        （默认在每次运行时清除，以获得仅 YAML 的干净视图） "
+
+#: run.py:80
+msgid "Expected config file paths list not found"
+msgstr "未找到预期的配置文件路径列表"
+
+#: run.py:89
+msgid "Invalid config list provided: {0}"
+msgstr "提供的配置列表无效: {0}"
+
+#: build/nuitka/app_qt.dist/test/ui/test_config_editor_paths.py:94
+#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91
+#: ui/config_editor_window.py:257
+msgid "(new config)"
+msgstr "(新配置)"
+
+#: build/nuitka/app_qt.dist/test/ui/test_log_panel.py:132
+#: test/ui/test_log_panel.py:132 ui/log_panel.py:140
+msgid "Clear"
+msgstr "清除"
+
+#: build/nuitka/app_qt.dist/test/ui/test_log_panel.py:133
+#: test/ui/test_log_panel.py:133 ui/log_panel.py:131
+msgid "Info"
+msgstr "信息"
+
+#: extensions/mcp_server.py:498
+msgid "Run these configs live? Files may be moved, renamed or deleted."
+msgstr "实时运行这些配置吗？文件可能被移动、重命名或删除。"
+
+#: extensions/mcp_server.py:506
+msgid "(could not read: {0})"
+msgstr "(无法读取: {0})"
+
+#: extensions/mcp_server.py:513
+msgid "Duplicate policy: {0}"
+msgstr "重复策略：{0}"
+
+#: extensions/mcp_server.py:546
+msgid "Run this batch for real"
+msgstr "真实运行此批处理"
+
+#: refacdir/archive_extractor.py:220
+msgid "{0}: skipping member with unsafe path {1!r} in {2}"
+msgstr "{0}: 在 {2} 中跳过路径不安全的成员 {1!r}"
+
+#: refacdir/archive_extractor.py:278
+msgid "{0}: could not read {1}: {2}"
+msgstr "{0}：无法读取 {1}：{2}"
+
+#: refacdir/archive_extractor.py:282
+msgid "{0}: no extractable files found for pattern {1} in {2}"
+msgstr "{0}: 在 {2} 中未找到匹配模式 {1} 的可提取文件"
+
+#: refacdir/archive_extractor.py:291
+msgid "TEST (dry run) {0}: nothing extracted or deleted"
+msgstr "TEST (试运行) {0}: 未提取或删除任何内容"
+
+#: refacdir/archive_extractor.py:294
+msgid "TEST {0}: would extract {1} file(s) from {2} archive(s) into {3}"
+msgstr "TEST {0}：将从 {2} 个存档中提取 {1} 个文件到 {3}"
+
+#: refacdir/archive_extractor.py:298
+msgid "TEST extract {0} from {1} -> {2}{3}"
+msgstr "TEST 从 {1} 中提取 {0} -> {2}{3}"
+
+#: refacdir/archive_extractor.py:300 refacdir/named_subdir_collector.py:224
+msgid "TEST ... and {0} more"
+msgstr "TEST ... 和 {0} 更多"
+
+#: refacdir/archive_extractor.py:302
+msgid "TEST {0}: would remove {1} source archive(s)"
+msgstr "TEST {0}：将删除 {1} 个源存档"
+
+#: refacdir/archive_extractor.py:306
+msgid "{0}: extracting {1} file(s) from {2} archive(s) into {3}"
+msgstr "{0}: 正在从 {2} 个归档中提取 {1} 个文件到 {3}"
+
+#: refacdir/archive_extractor.py:310
+msgid "Confirm archive extraction"
+msgstr "确认归档提取"
+
+#: refacdir/archive_extractor.py:311
+msgid "\"{0}\": extract {1} file(s) from {2} archive(s) into {3}?"
+msgstr "\"{0}\": 将 {1} 个文件从 {2} 存档提取至 {3}？"
+
+#: refacdir/archive_extractor.py:315
+msgid "Source archives will be deleted afterwards."
+msgstr "源存档将在之后被删除。"
+
+#: refacdir/archive_extractor.py:318 refacdir/batch_renamer.py:227
+#: refacdir/image_categorizer.py:109 refacdir/named_subdir_collector.py:237
+msgid "Operation cancelled by user"
+msgstr "操作已被用户取消"
+
+#: refacdir/archive_extractor.py:337
+msgid "extracted {0} -> {1} (renamed)"
+msgstr "已提取 {0} -> {1} (已重命名)"
+
+#: refacdir/archive_extractor.py:339
+msgid "extracted {0} -> {1}"
+msgstr "已提取 {0} -> {1}"
+
+#: refacdir/archive_extractor.py:343
+msgid "{0}: failed to extract {1} from {2}: {3}"
+msgstr "{0}：未能从 {2} 提取 {1}：{3}"
+
+#: refacdir/archive_extractor.py:347
+msgid "{0}: failed to open {1}: {2}"
+msgstr "{0}：打开 {1} 失败：{2}"
+
+#: refacdir/archive_extractor.py:349
+msgid "{0}: extracted {1} file(s) into {2}"
+msgstr "{0}: 已将 {1} 个文件提取到 {2}"
+
+#: refacdir/archive_extractor.py:351
+msgid "{0}: {1} file(s) renamed to avoid name collisions"
+msgstr "{0}: 为避免名称冲突，已将 {1} 个文件重命名"
+
+#: refacdir/archive_extractor.py:361
+msgid "{0}: keeping {1}, not every member extracted successfully"
+msgstr "{0}：保留 {1}，并非所有成员都成功提取"
+
+#: refacdir/archive_extractor.py:365
+msgid "{0}: removed source archive {1}"
+msgstr "{0}: 已删除源归档 {1}"
+
+#: refacdir/archive_extractor.py:367
+msgid "{0}: failed to remove source archive {1}"
+msgstr "{0}: 删除源存档 {1} 失败"
+
+#: refacdir/batch.py:65
+msgid "No config files found!"
+msgstr "未找到配置文件！"
+
+#: refacdir/batch.py:291
 msgid "Starting batch operations..."
 msgstr "开始批处理操作..."
 
-#: refacdir/batch.py:282
+#: refacdir/batch.py:302
+msgid "Processing config {0}/{1}: {2}"
+msgstr "正在处理配置 {0}/{1}: {2}"
+
+#: refacdir/batch.py:307
+msgid "Batch operations completed with {0} skipped actions"
+msgstr "批处理操作已完成，跳过了 {0} 项操作"
+
+#: refacdir/batch.py:308
 msgid "Batch operations completed (skipped {0} actions)"
 msgstr "批量操作已完成（跳过 {0} 个操作）"
 
-#: refacdir/batch.py:285
+#: refacdir/batch.py:310
+msgid "Batch operations completed successfully"
+msgstr "批量操作已成功完成"
+
+#: refacdir/batch.py:311
 msgid "Batch operations completed"
 msgstr "批处理操作已完成"
 
-#: refacdir/batch.py:293
+#: refacdir/batch.py:316
+msgid "Batch job cancelled"
+msgstr "批处理作业已取消"
+
+#: refacdir/batch.py:318
+msgid "Batch job interrupted by user"
+msgstr "批处理作业被用户中断"
+
+#: refacdir/batch.py:319
+msgid "Exiting prematurely at user request..."
+msgstr "应用户请求提前退出..."
+
+#: refacdir/batch.py:322
 msgid "Operations cancelled by user"
 msgstr "用户取消的操作"
 
-#: refacdir/batch.py:343
+#: refacdir/batch.py:339
+msgid "Config {0} failed to load: {1}"
+msgstr "配置 {0} 加载失败: {1}"
+
+#: refacdir/batch.py:346
+msgid "{0} is set to will run = False, skipping..."
+msgstr "{0} 被设置为 will run = False，跳过..."
+
+#: refacdir/batch.py:352
+msgid "Config {0} failed to load: no actions found in the config file."
+msgstr "配置 {0} 加载失败：配置文件中未找到任何操作。"
+
+#: refacdir/batch.py:375
+msgid "Config {0} stopped after {1} actions (skipped {2} actions)"
+msgstr "配置 {0} 在执行 {1} 个操作后停止（跳过 {2} 个操作）"
+
+#: refacdir/batch.py:377
 msgid "Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)"
 msgstr "配置 {0}/{1}：{2} 在执行 {3} 个操作后停止（跳过了 {4} 个操作）"
 
-#: refacdir/batch.py:398
+#: refacdir/batch.py:400
+msgid "{0} {1} job(s) completed"
+msgstr "{0} {1} 作业已完成"
+
+#: refacdir/batch.py:405
+msgid "{0} {1} job(s) failed"
+msgstr "{0} {1} 作业失败"
+
+#: refacdir/batch.py:412
+msgid "{0} completed, {1} skipped."
+msgstr "{0} 已完成，{1} 已跳过。"
+
+#: refacdir/batch.py:414
+msgid "{0} completed."
+msgstr "{0} 已完成。"
+
+#: refacdir/batch.py:416
+msgid "{0} skipped."
+msgstr "{0} 已跳过。"
+
+#: refacdir/batch.py:420 ui/batch_history_window.py:74
+msgid "Failures:"
+msgstr "失败:"
+
+#: refacdir/batch.py:424
+msgid "Batch Operations Failed"
+msgstr "批处理操作失败"
+
+#: refacdir/batch.py:426
+msgid "All operations completed successfully"
+msgstr "所有操作已成功完成"
+
+#: refacdir/batch.py:433
+msgid "{0} - Skipping {1} action"
+msgstr "{0} - 正在跳过 {1} 操作"
+
+#: refacdir/batch.py:436
 msgid "Config {0}/{1}: Running {2} action in {3}"
 msgstr "配置 {0}/{1}：正在执行 {2} 操作，位于 {3} 中"
 
-#: refacdir/batch.py:455
+#: refacdir/batch.py:447
+msgid "Invalid action configuration in {0} at index {1}: {2}"
+msgstr "在 {0} 中索引 {1} 处的操作配置无效: {2}"
+
+#: refacdir/batch.py:453
+msgid "Failed to run action at index {0} in {1}: {2}"
+msgstr "在 {1} 中索引 {0} 的操作运行失败: {2}"
+
+#: refacdir/batch.py:484
+msgid "Error in {0}, {1} action \"{2}\": {3}"
+msgstr "错误在 {0}，{1} 操作 \"{2}\"：{3}"
+
+#: refacdir/batch.py:490
+msgid "Error in {0}, {1} action #{2}: {3}"
+msgstr "错误 {0}，{1} 操作 #{2}: {3}"
+
+#: refacdir/batch.py:502
 msgid "Config {0}/{1}: Running {2} {3}/{4} in {5}"
 msgstr "配置 {0}/{1}：正在执行 {2} {3}/{4} 中的 {5}"
 
-#: refacdir/batch.py:498
+#: refacdir/batch.py:510
+msgid "{0}: {1} action \"{2}\" failed: {3}"
+msgstr "{0}: {1} 操作 \"{2}\" 失败: {3}"
+
+#: refacdir/batch.py:521
+msgid "{0} - Skipping renamer mapping {1} (will_run=false)"
+msgstr "{0} - 跳过重命名映射 {1} (will_run=false)"
+
+#: refacdir/batch.py:533
+msgid "Error in {0}, renamer mapping \"{1}\": {2}"
+msgstr "错误在 {0}，重命名映射“{1}”：{2}"
+
+#: refacdir/batch.py:539
+msgid "Error in {0}, renamer mapping #{1}: {2}"
+msgstr "错误位于 {0}，重命名映射 #{1}：{2}"
+
+#: refacdir/batch.py:551
 msgid "Config {0}/{1}: Running renamer mapping {2}/{3} in {4}"
 msgstr "配置 {0}/{1}：正在运行重命名映射 {2}/{3} 在 {4} 中"
 
-#: refacdir/backup/backup_manager.py:77 refacdir/backup/backup_manager.py:94
+#: refacdir/batch.py:563
+msgid "{0}: renamer mapping \"{1}\" failed: {2}"
+msgstr "{0}: 重命名映射 \"{1}\" 失败: {2}"
+
+#: refacdir/batch.py:603
+msgid "Duplicate remover {0}: duplicate_policy is cancel, keeping duplicates"
+msgstr "重复删除器 {0}: duplicate_policy 为 cancel，保留重复项"
+
+#: refacdir/batch_renamer.py:164
+msgid ""
+"{0} matches more than one search pattern in this mapping; keeping it under "
+"the first pattern only."
+msgstr "{0} 在此映射中匹配多个搜索模式；仅保留在第一个模式下。"
+
+#: refacdir/batch_renamer.py:199
+msgid "TESTING BATCH RENAME PROCESS: {0} (no change to be made)"
+msgstr "批量重命名过程测试: {0} (不做任何更改)"
+
+#: refacdir/batch_renamer.py:201
+#: test/renamer/test_batch_renamer_single_scan.py:136
+msgid "{0} - No files found at {1} ({2})"
+msgstr "{0} - 在 {1} 未找到文件 ({2})"
+
+#: refacdir/batch_renamer.py:206
+#: test/renamer/test_batch_renamer_single_scan.py:140
+#: test/renamer/test_batch_renamer_single_scan.py:157
+msgid "BATCH RENAME PROCESS STARTED: {0}"
+msgstr "批量重命名过程已启动: {0}"
+
+#: refacdir/batch_renamer.py:223
+msgid "Confirm renaming"
+msgstr "确认重命名"
+
+#: refacdir/batch_renamer.py:224
+msgid "Run \"{0}\" on {1} file(s) found?"
+msgstr "在找到的 {1} 个文件上运行“{0}”吗？"
+
+#: refacdir/batch_renamer.py:225
+msgid "Locations:"
+msgstr "位置："
+
+#: refacdir/batch_renamer.py:237
+#: test/renamer/test_batch_renamer_single_scan.py:158
+msgid "BATCH RENAME PROCESS COMPLETE: {0}"
+msgstr "批量重命名过程完成：{0}"
+
+#: refacdir/directory_observer.py:190
+msgid "Current state of directories:"
+msgstr "目录的当前状态："
+
+#: refacdir/directory_observer.py:191
+msgid "Total: {0} files"
+msgstr "总计: {0} 文件"
+
+#: refacdir/directory_observer.py:193 ui/renamer_rule_suggester_dialog.py:71
+msgid "Directory"
+msgstr "目录"
+
+#: refacdir/directory_observer.py:196
+msgid "Other"
+msgstr "其他"
+
+#: refacdir/directory_observer.py:197
+msgid "Total"
+msgstr "总计"
+
+#: refacdir/directory_observer.py:220
+msgid "No matching directory found for exclude directory {0}"
+msgstr "未找到与排除目录 {0} 匹配的目录"
+
+#: refacdir/duplicate_remover.py:174
+msgid "Running duplicate removal for: {0}"
+msgstr "正在删除重复项：{0}"
+
+#: refacdir/duplicate_remover.py:177
+msgid "TEST {0}: logging duplicates, removing nothing"
+msgstr "测试 {0}：记录重复项，未删除任何内容"
+
+#: refacdir/duplicate_remover.py:182
+msgid "skip_confirm set. Removing all duplicates without prompt."
+msgstr "skip_confirm 已设置。未提示即删除所有重复项。"
+
+#: refacdir/duplicate_remover.py:189
+msgid "No duplicates found after review payload generation."
+msgstr "生成审查负载后未发现重复项。"
+
+#: refacdir/duplicate_remover.py:200
+msgid "Duplicate review cancelled by user."
+msgstr "用户已取消重复审查。"
+
+#: refacdir/duplicate_remover.py:204 refacdir/duplicate_remover.py:359
+msgid "Confirm duplicate removal"
+msgstr "确认删除重复项"
+
+#: refacdir/duplicate_remover.py:205
+msgid "Remove all duplicates listed above?"
+msgstr "删除上述所有重复项吗？"
+
+#: refacdir/duplicate_remover.py:206
+msgid "User confirmed removal of all duplicates"
+msgstr "用户已确认删除所有重复项"
+
+#: refacdir/duplicate_remover.py:209 refacdir/duplicate_remover.py:214
+msgid "No change made."
+msgstr "未进行更改。"
+
+#: refacdir/duplicate_remover.py:210
+msgid "Remove duplicates with confirmation one by one?"
+msgstr "逐个确认删除重复项？"
+
+#: refacdir/duplicate_remover.py:211
+msgid "User chose to remove duplicates with individual confirmation"
+msgstr "用户选择了逐个确认删除重复项"
+
+#: refacdir/duplicate_remover.py:215
+msgid "Save duplicates report?"
+msgstr "保存重复报告？"
+
+#: refacdir/duplicate_remover.py:216
+msgid "User chose to save duplicates report"
+msgstr "用户选择保存重复报告"
+
+#: refacdir/duplicate_remover.py:219 ui/duplicate_review_dialogs.py:117
+msgid "No duplicates found."
+msgstr "未找到重复项。"
+
+#: refacdir/duplicate_remover.py:271
+msgid "Removing file: {0}"
+msgstr "正在删除文件：{0}"
+
+#: refacdir/backup/backup_mapping.py:632 refacdir/duplicate_remover.py:275
+msgid "Failed to remove file {0}: {1}"
+msgstr "无法删除文件 {0}：{1}"
+
+#: refacdir/duplicate_remover.py:305
+msgid "Error reading file info for \"{0}\": {1}"
+msgstr "读取 \"{0}\" 的文件信息时出错：{1}"
+
+#: refacdir/duplicate_remover.py:307
+msgid "Error scanning directory \"{0}\": {1}"
+msgstr "扫描目录“{0}”时出错：{1}"
+
+#: refacdir/duplicate_remover.py:322
+msgid "Error generating hash for \"{0}\": {1}"
+msgstr "为“{0}”生成哈希时出错: {1}"
+
+#: refacdir/duplicate_remover.py:329
+msgid "Found {0} sets of duplicate files"
+msgstr "找到 {0} 组重复文件"
+
+#: refacdir/duplicate_remover.py:351 refacdir/duplicate_remover.py:355
+msgid "Keeping file: {0}"
+msgstr "保留文件：{0}"
+
+#: refacdir/duplicate_remover.py:352 refacdir/duplicate_remover.py:356
+msgid "Removing duplicate files: {0}"
+msgstr "正在删除重复文件：{0}"
+
+#: refacdir/duplicate_remover.py:360
+msgid "Keep {0} and remove {1} duplicate(s)?"
+msgstr "保留 {0} 并删除 {1} 个重复项？"
+
+#: refacdir/duplicate_remover.py:365
+msgid "User skipped removal of duplicates"
+msgstr "用户跳过了重复项的删除"
+
+#: refacdir/duplicate_remover.py:432
+msgid "Report saved at {0}"
+msgstr "报告已保存至 {0}"
+
+#: refacdir/duplicate_remover.py:446
+msgid "Remove duplicate files in a directory."
+msgstr "删除目录中的重复文件。"
+
+#: refacdir/duplicate_remover.py:447
+msgid "Directory to search for duplicate files"
+msgstr "用于搜索重复文件的目录"
+
+#: refacdir/file_renamer.py:94
+msgid "TEST rename {0} to {1}"
+msgstr "TEST 将 {0} 重命名为 {1}"
+
+#: refacdir/file_renamer.py:96
+msgid "moved {0} to {1}"
+msgstr "已将{0}移动到{1}"
+
+#: refacdir/file_renamer.py:98
+msgid "renamed {0} to {1}"
+msgstr "已将 {0} 重命名为 {1}"
+
+#: refacdir/file_renamer.py:103
+msgid "Failed to rename {0} to {1}"
+msgstr "将 {0} 重命名为 {1} 失败"
+
+#: refacdir/file_renamer.py:199
+msgid ""
+"Skipping {0}: no longer present (likely already renamed earlier in this run)"
+msgstr "跳过 {0}：不再存在（可能已在本次运行中提前重命名）"
+
+#: refacdir/file_renamer.py:206
+msgid ""
+"Exact time for new filename \"{0}\" matches another file, will try to find a"
+" close value."
+msgstr "新文件名“{0}”的精确时间与其他文件匹配，正在尝试寻找相近的值。"
+
+#: refacdir/file_renamer.py:353
+msgid ""
+"TEST rename {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+msgstr ""
+"TEST 重命名 {0} 个文件于 {1}，目标为 {2}。glob_exp={3}, rename_base={4}, recursive={5}"
+
+#: refacdir/file_renamer.py:355 refacdir/file_renamer.py:359
+msgid ""
+"No files found to rename at {0} for glob_exp={1}, rename_base={2}, "
+"recursive={3}"
+msgstr "在 {0} 未找到要重命名的文件，glob_exp={1}，rename_base={2}，recursive={3}"
+
+#: refacdir/file_renamer.py:357
+msgid ""
+"Renamed {0} files in {1} by {2}. glob_exp={3}, rename_base={4}, "
+"recursive={5}"
+msgstr ""
+"已在 {1} 中将 {0} 个文件重命名，操作人 {2}。glob_exp={3}, rename_base={4}, recursive={5}"
+
+#: refacdir/file_renamer.py:363
+msgid ""
+"Some renaming operations failed. The following files may still be present:"
+msgstr "某些重命名操作失败。以下文件可能仍然存在："
+
+#: refacdir/file_renamer.py:384
+msgid "Rename all files in {0}? Confirm (y/n): "
+msgstr "将 {0} 中的所有文件重命名？ 确认 (y/n): "
+
+#: refacdir/file_renamer.py:386
+msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
+msgstr "要按 glob 模式 {0} 在 {1} 中重命名文件吗？确认 (y/n)： "
+
+#: refacdir/image_categorizer.py:89
+msgid "{0}: no images found to categorize under {1}"
+msgstr "{0}: 在 {1} 下未找到可分类的图像"
+
+#: refacdir/image_categorizer.py:94
+msgid "TEST (dry run) {0}: no files moved"
+msgstr "TEST（干运行）{0}：未移动文件"
+
+#: refacdir/image_categorizer.py:96
+msgid "TEST {0}: would categorize {1} image(s)"
+msgstr "TEST {0}: 将对{1}张图像进行分类"
+
+#: refacdir/image_categorizer.py:98 refacdir/named_subdir_collector.py:222
+msgid "TEST move {0} -> {1}"
+msgstr "TEST 移动 {0} -> {1}"
+
+#: refacdir/image_categorizer.py:101
+msgid "{0}: categorizing {1} image(s) under {2}"
+msgstr "{0}: 正在将 {1} 张图像分类到 {2}"
+
+#: refacdir/image_categorizer.py:104
+msgid "Confirm image categorization"
+msgstr "确认图像分类"
+
+#: refacdir/image_categorizer.py:105
+msgid "\"{0}\": move {1} image(s) under {2} into categories {3}?"
+msgstr "\"{0}\": 将 {1} 张图片移动到 {2} 下的类别 {3} 中吗？"
+
+#: refacdir/image_categorizer.py:118
+msgid "File already exists: {0}"
+msgstr "文件已存在: {0}"
+
+#: refacdir/image_categorizer.py:121 refacdir/named_subdir_collector.py:252
+msgid "moved {0} -> {1}"
+msgstr "已移动 {0} -> {1}"
+
+#: refacdir/named_subdir_collector.py:199
+msgid "{0}: no files found to collect under {1}"
+msgstr "{0}：在 {1} 下未找到可收集的文件"
+
+#: refacdir/named_subdir_collector.py:204
+msgid "TEST (dry run) {0}: no files moved or dirs cleared"
+msgstr "测试（演练） {0}：未移动文件或清除目录"
+
+#: refacdir/named_subdir_collector.py:216
+msgid "TEST {0}: would move {1} file(s) under {2}"
+msgstr "TEST {0}：将把 {1} 个文件移动到 {2} 下"
+
+#: refacdir/named_subdir_collector.py:228
+msgid "{0}: collecting {1} file(s) into bucket folders at {2}"
+msgstr "{0}：将 {1} 个文件收集到 {2} 的存储桶文件夹"
+
+#: refacdir/named_subdir_collector.py:232
+msgid "Confirm named subdir collection"
+msgstr "确认已命名的子目录集合"
+
+#: refacdir/named_subdir_collector.py:233
+msgid "\"{0}\": move {1} file(s) into folders {2} under {3}?"
+msgstr "\"{0}\": 将 {1} 个文件移动到 {2} 文件夹下的 {3} 中吗？"
+
+#: refacdir/user_search_funcs.py:67
+msgid "User search functions not loaded"
+msgstr "用户搜索功能未加载"
+
+#: refacdir/user_search_funcs.py:68
+msgid ""
+"{0}\n"
+"\n"
+"This run uses the built-in search functions only."
+msgstr ""
+"{0}\n"
+"\n"
+"本次运行仅使用内置的搜索功能。"
+
+#: refacdir/backup/backup_manager.py:57
+msgid "TESTING BACKUPS"
+msgstr "备份测试"
+
+#: refacdir/backup/backup_manager.py:57
+msgid "RUNNING BACKUPS"
+msgstr "正在运行备份"
+
+#: refacdir/backup/backup_manager.py:70
+msgid "Backup cancelled by user; no change made."
+msgstr "备份已被用户取消；未进行任何更改。"
+
+#: refacdir/backup/backup_manager.py:80 refacdir/backup/backup_manager.py:97
 msgid "Backup \"{0}\" ({1}/{2}): {3}"
 msgstr "备份 \"{0}\" ({1}/{2})：{3}"
 
-#: refacdir/utils/translations.py:40
+#: refacdir/backup/backup_manager.py:84
+msgid "Starting backup mapping %s (%s/%s): %s -> %s"
+msgstr "正在启动备份映射 %s (%s/%s)：%s -> %s"
+
+#: refacdir/backup/backup_manager.py:115
+msgid "\"{0}\": dry run of {1} backup mapping(s)?"
+msgstr "\"{0}\": {1} 个备份映射的干运行吗？"
+
+#: refacdir/backup/backup_manager.py:117
+msgid ""
+"\"{0}\": run {1} backup mapping(s)? Files will be copied, moved or removed."
+msgstr "\"{0}\": 运行 {1} 个备份映射？文件将被复制、移动或删除。"
+
+#: refacdir/backup/backup_manager.py:120
+msgid "Confirm backup"
+msgstr "确认备份"
+
+#: refacdir/backup/backup_manager.py:123
+msgid "I have checked these mappings"
+msgstr "我已检查这些映射"
+
+#: refacdir/backup/backup_manager.py:126
+msgid "Confirmation received, running backups."
+msgstr "已收到确认，正在执行备份。"
+
+#: refacdir/backup/backup_mapping.py:200 test/backup/test_backup.py:371
+msgid "Duplicate content hash {0}... : {1}"
+msgstr "重复的内容哈希 {0}... : {1}"
+
+#: refacdir/backup/backup_mapping.py:202
+msgid "scan complete"
+msgstr "扫描完成"
+
+#: refacdir/backup/backup_mapping.py:241
+msgid "counting files to scan…"
+msgstr "正在统计要扫描的文件…"
+
+#: refacdir/backup/backup_mapping.py:251
+msgid "counted {0} files; hashing…"
+msgstr "已统计 {0} 个文件；哈希中…"
+
+#: refacdir/backup/backup_mapping.py:268
+msgid "hashed {0}/{1} files"
+msgstr "已散列 {0}/{1} 文件"
+
+#: refacdir/backup/backup_mapping.py:311
+msgid "nothing to hash"
+msgstr "没有要哈希的"
+
+#: refacdir/backup/backup_mapping.py:329
+msgid "Creating directory: {0}"
+msgstr "正在创建目录：{0}"
+
+#: refacdir/backup/backup_mapping.py:361
+msgid "Moving file within external dir to: {0} - previous location: {1}"
+msgstr "正在将外部目录中的文件移动到：{0} - 之前的位置：{1}"
+
+#: refacdir/backup/backup_mapping.py:364
+msgid "Replacing file: {0}"
+msgstr "正在替换文件: {0}"
+
+#: refacdir/backup/backup_mapping.py:366
+msgid "Creating file: {0}"
+msgstr "正在创建文件：{0}"
+
+#: refacdir/backup/backup_mapping.py:387
+msgid "Removing file already backed up: {0}"
+msgstr "正在删除已备份的文件：{0}"
+
+#: refacdir/backup/backup_mapping.py:446 refacdir/backup/backup_mapping.py:460
+msgid "Making new directory: {0}"
+msgstr "正在创建新目录：{0}"
+
+#: refacdir/backup/backup_mapping.py:452
+msgid "directory structure only"
+msgstr "仅目录结构"
+
+#: refacdir/backup/backup_mapping.py:471
+msgid "nothing to sync"
+msgstr "没有可同步的内容"
+
+#: refacdir/backup/backup_mapping.py:478
+msgid "sync {0}/{1} content groups"
+msgstr "同步 {0}/{1} 内容组"
+
+#: refacdir/backup/backup_mapping.py:500
+msgid "Removing stale file: {0}"
+msgstr "正在删除过时的文件: {0}"
+
+#: refacdir/backup/backup_mapping.py:517
+msgid "Removing stale empty directory: {0}"
+msgstr "正在删除过期的空目录：{0}"
+
+#: refacdir/backup/backup_mapping.py:623
+msgid "No failures encountered for mapping: {0} -> {1}"
+msgstr "映射未检测到错误: {0} -> {1}"
+
+#: refacdir/backup/backup_mapping.py:625
+msgid "Failures encountered for mapping: {0} -> {1}"
+msgstr "映射时遇到错误: {0} -> {1}"
+
+#: refacdir/backup/backup_mapping.py:630
+msgid "Failed to move {0} to {1}: {2}"
+msgstr "无法将 {0} 移动到 {1}：{2}"
+
+#: refacdir/backup/backup_mapping.py:634
+msgid "Failed to remove file {0} (target missing): {1}"
+msgstr "删除文件 {0} 失败（目标缺失）：{1}"
+
+#: refacdir/backup/backup_mapping.py:636
+msgid "Failed to remove stale file {0}: {1}"
+msgstr "未能删除过期文件 {0}：{1}"
+
+#: refacdir/backup/backup_mapping.py:638
+msgid "Failed to remove stale directory {0}: {1}"
+msgstr "未能删除过时的目录 {0}: {1}"
+
+#: refacdir/backup/backup_mapping.py:647
+msgid "Saved failure data to {0}"
+msgstr "已将失败数据保存到{0}"
+
+#: refacdir/backup/backup_mapping.py:649
+msgid "Could not write failure log: {0}"
+msgstr "无法写入失败日志：{0}"
+
+#: refacdir/backup/backup_mapping.py:675
+msgid ""
+"Name: {0}\n"
+"Source: {1}\n"
+"Target: {2}\n"
+"Mode: {3}\n"
+"File types: {4}\n"
+"Exclude dirs: {5}\n"
+"Exclude removal dirs: {6}"
+msgstr ""
+"名称: {0}\n"
+"源: {1}\n"
+"目标: {2}\n"
+"模式: {3}\n"
+"文件类型: {4}\n"
+"排除目录: {5}\n"
+"排除删除目录: {6}"
+
+#: refacdir/llm/preview.py:54
+msgid "{0} file(s) matched across {1} location(s)."
+msgstr "{0} 个文件在 {1} 个位置匹配。"
+
+#: refacdir/llm/preview.py:73
+msgid ""
+"{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
+"removed (mirror-mode mappings only)."
+msgstr "{0} 个文件将被添加/更新，{1} 个陈旧的文件/目录将被删除（仅限镜像模式映射）。"
+
+#: refacdir/llm/preview.py:83
+msgid "{0} duplicate file(s) would be removed across {1} group(s)."
+msgstr "{0} 个重复文件将在 {1} 组中被删除。"
+
+#: refacdir/llm/preview.py:93
+msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
+msgstr "{0} / {1} 个总文件匹配已跟踪的类型，跨越 {2} 个目录。"
+
+#: refacdir/llm/preview.py:101
+msgid "{0} file(s) would be collected into {1} named subdir(s)."
+msgstr "{0} 个文件将被收集到 {1} 个已命名的子目录中。"
+
+#: refacdir/llm/preview.py:109
+msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
+msgstr "{0} 文件将从 {1} 存档中提取到 {2}。"
+
+#: refacdir/llm/preview.py:113
+msgid "{0} archive(s) could not be read."
+msgstr "无法读取 {0} 个存档。"
+
+#: refacdir/utils/confirm.py:56
+msgid "{0} (y/n): "
+msgstr "{0} (y/n)： "
+
+#: refacdir/utils/translations.py:41
 msgid "Monday"
 msgstr "星期一"
 
-#: refacdir/utils/translations.py:42
+#: refacdir/utils/translations.py:43
 msgid "Tuesday"
 msgstr "星期二"
 
-#: refacdir/utils/translations.py:44
+#: refacdir/utils/translations.py:45
 msgid "Wednesday"
 msgstr "星期三"
 
-#: refacdir/utils/translations.py:46
+#: refacdir/utils/translations.py:47
 msgid "Thursday"
 msgstr "星期四"
 
-#: refacdir/utils/translations.py:48
+#: refacdir/utils/translations.py:49
 msgid "Friday"
 msgstr "星期五"
 
-#: refacdir/utils/translations.py:50
+#: refacdir/utils/translations.py:51
 msgid "Saturday"
 msgstr "星期六"
 
-#: refacdir/utils/translations.py:52
+#: refacdir/utils/translations.py:53
 msgid "Sunday"
 msgstr "星期日"
 
-#: refacdir/utils/translations.py:64
+#: refacdir/utils/translations.py:65
 msgid "seconds"
 msgstr "秒数"
 
-#: refacdir/utils/translations.py:66
+#: refacdir/utils/translations.py:67
 msgid "minutes"
 msgstr "分钟"
 
-#: refacdir/utils/translations.py:68
+#: refacdir/utils/translations.py:69
 msgid "hours"
 msgstr "小时"
 
-#: refacdir/utils/translations.py:70
+#: refacdir/utils/translations.py:71
 msgid "days"
 msgstr "天数"
 
-#: refacdir/utils/translations.py:72
+#: refacdir/utils/translations.py:73
 msgid "weeks"
 msgstr "周数"
 
-#: refacdir/utils/translations.py:74
+#: refacdir/utils/translations.py:75
 msgid "months"
 msgstr "月数"
 
-#: refacdir/utils/translations.py:76
+#: refacdir/utils/translations.py:77
 msgid "years"
 msgstr "年份"
+
+#: test/ui/test_llm_config_chat_dialog.py:184 ui/llm_config_chat_dialog.py:235
+msgid "Failed after {0} attempt(s): {1}"
+msgstr "在 {0} 次尝试后失败: {1}"
+
+#: test/ui/test_renamer_action_dialog_chain.py:55
+#: ui/config_action_dialogs.py:587
+msgid "chained"
+msgstr "已链接"
 
 #: ui/batch_history_window.py:41
 msgid "(none)"
 msgstr "(无)"
 
-#: ui/batch_history_window.py:44
-msgid " (cancelled)"
-msgstr " (已取消)"
+#: ui/batch_history_window.py:45
+msgid "{0} (cancelled) — {1} — {2} op(s), {3} reversible"
+msgstr "{0}（已取消） — {1} — {2} 操作，{3} 可逆"
 
-#: ui/batch_history_window.py:49 ui/batch_history_window.py:77
+#: ui/batch_history_window.py:48
+msgid "{0} — {1} — {2} op(s), {3} reversible"
+msgstr "{0} — {1} — {2} 操作, {3} 可逆"
+
+#: ui/batch_history_window.py:52 ui/batch_history_window.py:80
 msgid "(unknown config)"
 msgstr "(未知配置)"
 
-#: ui/batch_history_window.py:50 ui/batch_history_window.py:78
-#: ui/batch_history_window.py:91
+#: ui/batch_history_window.py:53 ui/batch_history_window.py:81
+#: ui/batch_history_window.py:94
 msgid "(untagged)"
 msgstr "（未标记）"
 
-#: ui/batch_history_window.py:74
+#: ui/batch_history_window.py:56
+msgid "{0} / {1} — {2} op(s), {3} reversible"
+msgstr "{0} / {1} — {2} 操作, {3} 可逆"
+
+#: ui/batch_history_window.py:61
+msgid "Job ID: {0}"
+msgstr "作业 ID: {0}"
+
+#: ui/batch_history_window.py:62
+msgid "Started: {0}"
+msgstr "已启动: {0}"
+
+#: ui/batch_history_window.py:63
+msgid "Finished: {0}"
+msgstr "完成：{0}"
+
+#: ui/batch_history_window.py:64
+msgid "Configs: {0}"
+msgstr "配置：{0}"
+
+#: ui/batch_history_window.py:65
+msgid "Cancelled: Yes"
+msgstr "已取消: 是"
+
+#: ui/batch_history_window.py:65
+msgid "Cancelled: No"
+msgstr "已取消：否"
+
+#: ui/batch_history_window.py:67
+msgid "Action counts:"
+msgstr "动作计数："
+
+#: ui/batch_history_window.py:77
 msgid "(all mappings)"
 msgstr "(所有映射)"
 
-#: ui/batch_history_window.py:118
+#: ui/batch_history_window.py:83
+msgid "File operations — {0}:"
+msgstr "文件操作 — {0}:"
+
+#: ui/batch_history_window.py:98
+msgid "[reversed]"
+msgstr "[颠倒]"
+
+#: ui/batch_history_window.py:102
+msgid "[can reverse]"
+msgstr "[可逆]"
+
+#: ui/batch_history_window.py:104
+msgid "[missing at dest]"
+msgstr "[目标端缺失]"
+
+#: ui/batch_history_window.py:106
+msgid "[not reversible]"
+msgstr "[不可逆]"
+
+#: ui/batch_history_window.py:121
 msgid "Batch Job History"
 msgstr "批处理作业历史"
 
-#: ui/batch_history_window.py:132
+#: ui/batch_history_window.py:135
 msgid ""
 "Last {0} batch jobs (stored in encrypted cache). Reverse an entire job or a "
 "single renamer mapping."
 msgstr "最近的 {0} 批处理作业（存储在加密缓存中）。反转整个作业或单个重命名映射。"
 
-#: ui/batch_history_window.py:158
+#: ui/batch_history_window.py:161
 msgid "Refresh"
 msgstr "刷新"
 
-#: ui/batch_history_window.py:162 ui/batch_history_window.py:342
+#: ui/batch_history_window.py:165 ui/batch_history_window.py:345
 msgid "Preview reverse mapping"
 msgstr "预览逆向映射"
 
-#: ui/batch_history_window.py:166 ui/batch_history_window.py:313
-#: ui/batch_history_window.py:342
+#: ui/batch_history_window.py:169 ui/batch_history_window.py:316
+#: ui/batch_history_window.py:345
 msgid "Reverse mapping"
 msgstr "反转映射"
 
-#: ui/batch_history_window.py:170 ui/batch_history_window.py:344
+#: ui/batch_history_window.py:173 ui/batch_history_window.py:347
 msgid "Preview reverse job"
 msgstr "预览反向作业"
 
-#: ui/batch_history_window.py:174 ui/batch_history_window.py:319
-#: ui/batch_history_window.py:344
+#: ui/batch_history_window.py:177 ui/batch_history_window.py:322
+#: ui/batch_history_window.py:347
 msgid "Reverse entire job"
 msgstr "反转整个作业"
 
-#: ui/batch_history_window.py:193
+#: ui/batch_history_window.py:196
 msgid ""
 "No batch jobs recorded yet. Run operations (non test mode) to build history."
 msgstr "尚未记录批处理作业。请在非测试模式下运行操作以生成历史记录。"
 
-#: ui/batch_history_window.py:277
+#: ui/batch_history_window.py:280
 msgid "Job not found (history may have changed)."
 msgstr "未找到作业（历史可能已更改）。"
 
-#: ui/batch_history_window.py:288 ui/batch_history_window.py:295
-#: ui/batch_history_window.py:301 ui/batch_history_window.py:338
+#: ui/batch_history_window.py:291 ui/batch_history_window.py:298
+#: ui/batch_history_window.py:304 ui/batch_history_window.py:341
 msgid "Batch history"
 msgstr "批次历史"
 
-#: ui/batch_history_window.py:288
+#: ui/batch_history_window.py:291
 msgid "Select a job first."
 msgstr "请先选择一个作业。"
 
-#: ui/batch_history_window.py:295
+#: ui/batch_history_window.py:298
 msgid "Select a renamer mapping first."
 msgstr "请先选择一个重命名映射。"
 
-#: ui/batch_history_window.py:302
+#: ui/batch_history_window.py:305
 msgid "This job has no mapping tags; use Reverse entire job instead."
 msgstr "此作业没有映射标签；请改用 Reverse entire job。"
 
-#: ui/batch_history_window.py:309
+#: ui/batch_history_window.py:312
 msgid ""
 "Move files back for mapping \"{0}\" in config \"{1}\"?\n"
 "Only operations from this mapping are reversed (newest first). If a later mapping renamed the same file, reverse that mapping first."
@@ -311,7 +1247,7 @@ msgstr ""
 "将文件移回映射 \"{0}\"（配置 \"{1}\"）吗？\n"
 "仅逆转此映射的操作（最新的在前）。如果后续映射更名了同一文件，请先逆转那个映射。"
 
-#: ui/batch_history_window.py:316
+#: ui/batch_history_window.py:319
 msgid ""
 "Move files back along all recorded rename/move paths for this job?\n"
 "Operations are applied newest-first. Files must still exist at their destination."
@@ -319,7 +1255,7 @@ msgstr ""
 "将文件沿此作业记录的所有重命名/移动路径恢复吗？\n"
 "操作按最新优先顺序执行。文件必须仍然存在于目标位置。"
 
-#: ui/batch_history_window.py:346
+#: ui/batch_history_window.py:349
 msgid ""
 "Attempted: {0}\n"
 "Succeeded: {1}\n"
@@ -331,273 +1267,9 @@ msgstr ""
 "失败: {2}\n"
 "已跳过（不可逆或缺失）: {3}"
 
-#: ui/test_results_window.py:79
-msgid "Verification tests"
-msgstr "验证测试"
-
-#: ui/test_results_window.py:112
-msgid "Verification test results"
-msgstr "验证测试结果"
-
-#: ui/test_results_window.py:119
-msgid "Suite directory"
-msgstr "套件目录"
-
-#: ui/test_results_window.py:124
-msgid "All suites"
-msgstr "所有测试套件"
-
-#: ui/test_results_window.py:135
-msgid "Click Run suite to start."
-msgstr "点击 Run suite 开始。"
-
-#: ui/test_results_window.py:171
-msgid "Total Tests: 0"
-msgstr "测试总数：0"
-
-#: ui/test_results_window.py:174
-msgid "Passed: 0"
-msgstr "获得通过:0"
-
-#: ui/test_results_window.py:178
-msgid "Failed: 0"
-msgstr "失败: 0"
-
-#: ui/test_results_window.py:182
-msgid "Time: 0:00"
-msgstr "时间：0:00"
-
-#: ui/test_results_window.py:191
-msgid "Run suite"
-msgstr "运行套件"
-
-#: ui/custom_title_bar.py:109 ui/llm_config_chat_dialog.py:154
-#: ui/test_results_window.py:195
-msgid "Close"
-msgstr "关闭"
-
-#: ui/test_results_window.py:199
-msgid "Save Results"
-msgstr "保存结果"
-
-#: ui/test_results_window.py:216
-msgid "Running tests..."
-msgstr "正在运行测试..."
-
-#: ui/test_results_window.py:254
-msgid "Test tree not found: {0}"
-msgstr "未找到测试树：{0}"
-
-#: ui/test_results_window.py:274
-msgid "Test suite directory not found: {0}"
-msgstr "未找到测试套件目录：{0}"
-
-#: ui/test_results_window.py:293
-msgid "Backup test directory not found (required for fixtures): {0}"
-msgstr "未找到备份测试目录（用于固定装置）：{0}"
-
-#: ui/test_results_window.py:307
-msgid "Base directory: "
-msgstr "基准目录： "
-
-#: ui/test_results_window.py:309
-msgid "Pytest targets: "
-msgstr "Pytest 目标： "
-
-#: ui/test_results_window.py:313
-msgid "Backup fixtures directory: "
-msgstr "备份夹具目录: "
-
-#: ui/test_results_window.py:315
-msgid "Python path: "
-msgstr "Python 路径： "
-
-#: ui/test_results_window.py:320
-msgid "Test target not found: {0}"
-msgstr "未找到测试目标: {0}"
-
-#: ui/test_results_window.py:328
-msgid "Found test target: "
-msgstr "找到测试目标： "
-
-#: ui/test_results_window.py:332
-msgid "No test targets remain to run."
-msgstr "没有剩余的测试目标可运行。"
-
-#: ui/test_results_window.py:344
-msgid "Analyzing test suite..."
-msgstr "分析测试套房..."
-
-#: ui/test_results_window.py:363
-msgid "Found {0} tests in {1}"
-msgstr "在{1} 中找到{0} 测试"
-
-#: ui/test_results_window.py:369
-msgid "Error collecting tests from {0}: {1}"
-msgstr "从{0} 收集测试出错：{1}"
-
-#: ui/test_results_window.py:389
-msgid "Running tests from {0}..."
-msgstr "从{0} 运行测试..."
-
-#: ui/test_results_window.py:393
-msgid "Running tests from {0}:"
-msgstr "从{0} 运行测试："
-
-#: ui/test_results_window.py:420
-msgid "Error in {0}:"
-msgstr "{0} 中的错误："
-
-#: ui/test_results_window.py:438
-msgid "Error running tests in {0}: {1}"
-msgstr "运行{0}测试时出错：{1}"
-
-#: ui/test_results_window.py:453
-msgid "Unexpected error running tests: {0}"
-msgstr "运行中的意外错误：{0}"
-
-#: ui/test_results_window.py:478
-msgid "Save Test Results"
-msgstr "保存测试结果"
-
-#: ui/test_results_window.py:480
-msgid "Text Files (*.txt);;All Files (*)"
-msgstr "文本文件 (*.txt);;所有文件 (*)"
-
-#: ui/test_results_window.py:510
-msgid "Copy"
-msgstr "复制"
-
-#: ui/duplicate_review_dialogs.py:57 ui/test_results_window.py:513
-msgid "Select All"
-msgstr "全选"
-
-#: ui/test_results_window.py:559
-msgid "Total Tests: {0}"
-msgstr "总测试次数：{0}"
-
-#: ui/test_results_window.py:560
-msgid "Passed: {0}"
-msgstr "通过：{0}"
-
-#: ui/test_results_window.py:561
-msgid "Failed: {0}"
-msgstr "失败：{0}"
-
-#: ui/test_results_window.py:567
-msgid "Time: {0}:{1:02d}"
-msgstr "时间：{0}:{1:02d}"
-
-#: ui/test_results_window.py:577
-msgid "Test Run Complete - "
-msgstr "测试运行完成 - "
-
-#: ui/test_results_window.py:578
-msgid "Total Tests: "
-msgstr "测试总数： "
-
-#: ui/test_results_window.py:579
-msgid "Passed: "
-msgstr "通过： "
-
-#: ui/test_results_window.py:580
-msgid "Failed: "
-msgstr "失败： "
-
-#: ui/test_results_window.py:583
-msgid "All tests passed successfully!"
-msgstr "所有测试都顺利通过!"
-
-#: ui/test_results_window.py:583
-msgid "Some tests failed - check results"
-msgstr "一些测试失败 - 检查结果"
-
-#: refacdir/archive_extractor.py:300
-msgid "Confirm extraction of {0} file(s) from {1} archive(s) into {2} (y/n): "
-msgstr "确认将 {0} 个文件从 {1} 个存档提取到 {2} (y/n)： "
-
-#: refacdir/batch_renamer.py:208
-msgid "Confirm (y/n) "
-msgstr "确认 (y/n) "
-
-#: refacdir/duplicate_remover.py:197
-msgid "Confirm all duplicates removal (Y/n): "
-msgstr "确认删除所有重复项 (Y/n): "
-
-#: refacdir/duplicate_remover.py:203
-msgid "Remove duplicates with confirmation one by one? (Y/n): "
-msgstr "逐个确认删除重复项吗？ (Y/n): "
-
-#: refacdir/duplicate_remover.py:209
-msgid "Save duplicates report? (Y/n): "
-msgstr "保存重复报告吗？ (Y/n)： "
-
-#: refacdir/duplicate_remover.py:352
-msgid "OK to remove? (Y/n): "
-msgstr "确定删除吗？ (Y/n): "
-
-#: refacdir/file_renamer.py:384
-msgid "Rename all files in {0}? Confirm (y/n): "
-msgstr "将 {0} 中的所有文件重命名？ 确认 (y/n): "
-
-#: refacdir/file_renamer.py:386
-msgid "Rename files according to glob pattern {0} in {1}? Confirm (y/n): "
-msgstr "要按 glob 模式 {0} 在 {1} 中重命名文件吗？确认 (y/n)： "
-
-#: refacdir/image_categorizer.py:102
-msgid "Confirm categorization of {0} image(s) into {1} categories (y/n): "
-msgstr "确认将 {0} 张图像分类为 {1} 个类别 (y/n)： "
-
-#: refacdir/named_subdir_collector.py:227
-msgid "Confirm named subdir collection (y/n): "
-msgstr "确认已命名的子目录集合 (y/n): "
-
-#: refacdir/backup/backup_manager.py:110
-msgid ""
-"\n"
-"CONFIRM BACKUP (y/n): "
-msgstr " 确认备份 (y/n): "
-
-#: refacdir/backup/backup_manager.py:114
-msgid ""
-"\n"
-"CONFIRM BACKUP AGAIN (y/n): "
-msgstr " 再次确认备份 (y/n): "
-
-#: refacdir/llm/preview.py:55
-msgid "{0} file(s) matched across {1} location(s)."
-msgstr "{0} 个文件在 {1} 个位置匹配。"
-
-#: refacdir/llm/preview.py:74
-msgid ""
-"{0} file(s) would be added/updated, {1} stale file(s)/dir(s) would be "
-"removed (mirror-mode mappings only)."
-msgstr "{0} 个文件将被添加/更新，{1} 个陈旧的文件/目录将被删除（仅限镜像模式映射）。"
-
-#: refacdir/llm/preview.py:84
-msgid "{0} duplicate file(s) would be removed across {1} group(s)."
-msgstr "{0} 个重复文件将在 {1} 组中被删除。"
-
-#: refacdir/llm/preview.py:94
-msgid "{0} of {1} total file(s) matched tracked types across {2} dir(s)."
-msgstr "{0} / {1} 个总文件匹配已跟踪的类型，跨越 {2} 个目录。"
-
-#: refacdir/llm/preview.py:102
-msgid "{0} file(s) would be collected into {1} named subdir(s)."
-msgstr "{0} 个文件将被收集到 {1} 个已命名的子目录中。"
-
-#: refacdir/llm/preview.py:110
-msgid "{0} file(s) would be extracted from {1} archive(s) into {2}."
-msgstr "{0} 文件将从 {1} 存档中提取到 {2}。"
-
-#: refacdir/llm/preview.py:114
-msgid "{0} archive(s) could not be read."
-msgstr "无法读取 {0} 个存档。"
-
-#: test/ui/test_config_editor_paths.py:94 ui/config_editor_window.py:91
-#: ui/config_editor_window.py:257
-msgid "(new config)"
-msgstr "(新配置)"
+#: ui/batch_history_window.py:354
+msgid "... and {0} more"
+msgstr "...，还有{0}个"
 
 #: ui/config_action_dialogs.py:74 ui/config_action_dialogs.py:158
 msgid "Remove"
@@ -615,7 +1287,7 @@ msgstr "(未命名)"
 msgid "{0} ({1} key(s))"
 msgstr "{0}（{1} 键）"
 
-#: ui/config_action_dialogs.py:139
+#: ui/config_action_dialogs.py:139 ui/config_editor_window.py:286
 msgid "Action Type"
 msgstr "操作类型"
 
@@ -635,11 +1307,15 @@ msgstr "添加"
 msgid "Draft with AI..."
 msgstr "AI草稿..."
 
+#: ui/config_action_dialogs.py:166 ui/llm_config_chat_dialog.py:97
+msgid "{0} actions aren't supported by the AI drafting feature yet."
+msgstr "{0} 操作尚未在 AI 起草功能中受支持。"
+
 #: ui/config_action_dialogs.py:173
 msgid "Mapping Details"
 msgstr "映射详情"
 
-#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:419
+#: ui/config_action_dialogs.py:195 ui/config_action_dialogs.py:418
 msgid "Name"
 msgstr "名称"
 
@@ -651,9 +1327,13 @@ msgstr "属性"
 msgid "Add Property"
 msgstr "添加属性"
 
-#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:491
+#: ui/config_action_dialogs.py:211 ui/config_action_dialogs.py:490
 msgid "Save Mapping"
 msgstr "保存映射"
+
+#: ui/config_action_dialogs.py:281 ui/config_action_dialogs.py:527
+msgid "Mapping name is required."
+msgstr "映射名称是必填的。"
 
 #: ui/config_action_dialogs.py:292
 msgid "Select Mapping"
@@ -667,86 +1347,132 @@ msgstr "请选择要保存的映射。"
 msgid "Invalid Mapping"
 msgstr "映射无效"
 
-#: ui/config_action_dialogs.py:370
+#: ui/config_action_dialogs.py:352
+msgid "All mappings must have a name."
+msgstr "所有映射必须有名称。"
+
+#: ui/config_action_dialogs.py:355
+msgid "Mapping names must be unique within the action."
+msgstr "映射名称在同一操作中必须唯一。"
+
+#: ui/config_action_dialogs.py:369
 msgid "Validation failed: {0}"
 msgstr "验证失败: {0}"
 
-#: ui/config_action_dialogs.py:379
+#: ui/config_action_dialogs.py:378
 msgid "Backup mappings may include backup_mappings list and options."
 msgstr "备份映射可能包含 backup_mappings 列表和选项。"
 
-#: ui/config_action_dialogs.py:396
+#: ui/config_action_dialogs.py:395
 msgid ""
 "Each mapping defines function, locations, rename rules, and optional flags."
 msgstr "每个映射定义函数、位置、重命名规则和可选标志。"
 
-#: ui/config_action_dialogs.py:424
+#: ui/config_action_dialogs.py:399
+msgid "New renamer mapping"
+msgstr "新重命名映射"
+
+#: ui/config_action_dialogs.py:423
 msgid "Function"
 msgstr "功能"
 
-#: ui/config_action_dialogs.py:427 ui/renamer_rule_suggester_dialog.py:75
+#: ui/config_action_dialogs.py:426 ui/renamer_rule_suggester_dialog.py:75
 msgid "Options"
 msgstr "选项"
 
-#: ui/config_action_dialogs.py:443
+#: ui/config_action_dialogs.py:442
 msgid "Locations (one root path per line)"
 msgstr "位置（每行一个根路径）"
 
-#: ui/config_action_dialogs.py:450
+#: ui/config_action_dialogs.py:449
 msgid "Rename Rules"
 msgstr "重命名规则"
 
-#: ui/config_action_dialogs.py:457
+#: ui/config_action_dialogs.py:456
 msgid "Add / Update Rule"
 msgstr "添加 / 更新规则"
 
-#: ui/config_action_dialogs.py:460
+#: ui/config_action_dialogs.py:459
 msgid "Remove Rule"
 msgstr "删除规则"
 
-#: ui/config_action_dialogs.py:463
+#: ui/config_action_dialogs.py:462
 msgid "New Rule Draft"
 msgstr "新规则草案"
 
-#: ui/config_action_dialogs.py:466
+#: ui/config_action_dialogs.py:465
 msgid "Suggest Rules..."
 msgstr "建议规则..."
 
-#: ui/config_action_dialogs.py:473
+#: ui/config_action_dialogs.py:472
 msgid "pattern or comma-separated patterns"
 msgstr "模式或逗号分隔的模式"
 
-#: ui/config_action_dialogs.py:476
+#: ui/config_action_dialogs.py:475
 msgid "optional; one glob per line"
 msgstr "可选；每行一个 glob"
 
-#: ui/config_action_dialogs.py:679
+#: ui/config_action_dialogs.py:479
+msgid "also match OS/browser duplicate-download copies, e.g. \"name (1).ext\""
+msgstr "同时匹配 OS/浏览器的重复下载副本，例如 \"name (1).ext\""
+
+#: ui/config_action_dialogs.py:536
+msgid "At least one location root is required."
+msgstr "至少需要一个位置根。"
+
+#: ui/config_action_dialogs.py:543
+msgid "At least one rename rule is required."
+msgstr "至少需要一个重命名规则。"
+
+#: ui/config_action_dialogs.py:576
+msgid "{0} pattern(s)"
+msgstr "{0} 模式"
+
+#: ui/config_action_dialogs.py:579
+msgid "(auto per-pattern)"
+msgstr "(自动按模式)"
+
+#: ui/config_action_dialogs.py:585
+msgid "{0} exclude(s)"
+msgstr "{0} 排除"
+
+#: ui/config_action_dialogs.py:634
+msgid "search_patterns is required."
+msgstr "search_patterns 为必填项。"
+
+#: ui/config_action_dialogs.py:653
+msgid ""
+"rename_tag is required when a search pattern uses a \"{{...}}\" template or "
+"custom function reference."
+msgstr "当搜索模式使用 \"{{...}}\" 模板或自定义函数引用时，需要提供 rename_tag。"
+
+#: ui/config_action_dialogs.py:686
 msgid "Invalid Rule"
 msgstr "无效规则"
 
-#: ui/config_action_dialogs.py:745
+#: ui/config_action_dialogs.py:752
 msgid ""
 "Duplicate remover mappings usually contain source dirs and exclusion "
 "settings."
 msgstr "重复删除映射通常包含源目录和排除设置。"
 
-#: ui/config_action_dialogs.py:761
+#: ui/config_action_dialogs.py:768
 msgid ""
 "Directory observer mappings usually contain sortable/extra/parent dirs and "
 "file_types."
 msgstr "目录观察器映射通常包含可排序/额外/父目录和 file_types。"
 
-#: ui/config_action_dialogs.py:776
+#: ui/config_action_dialogs.py:783
 msgid ""
 "Directory flattener mappings usually include location and search_patterns."
 msgstr "目录扁平化映射通常包括位置和search_patterns。"
 
-#: ui/config_action_dialogs.py:790
+#: ui/config_action_dialogs.py:797
 msgid ""
 "Image categorizer mappings include source_dir, categories, and filters."
 msgstr "图像分类器映射包括 source_dir、categories 和 filters。"
 
-#: ui/config_action_dialogs.py:808
+#: ui/config_action_dialogs.py:815
 msgid ""
 "Collects files from nested folders whose basename is in subdir_names into "
 "root/<name>/. For subdir_names use comma-separated folder names in this "
@@ -759,20 +1485,40 @@ msgstr ""
 "subdir_names（推荐）。root：要扫描的目录树。clear_sources：移动后删除已清空的嵌套目录。subdir_depth（默认 "
 "1）：仅 root/<top-level-child>/<label>/；更大的值允许更多中间文件夹；-1 表示任意深度。"
 
-#: ui/config_action_dialogs.py:864
+#: ui/config_action_dialogs.py:824
+msgid "named_subdir_collector mapping"
+msgstr "命名子目录收集器映射"
+
+#: ui/config_action_dialogs.py:836
+msgid ""
+"subdir_names is required and must not be empty (comma-separated names, or "
+"YAML list in the saved file)."
+msgstr "subdir_names 为必填项且不能为空（逗号分隔的名称，或保存文件中的 YAML 列表）。"
+
+#: ui/config_action_dialogs.py:873
 msgid ""
 "Extracts ZIP archives matching pattern under search_dir into target_dir. "
 "target_dir is created if missing and always skipped while searching, so "
 "extracted files are never re-ingested; it cannot be search_dir or a parent "
 "of it. preserve_structure: keep each archive's folders under "
 "target_dir/<archive stem>/ (default off writes everything flat, tagging a "
-"collision with the archive's name). delete_sources: trash an archive once "
-"all of its members extracted."
+"collision with the archive's name). delete_sources (default on): trash an "
+"archive once all of its members extracted; set it false to keep the "
+"archives."
 msgstr ""
-"将匹配 search_dir 下模式的 ZIP 压缩包提取到 target_dir。若 target_dir "
-"不存在则创建，并在搜索时始终跳过它，从而防止已提取的文件再次被导入；target_dir 不能是 search_dir "
-"本身或其上层目录。preserve_structure：在 target_dir/<压缩包名称>/ "
-"下保留每个压缩包的文件夹（默认扁平化写入，冲突时使用压缩包名称标记）。delete_sources：在所有成员文件提取完成后将压缩包移入回收站。"
+"将 search_dir 下符合模式的 ZIP 压缩包解压到 target_dir。若 target_dir "
+"不存在则创建，并在搜索时始终跳过它，避免已解压的文件被重新导入；target_dir 不能是 search_dir "
+"本身或其父目录。preserve_structure：在 target_dir/<archive stem>/ "
+"下保留每个压缩包的文件夹（默认关闭时所有文件平铺写入，冲突时使用压缩包名标记）。delete_sources（默认开启）：在所有成员解压完毕后将压缩包放入回收站；设为"
+" false 则保留压缩包。"
+
+#: ui/config_action_dialogs.py:884
+msgid "archive_extractor mapping"
+msgstr "archive_extractor 映射"
+
+#: ui/config_editor_window.py:44
+msgid "Config Editor"
+msgstr "配置编辑器"
 
 #: ui/config_editor_window.py:61
 msgid "New Config"
@@ -866,6 +1612,10 @@ msgstr ""
 "未找到配置文件：\n"
 "{0}"
 
+#: ui/config_editor_window.py:243
+msgid "Top-level YAML must be a dictionary."
+msgstr "顶级 YAML 必须是字典。"
+
 #: ui/config_editor_window.py:249
 msgid "Load Error"
 msgstr "加载错误"
@@ -873,6 +1623,10 @@ msgstr "加载错误"
 #: ui/config_editor_window.py:281
 msgid "{0}. {1} ({2} mapping(s))"
 msgstr "{0}. {1} ({2} 映射)"
+
+#: ui/config_editor_window.py:286
+msgid "Choose Action Type"
+msgstr "选择操作类型"
 
 #: ui/config_editor_window.py:306 ui/config_editor_window.py:328
 msgid "Select Action"
@@ -893,6 +1647,18 @@ msgstr "不支持的操作类型：{0}"
 #: ui/config_editor_window.py:328
 msgid "Choose an action to remove."
 msgstr "选择要删除的操作。"
+
+#: ui/config_editor_window.py:354
+msgid "filename_mapping_functions must be a list."
+msgstr "filename_mapping_functions 必须是列表。"
+
+#: ui/config_editor_window.py:359
+msgid "filetype_definitions must be a list."
+msgstr "filetype_definitions 必须是列表。"
+
+#: ui/config_editor_window.py:362
+msgid "Invalid YAML block: {0}"
+msgstr "无效的 YAML 块：{0}"
 
 #: ui/config_editor_window.py:375
 msgid "Save Error"
@@ -926,15 +1692,20 @@ msgstr ""
 "已保存的配置：\n"
 "{0}"
 
-#: ui/custom_title_bar.py:99
+#: ui/custom_title_bar.py:100
 msgid "Minimize"
 msgstr "最小化"
 
-#: ui/custom_title_bar.py:104 ui/custom_title_bar.py:125
+#: ui/custom_title_bar.py:105 ui/custom_title_bar.py:126
 msgid "Maximize"
 msgstr "最大化"
 
-#: ui/custom_title_bar.py:122
+#: ui/custom_title_bar.py:110 ui/llm_config_chat_dialog.py:153
+#: ui/test_results_window.py:197
+msgid "Close"
+msgstr "关闭"
+
+#: ui/custom_title_bar.py:123
 msgid "Restore"
 msgstr "恢复"
 
@@ -942,69 +1713,177 @@ msgstr "恢复"
 msgid "Uncheck any files you do not want to remove."
 msgstr "取消选中您不想删除的文件。"
 
-#: ui/duplicate_review_dialogs.py:60
+#: ui/duplicate_review_dialogs.py:44
+msgid "[Group {0}] Keep: {1} | Obvious: Yes"
+msgstr "[组 {0}] 保持: {1} | 明显: 是"
+
+#: ui/duplicate_review_dialogs.py:46
+msgid "[Group {0}] Keep: {1} | Obvious: No"
+msgstr "[组{0} 保持: {1} | 明显: 否]"
+
+#: ui/duplicate_review_dialogs.py:51
+msgid "  remove -> {0}"
+msgstr "  删除 -> {0}"
+
+#: ui/duplicate_review_dialogs.py:59 ui/test_results_window.py:522
+msgid "Select All"
+msgstr "全选"
+
+#: ui/duplicate_review_dialogs.py:62
 msgid "Select None"
 msgstr "不选择"
 
-#: ui/duplicate_review_dialogs.py:133
+#: ui/duplicate_review_dialogs.py:101
+msgid "Duplicate Removal Review"
+msgstr "重复删除审查"
+
+#: ui/duplicate_review_dialogs.py:120
+msgid ""
+"Do you want to remove all ({0}) duplicate files?\n"
+"All duplicates appear to be valid."
+msgstr ""
+"是否要删除所有 ({0}) 个重复文件？\n"
+"所有重复文件似乎都是有效的。"
+
+#: ui/duplicate_review_dialogs.py:125
+msgid ""
+"Found {0} duplicate files.\n"
+"- {1} are index-obvious duplicates.\n"
+"- {2} are non-obvious by filename."
+msgstr ""
+"找到 {0} 个重复文件。\n"
+"- {1} 是索引明显的重复。\n"
+"- {2} 是文件名不明显的重复。"
+
+#: ui/duplicate_review_dialogs.py:135
 msgid "Remove All ({0})"
 msgstr "全部删除 ({0})"
 
-#: ui/duplicate_review_dialogs.py:137
+#: ui/duplicate_review_dialogs.py:139
 msgid "Review All ({0})"
 msgstr "全部审阅 ({0})"
 
-#: ui/duplicate_review_dialogs.py:142
+#: ui/duplicate_review_dialogs.py:144
 msgid "Review Non-Obvious ({0})"
 msgstr "审查非显而易见 ({0})"
 
-#: ui/llm_config_chat_dialog.py:113
+#: ui/duplicate_review_dialogs.py:167
+msgid "Review All Duplicate Files"
+msgstr "检查所有重复文件"
+
+#: ui/duplicate_review_dialogs.py:174
+msgid "Review Non-Obvious Duplicate Files"
+msgstr "审查不明显的重复文件"
+
+#: ui/llm_config_chat_dialog.py:76
+msgid "Draft {0} Action with AI"
+msgstr "使用 AI 的草稿 {0} 操作"
+
+#: ui/llm_config_chat_dialog.py:92
+msgid ""
+"Describe the {0} action you want in plain language. Nothing is written to "
+"the config until you click Apply below."
+msgstr "请使用简明语言描述您想要的 {0} 操作。在点击下面的“应用”之前，配置不会被写入。"
+
+#: ui/llm_config_chat_dialog.py:105
+msgid "e.g. \"Move every screenshot in Downloads into a Screenshots folder\""
+msgstr "将下载中的所有截图移动到 Screenshots 文件夹"
+
+#: ui/llm_config_chat_dialog.py:112
 msgid "Model"
 msgstr "模型"
 
-#: ui/llm_config_chat_dialog.py:116
+#: ui/llm_config_chat_dialog.py:115
 msgid "Endpoint override"
 msgstr "端点覆盖"
 
-#: ui/llm_config_chat_dialog.py:118
+#: ui/llm_config_chat_dialog.py:117
 msgid "blank = default local Ollama endpoint"
 msgstr "blank = 默认本地 Ollama 端点"
 
-#: ui/llm_config_chat_dialog.py:122
+#: ui/llm_config_chat_dialog.py:121
 msgid "Draft"
 msgstr "草稿"
 
-#: ui/llm_config_chat_dialog.py:127
+#: ui/llm_config_chat_dialog.py:126
 msgid "Conversation"
 msgstr "对话"
 
-#: ui/llm_config_chat_dialog.py:134
+#: ui/llm_config_chat_dialog.py:133
 msgid "Current Draft"
 msgstr "当前草稿"
 
-#: ui/llm_config_chat_dialog.py:141
+#: ui/llm_config_chat_dialog.py:140
 msgid "Preview (what this would touch)"
 msgstr "预览（将会影响的内容）"
 
-#: ui/llm_config_chat_dialog.py:149
+#: ui/llm_config_chat_dialog.py:148
 msgid "Apply"
 msgstr "应用"
 
-#: ui/llm_config_chat_dialog.py:166
+#: ui/llm_config_chat_dialog.py:165
 msgid "Description Required"
 msgstr "需要说明"
 
-#: ui/llm_config_chat_dialog.py:166
+#: ui/llm_config_chat_dialog.py:165
 msgid "Describe the action you want first."
 msgstr "请先描述您想要的操作。"
 
-#: ui/llm_config_chat_dialog.py:245
+#: ui/llm_config_chat_dialog.py:212
+msgid "Attempt {0}: parse error — {1}"
+msgstr "尝试 {0}: 解析错误 — {1}"
+
+#: ui/llm_config_chat_dialog.py:216
+msgid "Attempt {0}: validation failed — {1}"
+msgstr "尝试 {0}：验证失败 — {1}"
+
+#: ui/llm_config_chat_dialog.py:219
+msgid "Attempt {0}: OK"
+msgstr "尝试{0}: OK"
+
+#: ui/llm_config_chat_dialog.py:224
+msgid "Warnings: {0}"
+msgstr "警告：{0}"
+
+#: ui/llm_config_chat_dialog.py:231
+msgid "Preview unavailable: {0}"
+msgstr "预览不可用：{0}"
+
+#: ui/llm_config_chat_dialog.py:242
+msgid "Error: {0}"
+msgstr "错误：{0}"
+
+#: ui/llm_config_chat_dialog.py:248
 msgid "No Draft"
 msgstr "无草稿"
 
-#: ui/llm_config_chat_dialog.py:245
+#: ui/llm_config_chat_dialog.py:248
 msgid "Draft an action first."
 msgstr "请先起草一个动作。"
+
+#: ui/llm_config_chat_dialog.py:253
+msgid "Applied."
+msgstr "已应用。"
+
+#: ui/log_panel.py:123
+msgid "Log"
+msgstr "日志"
+
+#: ui/log_panel.py:127
+msgid "Level"
+msgstr "等级"
+
+#: ui/log_panel.py:130
+msgid "Debug"
+msgstr "调试"
+
+#: ui/log_panel.py:132
+msgid "Warning"
+msgstr "警告"
+
+#: ui/renamer_rule_suggester_dialog.py:42
+msgid "Renamer Auto-Rule Suggestions"
+msgstr "Renamer 自动规则建议"
 
 #: ui/renamer_rule_suggester_dialog.py:53
 msgid "Common Patterns (no directory needed)"
@@ -1017,10 +1896,6 @@ msgstr "从文件中检测"
 #: ui/renamer_rule_suggester_dialog.py:68
 msgid "Browse"
 msgstr "浏览"
-
-#: ui/renamer_rule_suggester_dialog.py:71
-msgid "Directory"
-msgstr "目录"
 
 #: ui/renamer_rule_suggester_dialog.py:73
 msgid "Scan recursively"
@@ -1062,24 +1937,248 @@ msgstr ""
 msgid "No strong filename patterns detected."
 msgstr "未检测到强文件名模式。"
 
-#: ui/renamer_rule_suggester_dialog.py:197
+#: ui/renamer_rule_suggester_dialog.py:132
+msgid "{0}. [{1}%] {2}  ({3} files, {4}%)"
+msgstr "{0}. [{1}%] {2}  ({3} 个文件, {4}%)"
+
+#: ui/renamer_rule_suggester_dialog.py:149
+#: ui/renamer_rule_suggester_dialog.py:180
+#: ui/renamer_rule_suggester_dialog.py:219
+msgid "n/a"
+msgstr "不适用"
+
+#: ui/renamer_rule_suggester_dialog.py:151
+#: ui/renamer_rule_suggester_dialog.py:180
+msgid "Reason: {0}"
+msgstr "原因: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:152
+#: ui/renamer_rule_suggester_dialog.py:185
+msgid "Pattern: {0}"
+msgstr "模式: {0}"
+
+#: ui/renamer_rule_suggester_dialog.py:155
+msgid "Suggested rename_tag: {0}"
+msgstr "建议的 rename_tag：{0}"
+
+#: ui/renamer_rule_suggester_dialog.py:157
+msgid ""
+"rename_tag: auto-derived per pattern (each literal pattern becomes its own "
+"tag)"
+msgstr "rename_tag：按模式自动派生（每个字面模式成为单独的标签）"
+
+#: ui/renamer_rule_suggester_dialog.py:160
+msgid ""
+"Suggested function: {0} (set this yourself in the Function dropdown; it's "
+"not applied automatically)"
+msgstr "建议函数: {0}（请在函数下拉菜单中自行设置；不会自动应用）"
+
+#: ui/renamer_rule_suggester_dialog.py:165
+msgid "Also matches OS/browser duplicate-download copies, e.g. \"R (1).png\"."
+msgstr "也匹配操作系统/浏览器的重复下载副本，例如 \"R (1).png\"。"
+
+#: ui/renamer_rule_suggester_dialog.py:181
+msgid "Confidence: {0}%"
+msgstr "置信度: {0}%"
+
+#: ui/renamer_rule_suggester_dialog.py:182
+msgid "Affected: {0} files ({1}%)"
+msgstr "受影响: {0} 个文件 ({1}%)"
+
+#: ui/renamer_rule_suggester_dialog.py:186
+msgid "Top subdirs: {0}"
+msgstr "顶级子目录：{0}"
+
+#: ui/renamer_rule_suggester_dialog.py:200
 msgid "Select Suggestion"
 msgstr "选择建议"
 
-#: ui/renamer_rule_suggester_dialog.py:197
+#: ui/renamer_rule_suggester_dialog.py:200
 msgid "Pick a suggestion first."
 msgstr "请先选择一个建议。"
 
-#: ui/renamer_rule_suggester_dialog.py:201
+#: ui/renamer_rule_suggester_dialog.py:204
 msgid "Invalid Suggestion"
 msgstr "无效的建议"
 
-#: ui/renamer_rule_suggester_dialog.py:201
+#: ui/renamer_rule_suggester_dialog.py:204
 msgid "Selected suggestion has no usable pattern."
 msgstr "所选建议没有可用的模式。"
 
-#: ui/test_results_window.py:262
+#: ui/test_results_window.py:81
+msgid "Verification tests"
+msgstr "验证测试"
+
+#: ui/test_results_window.py:114
+msgid "Verification test results"
+msgstr "验证测试结果"
+
+#: ui/test_results_window.py:121
+msgid "Suite directory"
+msgstr "套件目录"
+
+#: ui/test_results_window.py:126
+msgid "All suites"
+msgstr "所有测试套件"
+
+#: ui/test_results_window.py:137
+msgid "Click Run suite to start."
+msgstr "点击 Run suite 开始。"
+
+#: ui/test_results_window.py:173
+msgid "Total Tests: 0"
+msgstr "测试总数：0"
+
+#: ui/test_results_window.py:176
+msgid "Passed: 0"
+msgstr "获得通过:0"
+
+#: ui/test_results_window.py:180
+msgid "Failed: 0"
+msgstr "失败: 0"
+
+#: ui/test_results_window.py:184
+msgid "Time: 0:00"
+msgstr "时间：0:00"
+
+#: ui/test_results_window.py:193
+msgid "Run suite"
+msgstr "运行套件"
+
+#: ui/test_results_window.py:201
+msgid "Save Results"
+msgstr "保存结果"
+
+#: ui/test_results_window.py:218
+msgid "Running tests..."
+msgstr "正在运行测试..."
+
+#: ui/test_results_window.py:260
+msgid "Test tree not found: {0}"
+msgstr "未找到测试树：{0}"
+
+#: ui/test_results_window.py:268
 msgid ""
 "Excluding Qt UI tests (marker \"ui\") from All suites: they drive real "
 "widgets via the app's own QApplication and would hang running inside it."
 msgstr "从所有套件中排除 Qt UI 测试（标记“ui”）：它们通过应用程序自身的 QApplication 驱动真实部件，在其中运行会导致卡死。"
+
+#: ui/test_results_window.py:280
+msgid "Test suite directory not found: {0}"
+msgstr "未找到测试套件目录：{0}"
+
+#: ui/test_results_window.py:299
+msgid "Backup test directory not found (required for fixtures): {0}"
+msgstr "未找到备份测试目录（用于固定装置）：{0}"
+
+#: ui/test_results_window.py:313
+msgid "Base directory: "
+msgstr "基准目录： "
+
+#: ui/test_results_window.py:315
+msgid "Pytest targets: "
+msgstr "Pytest 目标： "
+
+#: ui/test_results_window.py:319
+msgid "Backup fixtures directory: "
+msgstr "备份夹具目录: "
+
+#: ui/test_results_window.py:321
+msgid "Python path: "
+msgstr "Python 路径： "
+
+#: ui/test_results_window.py:326
+msgid "Test target not found: {0}"
+msgstr "未找到测试目标: {0}"
+
+#: ui/test_results_window.py:334
+msgid "Found test target: "
+msgstr "找到测试目标： "
+
+#: ui/test_results_window.py:338
+msgid "No test targets remain to run."
+msgstr "没有剩余的测试目标可运行。"
+
+#: ui/test_results_window.py:350
+msgid "Analyzing test suite..."
+msgstr "分析测试套房..."
+
+#: ui/test_results_window.py:369
+msgid "Found {0} tests in {1}"
+msgstr "在{1} 中找到{0} 测试"
+
+#: ui/test_results_window.py:375
+msgid "Error collecting tests from {0}: {1}"
+msgstr "从{0} 收集测试出错：{1}"
+
+#: ui/test_results_window.py:395
+msgid "Running tests from {0}..."
+msgstr "从{0} 运行测试..."
+
+#: ui/test_results_window.py:399
+msgid "Running tests from {0}:"
+msgstr "从{0} 运行测试："
+
+#: ui/test_results_window.py:426
+msgid "Error in {0}:"
+msgstr "{0} 中的错误："
+
+#: ui/test_results_window.py:444
+msgid "Error running tests in {0}: {1}"
+msgstr "运行{0}测试时出错：{1}"
+
+#: ui/test_results_window.py:459
+msgid "Unexpected error running tests: {0}"
+msgstr "运行中的意外错误：{0}"
+
+#: ui/test_results_window.py:487
+msgid "Save Test Results"
+msgstr "保存测试结果"
+
+#: ui/test_results_window.py:489
+msgid "Text Files (*.txt);;All Files (*)"
+msgstr "文本文件 (*.txt);;所有文件 (*)"
+
+#: ui/test_results_window.py:519
+msgid "Copy"
+msgstr "复制"
+
+#: ui/test_results_window.py:568
+msgid "Total Tests: {0}"
+msgstr "总测试次数：{0}"
+
+#: ui/test_results_window.py:569
+msgid "Passed: {0}"
+msgstr "通过：{0}"
+
+#: ui/test_results_window.py:570
+msgid "Failed: {0}"
+msgstr "失败：{0}"
+
+#: ui/test_results_window.py:576
+msgid "Time: {0}:{1:02d}"
+msgstr "时间：{0}:{1:02d}"
+
+#: ui/test_results_window.py:586
+msgid "Test Run Complete - "
+msgstr "测试运行完成 - "
+
+#: ui/test_results_window.py:587
+msgid "Total Tests: "
+msgstr "测试总数： "
+
+#: ui/test_results_window.py:588
+msgid "Passed: "
+msgstr "通过： "
+
+#: ui/test_results_window.py:589
+msgid "Failed: "
+msgstr "失败： "
+
+#: ui/test_results_window.py:592
+msgid "All tests passed successfully!"
+msgstr "所有测试都顺利通过!"
+
+#: ui/test_results_window.py:592
+msgid "Some tests failed - check results"
+msgstr "一些测试失败 - 检查结果"

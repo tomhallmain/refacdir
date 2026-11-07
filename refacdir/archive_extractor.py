@@ -40,7 +40,7 @@ import zipfile
 from refacdir.backup.backup_mapping import remove_file
 from refacdir.utils.logger import setup_logger
 from refacdir.utils.confirm import confirm_action
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _
 from refacdir.utils.utils import Utils
 
 logger = setup_logger("archive_extractor")
@@ -121,7 +121,7 @@ def _allocate(dest_dir: str, filename: str, source_tag, reserved: set):
             reserved.add(os.path.normcase(candidate))
             return candidate, True
         counter += 1
-    raise Exception(f"Unable to find a unique filename for {filename} in {dest_dir}")
+    raise Exception(LocalizedText("Unable to find a unique filename for {0} in {1}", filename, dest_dir))
 
 
 def _group_by_archive(planned: list) -> dict:
@@ -217,7 +217,7 @@ class ArchiveExtractor:
                 relative = _safe_relative_path(member)
                 if relative is None:
                     logger.warning(
-                        f"{self.name}: skipping member with unsafe path {member!r} in {archive}"
+                        _("{0}: skipping member with unsafe path {1!r} in {2}").format(self.name, member, archive)
                     )
                     continue
                 basename = os.path.basename(relative)
@@ -254,25 +254,32 @@ class ArchiveExtractor:
 
     def run(self):
         if not Utils.isdir_with_retry(self.search_dir):
-            raise Exception(f"Invalid search directory: {self.search_dir}")
+            raise Exception(LocalizedText("Invalid search directory: {0}", self.search_dir))
         if self.target_dir == self.search_dir:
             raise Exception(
-                f"target_dir must differ from search_dir, both are {self.search_dir} "
-                "(the target is excluded from the search, so this would find nothing)"
+                LocalizedText(
+                    "target_dir must differ from search_dir, both are {0} "
+                    "(the target is excluded from the search, so this would find nothing)",
+                    self.search_dir,
+                )
             )
         if _is_under(self.search_dir, self.target_dir):
             raise Exception(
-                f"search_dir {self.search_dir} sits inside target_dir {self.target_dir}; "
-                "the target is excluded from the search, so this would find nothing"
+                LocalizedText(
+                    "search_dir {0} sits inside target_dir {1}; "
+                    "the target is excluded from the search, so this would find nothing",
+                    self.search_dir,
+                    self.target_dir,
+                )
             )
 
         planned, unreadable = self._plan()
         for archive, reason in unreadable:
-            logger.error(f"{self.name}: could not read {archive}: {reason}")
+            logger.error(_("{0}: could not read {1}: {2}").format(self.name, archive, reason))
 
         if len(planned) == 0:
             logger.warning(
-                f"{self.name}: no extractable files found for pattern {self.pattern} in {self.search_dir}"
+                _("{0}: no extractable files found for pattern {1} in {2}").format(self.name, self.pattern, self.search_dir)
             )
             return
 
@@ -281,24 +288,22 @@ class ArchiveExtractor:
 
         if self.test:
             logger.info(
-                f"|=============== TEST (dry run) {self.name}: nothing extracted or deleted ===============|"
+                "|=============== " + _("TEST (dry run) {0}: nothing extracted or deleted").format(self.name) + " ===============|"
             )
             logger.info(
-                f"TEST {self.name}: would extract {len(planned)} file(s) from "
-                f"{archive_count} archive(s) into {self.target_dir}"
+                _("TEST {0}: would extract {1} file(s) from {2} archive(s) into {3}").format(self.name, len(planned), archive_count, self.target_dir)
             )
             for archive, member, dest_path, renamed in planned[:_DRY_RUN_LOG_LIMIT]:
                 suffix = " (renamed)" if renamed else ""
-                logger.info(f"TEST extract {member} from {archive} -> {dest_path}{suffix}")
+                logger.info(_("TEST extract {0} from {1} -> {2}{3}").format(member, archive, dest_path, suffix))
             if len(planned) > _DRY_RUN_LOG_LIMIT:
-                logger.info(f"TEST ... and {len(planned) - _DRY_RUN_LOG_LIMIT} more")
+                logger.info(_("TEST ... and {0} more").format(len(planned) - _DRY_RUN_LOG_LIMIT))
             if self.delete_sources:
-                logger.info(f"TEST {self.name}: would remove {archive_count} source archive(s)")
+                logger.info(_("TEST {0}: would remove {1} source archive(s)").format(self.name, archive_count))
             return
 
         logger.info(
-            f"{self.name}: extracting {len(planned)} file(s) from {archive_count} archive(s) "
-            f"into {self.target_dir}"
+            _("{0}: extracting {1} file(s) from {2} archive(s) into {3}").format(self.name, len(planned), archive_count, self.target_dir)
         )
         if not self.skip_confirm and not confirm_action(
             self.app_actions,
@@ -310,7 +315,7 @@ class ArchiveExtractor:
                 _("Source archives will be deleted afterwards.") if self.delete_sources else None
             ),
         ):
-            logger.info("Operation cancelled by user")
+            logger.info(_("Operation cancelled by user"))
             return
 
         os.makedirs(self.target_dir, exist_ok=True)
@@ -329,21 +334,21 @@ class ArchiveExtractor:
                             extracted += 1
                             if renamed:
                                 renamed_count += 1
-                                logger.info(f"extracted {member} -> {dest_path} (renamed)")
+                                logger.info(_("extracted {0} -> {1} (renamed)").format(member, dest_path))
                             else:
-                                logger.info(f"extracted {member} -> {dest_path}")
+                                logger.info(_("extracted {0} -> {1}").format(member, dest_path))
                         except Exception as e:
                             failed_archives.add(archive)
                             logger.error(
-                                f"{self.name}: failed to extract {member} from {archive}: {e}"
+                                _("{0}: failed to extract {1} from {2}: {3}").format(self.name, member, archive, e)
                             )
             except Exception as e:
                 failed_archives.add(archive)
-                logger.error(f"{self.name}: failed to open {archive}: {e}")
+                logger.error(_("{0}: failed to open {1}: {2}").format(self.name, archive, e))
 
-        logger.info(f"{self.name}: extracted {extracted} file(s) into {self.target_dir}")
+        logger.info(_("{0}: extracted {1} file(s) into {2}").format(self.name, extracted, self.target_dir))
         if renamed_count > 0:
-            logger.info(f"{self.name}: {renamed_count} file(s) renamed to avoid name collisions")
+            logger.info(_("{0}: {1} file(s) renamed to avoid name collisions").format(self.name, renamed_count))
 
         if self.delete_sources:
             self._delete_source_archives(by_archive, failed_archives)
@@ -353,10 +358,10 @@ class ArchiveExtractor:
         for archive in by_archive:
             if archive in failed_archives:
                 logger.warning(
-                    f"{self.name}: keeping {archive}, not every member extracted successfully"
+                    _("{0}: keeping {1}, not every member extracted successfully").format(self.name, archive)
                 )
                 continue
             if remove_file(archive):
-                logger.info(f"{self.name}: removed source archive {archive}")
+                logger.info(_("{0}: removed source archive {1}").format(self.name, archive))
             else:
-                logger.error(f"{self.name}: failed to remove source archive {archive}")
+                logger.error(_("{0}: failed to remove source archive {1}").format(self.name, archive))

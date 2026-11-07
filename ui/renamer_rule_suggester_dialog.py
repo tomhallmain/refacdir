@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from refacdir.lib.multi_display import SmartDialog
-from refacdir.utils.translations import _
+from refacdir.utils.translations import _, localized_str
 
 from refacdir.renamer_rule_generation import common_pattern_presets, suggest_renamer_rules
 
@@ -39,7 +39,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
         super().__init__(
             parent=parent,
             position_parent=parent,
-            title="Renamer Auto-Rule Suggestions",
+            title=_("Renamer Auto-Rule Suggestions"),
             geometry="860x680",
             center=True,
         )
@@ -96,7 +96,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
     def _populate_presets(self):
         self.preset_list.clear()
         for preset in self._presets:
-            self.preset_list.addItem(f"{preset['name']} — {preset['search_patterns']}")
+            self.preset_list.addItem(f"{localized_str(preset['name'])} — {preset['search_patterns']}")
 
     def _browse_directory(self):
         start_dir = self.directory_edit.text().strip() or os.path.expanduser("~")
@@ -129,7 +129,7 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             pct = item.get("affected_percent", 0.0)
             confidence = item.get("confidence", 0)
             self.suggestion_list.addItem(
-                f"{idx + 1}. [{confidence}%] {pattern}  ({affected} files, {pct:.1f}%)"
+                _("{0}. [{1}%] {2}  ({3} files, {4}%)").format(idx + 1, confidence, pattern, affected, f"{pct:.1f}")
             )
         self.suggestion_list.setCurrentRow(0)
 
@@ -146,24 +146,24 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             "chain_parenthetical_indices": preset.get("chain_parenthetical_indices", False),
             "_source": "preset",
         }
-        chaining_note = (
-            '\nAlso matches OS/browser duplicate-download copies, e.g. "R (1).png".'
-            if preset.get("chain_parenthetical_indices")
-            else ""
+        not_available = _("n/a")
+        lines = [
+            _("Reason: {0}").format(localized_str(preset.get("reason", not_available))),
+            _("Pattern: {0}").format(preset["search_patterns"]),
+        ]
+        if preset.get("rename_tag"):
+            lines.append(_("Suggested rename_tag: {0}").format(preset["rename_tag"]))
+        else:
+            lines.append(_("rename_tag: auto-derived per pattern (each literal pattern becomes its own tag)"))
+        lines.append(
+            _(
+                "Suggested function: {0} (set this yourself in the Function dropdown; "
+                "it's not applied automatically)"
+            ).format(preset.get("function_hint", not_available))
         )
-        rename_tag_line = (
-            f"Suggested rename_tag: {preset['rename_tag']}\n"
-            if preset.get("rename_tag")
-            else "rename_tag: auto-derived per pattern (each literal pattern becomes its own tag)\n"
-        )
-        self.details_label.setText(
-            f"Reason: {preset.get('reason', 'n/a')}\n"
-            f"Pattern: {preset['search_patterns']}\n"
-            f"{rename_tag_line}"
-            f"Suggested function: {preset.get('function_hint', 'n/a')} "
-            "(set this yourself in the Function dropdown; it's not applied automatically)"
-            f"{chaining_note}"
-        )
+        if preset.get("chain_parenthetical_indices"):
+            lines.append(_('Also matches OS/browser duplicate-download copies, e.g. "R (1).png".'))
+        self.details_label.setText("\n".join(lines))
 
     def _on_selection_changed(self, row: int):
         if row < 0 or row >= len(self._suggestions):
@@ -176,13 +176,16 @@ class RenamerRuleSuggesterDialog(SmartDialog):
             "search_patterns": item["search_patterns"],
             "_source": "detected",
         }
-        self.details_label.setText(
-            f"Reason: {item.get('reason', 'n/a')}\n"
-            f"Confidence: {item.get('confidence', 0)}%\n"
-            f"Affected: {item.get('affected_files', 0)} files ({item.get('affected_percent', 0.0):.2f}%)\n"
-            f"Pattern: {item['search_patterns']}\n"
-            f"Top subdirs: {self._format_subdirs(item.get('subdirs', []))}"
-        )
+        lines = [
+            _("Reason: {0}").format(localized_str(item.get("reason", _("n/a")))),
+            _("Confidence: {0}%").format(item.get("confidence", 0)),
+            _("Affected: {0} files ({1}%)").format(
+                item.get("affected_files", 0), f"{item.get('affected_percent', 0.0):.2f}"
+            ),
+            _("Pattern: {0}").format(item["search_patterns"]),
+            _("Top subdirs: {0}").format(self._format_subdirs(item.get("subdirs", []))),
+        ]
+        self.details_label.setText("\n".join(lines))
 
     @staticmethod
     def _deselect(list_widget: QListWidget):
@@ -213,5 +216,5 @@ class RenamerRuleSuggesterDialog(SmartDialog):
 
     def _format_subdirs(self, subdirs: list[dict]) -> str:
         if not subdirs:
-            return "n/a"
+            return _("n/a")
         return ", ".join(f"{item.get('subdir', '.')}: {item.get('count', 0)}" for item in subdirs)

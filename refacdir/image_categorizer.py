@@ -3,7 +3,7 @@ import sys
 
 from refacdir.config import config
 from refacdir.utils.confirm import confirm_action
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
@@ -45,10 +45,10 @@ class ImageCategorizer:
         self.segregation_map = {}
 
         if not weidr_imported:
-            raise Exception("Invalid ImageCategorizer config - Weidr not imported")
+            raise Exception(LocalizedText("Invalid ImageCategorizer config - Weidr not imported"))
 
         if not Utils.isdir_with_retry(source_dir):
-            raise Exception(f"Source directory {source_dir} is invalid")
+            raise Exception(LocalizedText("Source directory {0} is invalid", source_dir))
         
         logger.info("Excluding directories from image categorization:")
         for d in exclude_dirs:
@@ -57,12 +57,12 @@ class ImageCategorizer:
             else:
                 full_path = os.path.join(os.path.abspath(self.source_dir), d)
             if not Utils.isdir_with_retry(full_path):
-                raise Exception("Invalid exclude directory: " + d)
+                raise Exception(LocalizedText("Invalid exclude directory: {0}", d))
             logger.info(full_path)
             self.exclude_dirs.append(full_path)
 
         if len(categories) == 0:
-            raise Exception("No categories provided")
+            raise Exception(LocalizedText("No categories provided"))
         
         # Each category's own output folder is excluded from the scan so a second
         # run does not re-categorize files an earlier run already sorted. These
@@ -86,19 +86,19 @@ class ImageCategorizer:
 
         planned = [(category, f) for category, files in self.segregation_map.items() for f in files]
         if len(planned) == 0:
-            logger.warning(f"{self.name}: no images found to categorize under {self.source_dir}")
+            logger.warning(_("{0}: no images found to categorize under {1}").format(self.name, self.source_dir))
             return
 
         if self.test:
             logger.info(
-                f"|=============== TEST (dry run) {self.name}: no files moved ===============|"
+                "|=============== " + _("TEST (dry run) {0}: no files moved").format(self.name) + " ===============|"
             )
-            logger.info(f"TEST {self.name}: would categorize {len(planned)} image(s)")
+            logger.info(_("TEST {0}: would categorize {1} image(s)").format(self.name, len(planned)))
             for category, f in planned:
-                logger.info(f"TEST move {f} -> {self._category_path(category, f)}")
+                logger.info(_("TEST move {0} -> {1}").format(f, self._category_path(category, f)))
             return
 
-        logger.info(f"{self.name}: categorizing {len(planned)} image(s) under {self.source_dir}")
+        logger.info(_("{0}: categorizing {1} image(s) under {2}").format(self.name, len(planned), self.source_dir))
         if not self.skip_confirm and not confirm_action(
             self.app_actions,
             _("Confirm image categorization"),
@@ -106,7 +106,7 @@ class ImageCategorizer:
                 self.name, len(planned), self.source_dir, ", ".join(self.categories)
             ),
         ):
-            logger.info("Operation cancelled by user")
+            logger.info(_("Operation cancelled by user"))
             return
 
         for category in self.categories:
@@ -115,10 +115,10 @@ class ImageCategorizer:
         for category, f in planned:
             new_path = self._category_path(category, f)
             if os.path.exists(new_path):
-                logger.warning(f"File already exists: {new_path}")
+                logger.warning(_("File already exists: {0}").format(new_path))
                 continue
             Utils.move(f, new_path)
-            logger.info(f"moved {f} -> {new_path}")
+            logger.info(_("moved {0} -> {1}").format(f, new_path))
 
     def _category_path(self, category, file_path):
         return os.path.join(self.source_dir, category, os.path.basename(file_path))

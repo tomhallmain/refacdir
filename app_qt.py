@@ -24,7 +24,7 @@ from refacdir.running_tasks_registry import start_thread, periodic, RecurringAct
 from refacdir.utils.app_info_cache import app_info_cache
 from refacdir.utils.app_paths import resource_path
 from refacdir.utils.logger import setup_logger
-from refacdir.utils.translations import _
+from refacdir.utils.translations import _, localized_str
 from refacdir.utils.utils import Utils
 from refacdir.utils.build_maintenance import start_build_maintenance
 from refacdir.utils.crash_log import enable_fault_log
@@ -560,7 +560,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 logger.info(f"Batch run queued (already running): {run_id}")
             except Exception as exc:
                 self._run_overrides.pop(run_id, None)
-                self.alert(_("Queue full"), str(exc), "error")
+                self.alert(_("Queue full"), localized_str(exc), "error")
                 return run_id
             return run_id
 
@@ -597,7 +597,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             try:
                 main(run_args)
             except Exception as e:
-                self.alert("Error", str(e), "error")
+                self.alert(_("Error"), localized_str(e), "error")
                 self.status_label.setText(_("Operation failed"))
             finally:
                 QTimer.singleShot(0, self._finish_batch_run)
@@ -748,7 +748,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
     def _on_config_saved(self, config_path: str):
         """Notify the user after a config save (refresh already ran via editor reload)."""
         logger.info(f"Config saved from editor: {config_path}")
-        self.toast(f"Config saved: {config_path}")
+        self.toast(_("Config saved: {0}").format(config_path))
 
     def refresh_configs(self):
         """Thread-safe config refresh callback for app actions."""

@@ -10,6 +10,7 @@ from .hash_manager import HashManager
 from .safe_file_ops import SafeFileOps
 from refacdir.utils.cache_paths import refacdir_cache_dir
 from refacdir.utils.logger import setup_logger
+from refacdir.utils.translations import LocalizedText, _
 
 # Set up logger for backup mapping
 logger = setup_logger('backup_mapping')
@@ -118,7 +119,7 @@ class BackupMapping:
             will_run: Whether this mapping will be executed
         """
         if source_dir is None or target_dir is None:
-            raise ValueError("Source and target directories must be specified")
+            raise ValueError(LocalizedText("Source and target directories must be specified"))
             
         self.name = name
         self.source_dir = os.path.normpath(source_dir)
@@ -196,9 +197,9 @@ class BackupMapping:
         if warn_duplicates:
             for h, files in self._source_data.hash_dict.items():
                 if len(files) > 1:
-                    logger.info(f"Duplicate content hash {h[:16]}... : {files}")
+                    logger.info(_("Duplicate content hash {0}... : {1}").format(h[:16], files))
         if progress:
-            progress(1.0, "scan complete")
+            progress(1.0, _("scan complete"))
 
     def _count_scan_files(self) -> Tuple[int, int]:
         """Count files that will be hashed; mirrors _rebuild_hash_tables walks (read-only)."""
@@ -237,7 +238,7 @@ class BackupMapping:
 
         total = 0
         if progress:
-            progress(0.0, "counting files to scan…")
+            progress(0.0, _("counting files to scan…"))
             src_n, tgt_n = self._count_scan_files()
             total = src_n + tgt_n
             logger.info(
@@ -247,7 +248,7 @@ class BackupMapping:
                 src_n,
                 tgt_n,
             )
-            progress(0.02, f"counted {total} files; hashing…")
+            progress(0.02, _("counted {0} files; hashing…").format(total))
 
         done = 0
 
@@ -264,7 +265,7 @@ class BackupMapping:
                 return
             frac = min(1.0, done / total)
             if done % _HASH_PROGRESS_UI_EVERY == 0 or done == total:
-                progress(0.02 + 0.98 * frac, f"hashed {done}/{total} files")
+                progress(0.02 + 0.98 * frac, _("hashed {0}/{1} files").format(done, total))
             if done % _HASH_PROGRESS_LOG_EVERY == 0 or done == total:
                 logger.info(
                     "Backup mapping %r: hashed %s/%s files (~%d%%)",
@@ -307,7 +308,7 @@ class BackupMapping:
                     _tick()
 
         if progress and total == 0:
-            progress(1.0, "nothing to hash")
+            progress(1.0, _("nothing to hash"))
         elif not progress and done > 0:
             logger.info(
                 "Backup mapping %r: finished hashing %s files",
@@ -325,11 +326,11 @@ class BackupMapping:
         """Create target directory structure"""
         parent = os.path.dirname(target_path)
         if parent and not os.path.exists(parent):
-            logger.info(f"Creating directory: {parent}")
+            logger.info(_("Creating directory: {0}").format(parent))
             if not test:
                 success, error = SafeFileOps.atomic_create_dir(parent)
                 if not success:
-                    raise Exception(f"Failed to create directory: {error}")
+                    raise Exception(LocalizedText("Failed to create directory: {0}", error))
 
     def _is_file_excluded(self, filepath: str) -> bool:
         """Check if a file should be excluded from backup"""
@@ -357,12 +358,12 @@ class BackupMapping:
         
         try:
             if external_source:
-                logger.info(f"Moving file within external dir to: {target_path} - previous location: {external_source}")
+                logger.info(_("Moving file within external dir to: {0} - previous location: {1}").format(target_path, external_source))
                 source_path = external_source
             elif os.path.exists(target_path):
-                logger.info(f"Replacing file: {target_path}")
+                logger.info(_("Replacing file: {0}").format(target_path))
             else:
-                logger.info(f"Creating file: {target_path}")
+                logger.info(_("Creating file: {0}").format(target_path))
                 
             if not test:
                 if self.transaction is None:
@@ -383,7 +384,7 @@ class BackupMapping:
             logger.error(msg)
             self.failures.append([FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST, msg, target_path, source_path])
             return
-        logger.info(f"Removing file already backed up: {source_path}")
+        logger.info(_("Removing file already backed up: {0}").format(source_path))
         if not test:
             try:
                 if not remove_file(source_path):
@@ -442,13 +443,13 @@ class BackupMapping:
                 logger.info(f"PUSHING DIRECTORY STRUCTURE TO {self.target_dir}")
             for directory in new_dirs:
                 new_dir = os.path.join(self.target_dir, directory)
-                logger.info(f"Making new directory: {new_dir}")
+                logger.info(_("Making new directory: {0}").format(new_dir))
                 if not test:
                     success, error = SafeFileOps.atomic_create_dir(new_dir)
                     if not success:
-                        raise Exception(f"Failed to create directory: {error}")
+                        raise Exception(LocalizedText("Failed to create directory: {0}", error))
             if progress:
-                progress(1.0, "directory structure only")
+                progress(1.0, _("directory structure only"))
             return
 
         new_dirs = sorted(set(self._source_dirs) - set(self._target_dirs))
@@ -456,25 +457,25 @@ class BackupMapping:
             logger.info(f"PUSHING DIRECTORY STRUCTURE TO {self.target_dir}")
         for directory in new_dirs:
             new_dir = os.path.join(self.target_dir, directory)
-            logger.info(f"Making new directory: {new_dir}")
+            logger.info(_("Making new directory: {0}").format(new_dir))
             if not test:
                 success, error = SafeFileOps.atomic_create_dir(new_dir)
                 if not success:
-                    raise Exception(f"Failed to create directory: {error}")
+                    raise Exception(LocalizedText("Failed to create directory: {0}", error))
 
         logger.info(f"PUSHING FILES TO {self.target_dir}")
         items = list(self._source_data.hash_dict.items())
         n_groups = len(items)
         if n_groups == 0:
             if progress:
-                progress(1.0, "nothing to sync")
+                progress(1.0, _("nothing to sync"))
             return
         step = max(1, n_groups // 100)
         for j, (source_hash, paths) in enumerate(items):
             self._ensure_files(source_hash, paths, move_func=move_func, test=test)
             if j % step == 0 or j == n_groups - 1:
                 if progress:
-                    progress((j + 1) / n_groups, f"sync {j + 1}/{n_groups} content groups")
+                    progress((j + 1) / n_groups, _("sync {0}/{1} content groups").format(j + 1, n_groups))
                 logger.info(
                     "Backup mapping %r: sync progress %s/%s content groups",
                     self.name,
@@ -486,7 +487,7 @@ class BackupMapping:
         if not os.path.exists(self.target_dir):
             return
         logger.info(f"Removing stale paths under {self.target_dir}")
-        for root, _, files in os.walk(self.target_dir, topdown=False):
+        for root, _dirs, files in os.walk(self.target_dir, topdown=False):
             for name in files:
                 filepath = os.path.join(root, name)
                 if self._is_internal_backup_path(filepath):
@@ -496,7 +497,7 @@ class BackupMapping:
                 rel = os.path.relpath(filepath, self.target_dir)
                 rel_n = os.path.normpath(rel)
                 if rel_n not in self._expected_target_rel_paths:
-                    logger.info(f"Removing stale file: {filepath}")
+                    logger.info(_("Removing stale file: {0}").format(filepath))
                     if not test:
                         try:
                             if os.path.isfile(filepath):
@@ -513,7 +514,7 @@ class BackupMapping:
                 continue
             try:
                 if not os.listdir(stale):
-                    logger.info(f"Removing stale empty directory: {stale}")
+                    logger.info(_("Removing stale empty directory: {0}").format(stale))
                     if not test:
                         os.rmdir(stale)
             except OSError as e:
@@ -619,22 +620,22 @@ class BackupMapping:
 
     def report_failures(self) -> None:
         if len(self.failures) == 0:
-            logger.info(f"No failures encountered for mapping: {self.source_dir} -> {self.target_dir}")
+            logger.info(_("No failures encountered for mapping: {0} -> {1}").format(self.source_dir, self.target_dir))
             return
-        logger.warning(f"Failures encountered for mapping: {self.source_dir} -> {self.target_dir}")
+        logger.warning(_("Failures encountered for mapping: {0} -> {1}").format(self.source_dir, self.target_dir))
         for f in self.failures:
             logger.warning(f"{f}")
             failure_type = f[0]
             if failure_type == FailureType.MOVE_FILE:
-                logger.warning(f"Failed to move {f[3]} to {f[2]}: {f[1]}")
+                logger.warning(_("Failed to move {0} to {1}: {2}").format(f[3], f[2], f[1]))
             elif failure_type == FailureType.REMOVE_SOURCE_FILE:
-                logger.warning(f"Failed to remove file {f[3]}: {f[1]}")
+                logger.warning(_("Failed to remove file {0}: {1}").format(f[3], f[1]))
             elif failure_type == FailureType.REMOVE_SOURCE_FILE_TARGET_NOEXIST:
-                logger.warning(f"Failed to remove file {f[3]} (target missing): {f[1]}")
+                logger.warning(_("Failed to remove file {0} (target missing): {1}").format(f[3], f[1]))
             elif failure_type == FailureType.REMOVE_STALE_FILE:
-                logger.warning(f"Failed to remove stale file {f[2]}: {f[1]}")
+                logger.warning(_("Failed to remove stale file {0}: {1}").format(f[2], f[1]))
             elif failure_type == FailureType.REMOVE_STALE_DIRECTORY:
-                logger.warning(f"Failed to remove stale directory {f[2]}: {f[1]}")
+                logger.warning(_("Failed to remove stale directory {0}: {1}").format(f[2], f[1]))
         try:
             def _serialize(row):
                 if isinstance(row, (list, tuple)):
@@ -643,9 +644,9 @@ class BackupMapping:
             failure_log = _FAILURE_LOG or os.path.join(refacdir_cache_dir(), "backup_failures.json")
             with open(failure_log, "w", encoding="utf-8") as out:
                 json.dump([_serialize(x) for x in self.failures], out, indent=2)
-            logger.info(f"Saved failure data to {failure_log}")
+            logger.info(_("Saved failure data to {0}").format(failure_log))
         except OSError as e:
-            logger.warning(f"Could not write failure log: {e}")
+            logger.warning(_("Could not write failure log: {0}").format(e))
 
     def clean(self) -> None:
         """Clean up backup state"""
@@ -667,3 +668,18 @@ class BackupMapping:
     Exclude dirs: {self.exclude_dirs}
     Exclude removal dirs: {self.exclude_removal_dirs}
 }}"""
+
+    def describe(self) -> str:
+        """The mapping's settings for the user, as listed when confirming a backup."""
+        return _(
+            "Name: {0}\nSource: {1}\nTarget: {2}\nMode: {3}\nFile types: {4}\n"
+            "Exclude dirs: {5}\nExclude removal dirs: {6}"
+        ).format(
+            self.name,
+            self.source_dir,
+            self.target_dir,
+            self.mode,
+            self.file_types,
+            self.exclude_dirs,
+            self.exclude_removal_dirs,
+        )

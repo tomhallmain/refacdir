@@ -16,7 +16,7 @@ from refacdir.image_categorizer import ImageCategorizer
 from refacdir.named_subdir_collector import NamedSubdirCollector
 from refacdir import user_search_funcs
 from refacdir.utils.app_paths import app_data_dir
-from refacdir.utils.translations import _
+from refacdir.utils.translations import LocalizedText, _, localized_str
 from refacdir.utils.utils import Utils
 from refacdir.utils.logger import setup_logger
 
@@ -62,8 +62,8 @@ class BatchArgs:
 
     def validate(self):
         if len(self.configs) == 0:
-            logger.error("No config files found!")
-            raise Exception("No config files found!")
+            logger.error(_("No config files found!"))
+            raise Exception(LocalizedText("No config files found!"))
         return True
 
     def override_configs(self, filtered_configs):
@@ -212,7 +212,10 @@ class BatchJob:
         for action_type in ActionType.__members__.values():
             self.counts_map[action_type] = 0
             self.failure_counts_map[action_type] = 0
+        # failures holds the translated text shown to the user and stored in job
+        # history; _failure_log_messages holds the English text for the log file.
         self.failures = []
+        self._failure_log_messages = []
         self.test = args.test
         self.skip_confirm = args.skip_confirm
         self.duplicate_policy = getattr(args, "duplicate_policy", None)
@@ -237,7 +240,12 @@ class BatchJob:
         if temp_full_path_example:
             if len(self.configurations) == 1:
                 logger.error("Only example config file found - this is not allowed")
-                raise Exception("Excluded example config file! Please change name of config_example.yaml to ensure it is included.")
+                raise Exception(
+                    LocalizedText(
+                        "Excluded example config file! Please change name of config_example.yaml "
+                        "to ensure it is included."
+                    )
+                )
             del self.configurations[temp_full_path_example]
 
 
@@ -291,24 +299,24 @@ class BatchJob:
                 self.current_config_index += 1
                 logger.info(f"Processing config {self.current_config_index}/{self.total_configs}: {config}")
                 if self.app_actions:
-                    self.app_actions.progress_text(f"Processing config {self.current_config_index}/{self.total_configs}: {config}")
+                    self.app_actions.progress_text(_("Processing config {0}/{1}: {2}").format(self.current_config_index, self.total_configs, config))
                 self.run_config_file(config)
                 
             if self.app_actions:
                 if self.skipped_actions > 0:
-                    logger.info(f"Batch operations completed with {self.skipped_actions} skipped actions")
+                    logger.info(_("Batch operations completed with {0} skipped actions").format(self.skipped_actions))
                     self.app_actions.progress_text(_("Batch operations completed (skipped {0} actions)").format(self.skipped_actions))
                 else:
-                    logger.info("Batch operations completed successfully")
+                    logger.info(_("Batch operations completed successfully"))
                     self.app_actions.progress_text(_("Batch operations completed"))
                 self.app_actions.progress_bar_reset()
                 
         except (KeyboardInterrupt, BatchCancelled) as e:
             if isinstance(e, BatchCancelled):
-                logger.warning("Batch job cancelled")
+                logger.warning(_("Batch job cancelled"))
             else:
-                logger.warning("Batch job interrupted by user")
-                print("Exiting prematurely at user request...")
+                logger.warning(_("Batch job interrupted by user"))
+                print(_("Exiting prematurely at user request..."))
             self.cancelled = True
             if self.app_actions:
                 self.app_actions.progress_text(_("Operations cancelled by user"))
@@ -326,19 +334,23 @@ class BatchJob:
             try:
                 config_wrapper = yaml.load(f, Loader=yaml.FullLoader)
             except yaml.YAMLError as e:
-                logger.error(f"Error loading {config}: {e}")
-                self.failures.append(f"Config {config} failed to load: {e}")
+                self._record_failure(
+                    f"Error loading {config}: {e}",
+                    _("Config {0} failed to load: {1}").format(config, localized_str(e)),
+                )
                 return
 
             if "will_run" in config_wrapper and config_wrapper["will_run"] == False:
                 # Safety belt: args.configs is the primary gate in run(); this catches
                 # stale YAML if sync failed or the file was edited outside the app.
-                logger.info(f"{config} is set to will run = False, skipping...")
+                logger.info(_("{0} is set to will run = False, skipping...").format(config))
                 return
 
             if "actions" not in config_wrapper:
-                logger.error(f"Error loading {config}: No actions found in config file!")
-                self.failures.append(f"Config {config} failed to load: No actions found in config file!")
+                self._record_failure(
+                    f"Error loading {config}: No actions found in config file!",
+                    _("Config {0} failed to load: no actions found in the config file.").format(config),
+                )
                 return
 
             # ``run()`` counts actions across configs before calling this method; callers that invoke
@@ -360,7 +372,7 @@ class BatchJob:
                     # If action fails, count remaining actions as skipped
                     remaining_actions = total_actions_in_config - (i + 1)
                     self.skipped_actions += remaining_actions
-                    logger.warning(f"Config {config} stopped after {i + 1} actions (skipped {remaining_actions} actions)")
+                    logger.warning(_("Config {0} stopped after {1} actions (skipped {2} actions)").format(config, i + 1, remaining_actions))
                     if self.app_actions:
                         self.app_actions.progress_text(_("Config {0}/{1}: {2} stopped after {3} actions (skipped {4} actions)").format(self.current_config_index, self.total_configs, config, i + 1, remaining_actions))
                     return # If we fail to run an action then we stop running the config file
@@ -371,6 +383,11 @@ class BatchJob:
                     progress = self.current_action_index / self.total_actions
                     self.app_actions.progress_bar_update(None, progress)
 
+    def _record_failure(self, log_message, display_message):
+        logger.error(log_message)
+        self._failure_log_messages.append(log_message)
+        self.failures.append(display_message)
+
     def log_results(self):
         logger.info("Logging batch job results")
         # Calculate totals
@@ -380,41 +397,40 @@ class BatchJob:
         for action_type in ActionType.__members__.values():
             count_action_type = self.counts_map[action_type]
             if count_action_type > 0:
-                logger.info(f"{count_action_type} {action_type} job(s) completed")
+                logger.info(_("{0} {1} job(s) completed").format(count_action_type, action_type))
         if len(self.failures) > 0:
             for action_type in ActionType.__members__.values():
                 count_action_type = self.failure_counts_map[action_type]
                 if count_action_type > 0:
-                    logger.warning(f"{count_action_type} {action_type} job(s) failed")
-            for failure in self.failures:
+                    logger.warning(_("{0} {1} job(s) failed").format(count_action_type, action_type))
+            for failure in self._failure_log_messages:
                 logger.error(failure)
             
             # Call alert if app_actions is available and there are failures
             if self.app_actions:
-                message_parts = []
-                if total_completed > 0:
-                    message_parts.append(f"{total_completed} completed")
-                if total_skipped > 0:
-                    message_parts.append(f"{total_skipped} skipped")
-                
-                # List specific failures
-                failure_list = "\n".join(self.failures)
-                
-                if message_parts:
-                    message = f"{', '.join(message_parts)}.\n\nFailures:\n{failure_list}"
+                if total_completed > 0 and total_skipped > 0:
+                    summary = _("{0} completed, {1} skipped.").format(total_completed, total_skipped)
+                elif total_completed > 0:
+                    summary = _("{0} completed.").format(total_completed)
+                elif total_skipped > 0:
+                    summary = _("{0} skipped.").format(total_skipped)
                 else:
-                    message = f"Failures:\n{failure_list}"
-                
-                self.app_actions.alert("Batch Operations Failed", message, "error")
+                    summary = None
+
+                message = _("Failures:") + "\n" + "\n".join(self.failures)
+                if summary:
+                    message = summary + "\n\n" + message
+
+                self.app_actions.alert(_("Batch Operations Failed"), message, "error")
         elif not self.cancelled:
-            logger.info("All operations completed successfully")
+            logger.info(_("All operations completed successfully"))
 
     def run_action(self, config, action, idx):
         try:
             action_type_string = action["type"]
             action_type = ActionType[action_type_string]
             if self.args.only_observers and ActionType.DIRECTORY_OBSERVER != action_type:
-                logger.info(f"{config} - Skipping {action_type} action")
+                logger.info(_("{0} - Skipping {1} action").format(config, action_type))
                 return True
             if self.app_actions:
                 self.app_actions.progress_text(_("Config {0}/{1}: Running {2} action in {3}").format(self.current_config_index, self.total_configs, action_type, config))
@@ -426,14 +442,16 @@ class BatchJob:
         except BatchCancelled:
             raise
         except KeyError as e:
-            error_msg = f"Invalid action configuration in {config} index {idx}: {e}"
-            logger.error(error_msg)
-            self.failures.append(error_msg)
+            self._record_failure(
+                f"Invalid action configuration in {config} index {idx}: {e}",
+                _("Invalid action configuration in {0} at index {1}: {2}").format(config, idx, localized_str(e)),
+            )
             return False
         except Exception as e:
-            error_msg = f"Failed to run action index {idx} in {config}: {e}"
-            logger.error(error_msg)
-            self.failures.append(error_msg)
+            self._record_failure(
+                f"Failed to run action index {idx} in {config}: {e}",
+                _("Failed to run action at index {0} in {1}: {2}").format(idx, config, localized_str(e)),
+            )
             return False
 
     def run_multi_action(self, config, action_type, actions):
@@ -461,12 +479,16 @@ class BatchJob:
                 self.failure_counts_map[action_type] += 1
                 if "name" in _action:
                     name = _action["name"]
-                    error = f"Error in {config} {action_type} {name}:  {e}"
+                    self._record_failure(
+                        f"Error in {config} {action_type} {name}:  {e}",
+                        _('Error in {0}, {1} action "{2}": {3}').format(config, action_type, name, localized_str(e)),
+                    )
                 else:
                     _action_index = self.counts_map[action_type] - 1
-                    error = f"Error in {config} {action_type} {_action_index}:  {e}"
-                logger.error(error)
-                self.failures.append(error)
+                    self._record_failure(
+                        f"Error in {config} {action_type} {_action_index}:  {e}",
+                        _("Error in {0}, {1} action #{2}: {3}").format(config, action_type, _action_index, localized_str(e)),
+                    )
                 continue
 
             # Calculate sub-progress for this action
@@ -483,9 +505,10 @@ class BatchJob:
                 action.run()
             except Exception as e:
                 self.failure_counts_map[action_type] += 1
-                error = f"{config} {action_type} {action.name} failed:  {e}"
-                logger.error(error)
-                self.failures.append(error)
+                self._record_failure(
+                    f"{config} {action_type} {action.name} failed:  {e}",
+                    _('{0}: {1} action "{2}" failed: {3}').format(config, action_type, action.name, localized_str(e)),
+                )
         return self.failure_counts_map[action_type] == 0
 
     def run_renamers(self, config, renamers):
@@ -495,7 +518,7 @@ class BatchJob:
             will_run = Utils.get_from_dict(_renamer, "will_run", self.renamer_mapping_will_run_default)
             if not will_run:
                 name = _renamer.get("name", renamer_index)
-                logger.info(f"{config} - Skipping renamer mapping {name} (will_run=false)")
+                logger.info(_("{0} - Skipping renamer mapping {1} (will_run=false)").format(config, name))
                 continue
 
             self.counts_map[ActionType.RENAMER] += 1
@@ -505,12 +528,16 @@ class BatchJob:
                 self.failure_counts_map[ActionType.RENAMER] += 1
                 if "name" in _renamer:
                     name = _renamer["name"]
-                    error = f"Error in {config} renamer {name}:  {e}"
+                    self._record_failure(
+                        f"Error in {config} renamer {name}:  {e}",
+                        _('Error in {0}, renamer mapping "{1}": {2}').format(config, name, localized_str(e)),
+                    )
                 else:
                     rename_index = self.counts_map[ActionType.RENAMER] - 1
-                    error = f"Error in {config} renamer {rename_index}:  {e}"
-                logger.error(error)
-                self.failures.append(error)
+                    self._record_failure(
+                        f"Error in {config} renamer {rename_index}:  {e}",
+                        _("Error in {0}, renamer mapping #{1}: {2}").format(config, rename_index, localized_str(e)),
+                    )
                 continue
 
             # Calculate sub-progress for this renamer
@@ -531,9 +558,10 @@ class BatchJob:
                     renamer.execute(renamer_function)
             except Exception as e:
                 self.failure_counts_map[ActionType.RENAMER] += 1
-                error = f"{config} renamer {renamer.name} failed:  {e}"
-                logger.error(error)
-                self.failures.append(error)
+                self._record_failure(
+                    f"{config} renamer {renamer.name} failed:  {e}",
+                    _('{0}: renamer mapping "{1}" failed: {2}').format(config, renamer.name, localized_str(e)),
+                )
         return self.failure_counts_map[ActionType.RENAMER] == 0
 
     def construct_duplicate_remover(self, yaml_dict={}):
@@ -572,7 +600,7 @@ class BatchJob:
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         if not test and self.duplicate_policy == "cancel":
-            logger.info(f"Duplicate remover {name}: duplicate_policy is cancel, keeping duplicates")
+            logger.info(_("Duplicate remover {0}: duplicate_policy is cancel, keeping duplicates").format(name))
             test = True
         logger.info(f"Constructing duplicate remover: {name} with {len(source_dirs)} source directories")
         return DuplicateRemover(
@@ -665,7 +693,7 @@ class BatchJob:
         location = Utils.get_from_dict(yaml_dict, "location", None)
         if not location:
             logger.error("No location found for directory flattener config!")
-            raise Exception("No location found for directory flattener config!")
+            raise Exception(LocalizedText("No location found for directory flattener config!"))
         search_patterns = Utils.get_from_dict(yaml_dict, "search_patterns", [])
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
@@ -847,7 +875,7 @@ class BatchJob:
         root = Location.construct(yaml_dict["root"]).root
         subdir_names = Utils.parse_yamlish_list(yaml_dict["subdir_names"])
         if len(subdir_names) == 0:
-            raise Exception("named_subdir_collector mapping requires a non-empty subdir_names list")
+            raise Exception(LocalizedText("named_subdir_collector mapping requires a non-empty subdir_names list"))
         test = Utils.get_from_dict(yaml_dict, "test", self.test)
         skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
         clear_sources = Utils.get_from_dict(yaml_dict, "clear_sources", True)
