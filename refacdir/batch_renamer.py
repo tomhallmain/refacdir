@@ -78,7 +78,8 @@ class BatchRenamer:
     }
 
     def __init__(self, name, mappings, locations, test=True, skip_confirm=False, recursive=True,
-                 preserve_alpha=False, make_dirs=False, find_unused_filenames=False, app_actions=None):
+                 preserve_alpha=False, make_dirs=False, find_unused_filenames=False, app_actions=None,
+                 skip_missing_locations=False):
         logger.info(f"Initializing batch renamer: {name} with {len(mappings)} mappings and {len(locations)} locations")
         self.name = name
         self.mappings = mappings
@@ -90,6 +91,36 @@ class BatchRenamer:
         self.make_dirs = make_dirs
         self.find_unused_filenames = find_unused_filenames
         self.app_actions = app_actions
+        # When True, execute() skips location roots that are not directories
+        # (with a warning) and runs on the rest; it still fails if none exist.
+        self.skip_missing_locations = skip_missing_locations
+
+    @staticmethod
+    def _location_root(location):
+        if isinstance(location, Location):
+            return location.root
+        if isinstance(location, dict):
+            return location["root"]
+        return location
+
+    def _drop_missing_locations(self):
+        """Remove locations whose root is not a directory, warning for each.
+        Raises if every location is missing."""
+        present = []
+        for location in self.locations:
+            root = BatchRenamer._location_root(location)
+            if isinstance(root, str) and Utils.isdir_with_retry(root):
+                present.append(location)
+            else:
+                logger.warning(_("{0} - Directory not found, skipping location: {1}").format(self.name, root))
+        if not present:
+            error_msg = LocalizedText(
+                "None of the locations for {0} were found: {1}",
+                self.name, Utils.stringify_list(self.locations, do_print=False),
+            )
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        self.locations = present
 
     def _get_renamer(self, location):
         if isinstance(location, Location):
@@ -181,6 +212,9 @@ class BatchRenamer:
                 raise Exception(error_msg)
         _desc = BatchRenamer.DESCRIPTIONS[_func]
 
+        if self.skip_missing_locations:
+            self._drop_missing_locations()
+
         # For real (non-test) runs, scan each location's mappings exactly once up
         # front. The same {pattern: [filenames]} results decide whether there's
         # anything to do below, and are then handed to the real operation further
@@ -215,8 +249,7 @@ class BatchRenamer:
                 for filenames in scanned.values()
             )
             locations = "\n".join(
-                location.root if isinstance(location, Location) else str(location)
-                for location in self.locations
+                str(BatchRenamer._location_root(location)) for location in self.locations
             )
             if not confirm_action(
                 self.app_actions,

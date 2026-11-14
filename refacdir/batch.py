@@ -45,6 +45,9 @@ class BatchArgs:
         self.backup_warn_duplicates = False
         self.backup_mapping_will_run_default = True
         self.renamer_mapping_will_run_default = True
+        # When True, a RENAMER group skips locations whose directory is missing
+        # and runs on the rest, instead of failing the whole group.
+        self.skip_missing_renamer_locations = False
         # MCP's duplicate_policy for a live run: "cancel" keeps duplicates (the
         # remover only finds and logs them), "remove_all" removes them. None
         # leaves the remover's own confirmation and skip_confirm in charge.
@@ -223,6 +226,7 @@ class BatchJob:
         self.backup_warn_duplicates = args.backup_warn_duplicates
         self.backup_mapping_will_run_default = args.backup_mapping_will_run_default
         self.renamer_mapping_will_run_default = args.renamer_mapping_will_run_default
+        self.skip_missing_renamer_locations = getattr(args, "skip_missing_renamer_locations", False)
         self.cancelled = False
         
         # Progress tracking
@@ -666,6 +670,7 @@ class BatchJob:
             make_dirs=make_dirs,
             find_unused_filenames=find_unused_filenames,
             app_actions=self.app_actions,
+            skip_missing_locations=self.skip_missing_renamer_locations,
         )
         return renamer, renamer_function
 
