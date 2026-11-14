@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
     QGridLayout,
     QGroupBox,
@@ -25,6 +26,8 @@ from PySide6.QtWidgets import (
 from refacdir.batch import ActionType
 from refacdir.lib.multi_display import SmartDialog
 from refacdir.llm.config_schema import supported_action_types
+from refacdir.trash_remover import protected_directory_reason
+from refacdir.utils.translations import localized_str
 from refacdir.utils.translations import _
 from refacdir.utils.utils import Utils
 from .llm_config_chat_dialog import LLMConfigChatDialog
@@ -902,6 +905,82 @@ class ArchiveExtractorActionDialog(BaseActionDialog):
         ]
 
 
+class TrashRemoverActionDialog(BaseActionDialog):
+    def hint_text(self) -> str:
+        return _(
+            "Empties each directory in directories: its contents are removed, the directory "
+            "itself is kept. delete_mode: permanent (default) or system_trash. "
+            "remove_subdirectories (default on), older_than_days, patterns (e.g. [\"*.tmp\"]), "
+            "max_entries / max_total_size (e.g. 5GB) limit what a run may remove. "
+            "empty_system_trash: also empty the operating system's trash. Drive roots, the home "
+            "directory, system directories and this application's own directories are refused."
+        )
+
+    def default_mapping(self) -> dict:
+        return {
+            "name": _("trash_remover mapping"),
+            "directories": [],
+            "test": True,
+        }
+
+    def property_key_options(self) -> list[str]:
+        return [
+            "directories",
+            "delete_mode",
+            "remove_subdirectories",
+            "older_than_days",
+            "patterns",
+            "empty_system_trash",
+            "max_entries",
+            "max_total_size",
+            "will_run",
+            "test",
+            "skip_confirm",
+        ]
+
+    def _build_mapping_detail_widgets(self):
+        super()._build_mapping_detail_widgets()
+        add_dir_btn = QPushButton(_("Add Directory..."))
+        add_dir_btn.clicked.connect(self._on_add_directory)
+        # After the Properties group, before the Save Mapping row.
+        self.detail_layout.insertWidget(2, add_dir_btn)
+
+    def _directories_row(self) -> MappingPropertyRow:
+        for row in self._mapping_property_rows:
+            if row.key() == "directories":
+                return row
+        self._on_add_property_row(key="directories", value=[])
+        return self._mapping_property_rows[-1]
+
+    def _on_add_directory(self):
+        selected = QFileDialog.getExistingDirectory(self, _("Select Directory"))
+        if not selected:
+            return
+        reason = protected_directory_reason(selected)
+        if reason is not None:
+            QMessageBox.warning(self, _("Directory Not Allowed"), localized_str(reason))
+            return
+        row = self._directories_row()
+        directories = row.value()
+        if not isinstance(directories, list):
+            directories = [directories] if directories else []
+        if selected not in directories:
+            directories.append(selected)
+        row.value_edit.setText(yaml.safe_dump(directories, default_flow_style=True, allow_unicode=True).strip())
+
+    def _build_mapping_from_editor(self) -> dict:
+        mapping = super()._build_mapping_from_editor()
+        directories = mapping.get("directories") or []
+        if not isinstance(directories, list):
+            directories = [directories]
+        for entry in directories:
+            root = entry.get("root") if isinstance(entry, dict) else entry
+            reason = protected_directory_reason(root)
+            if reason is not None:
+                raise ValueError(localized_str(reason))
+        return mapping
+
+
 def create_action_dialog(parent, action_type: ActionType, action_data: dict | None = None) -> BaseActionDialog:
     dialog_map = {
         ActionType.BACKUP: BackupActionDialog,
@@ -912,6 +991,7 @@ def create_action_dialog(parent, action_type: ActionType, action_data: dict | No
         ActionType.IMAGE_CATEGORIZER: ImageCategorizerActionDialog,
         ActionType.NAMED_SUBDIR_COLLECTOR: NamedSubdirCollectorActionDialog,
         ActionType.ARCHIVE_EXTRACTOR: ArchiveExtractorActionDialog,
+        ActionType.TRASH_REMOVER: TrashRemoverActionDialog,
     }
     dialog_cls = dialog_map.get(action_type, BaseActionDialog)
     return dialog_cls(parent=parent, action_type=action_type, action_data=action_data)

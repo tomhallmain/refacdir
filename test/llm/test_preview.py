@@ -133,3 +133,24 @@ def test_named_subdir_collector_preview_lists_work_items(tmp_path):
     assert result.details["work_items"] == [("A", str(f))]
     # Read-only.
     assert f.exists()
+
+
+def test_trash_remover_preview_lists_entries_without_removing(tmp_path):
+    trash = tmp_path / "trash"
+    trash.mkdir()
+    f = trash / "old.txt"
+    f.write_text("data", encoding="utf-8")
+    action_dict = {"name": "Test trash", "directories": [str(trash)]}
+    result = preview_action(ActionType.TRASH_REMOVER, action_dict)
+    assert result.available is True
+    assert result.details["entry_count"] == 1
+    # Read-only.
+    assert f.exists()
+
+
+def test_trash_remover_preview_reports_missing_directory(tmp_path):
+    action_dict = {"name": "Test trash", "directories": [str(tmp_path / "not_yet")]}
+    result = preview_action(ActionType.TRASH_REMOVER, action_dict)
+    assert result.available is True
+    assert result.details["entry_count"] == 0
+    assert len(result.details["missing"]) == 1

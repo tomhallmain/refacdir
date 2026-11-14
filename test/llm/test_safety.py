@@ -14,6 +14,7 @@ from refacdir.llm.safety import apply_safety_defaults
     [
         ActionType.RENAMER, ActionType.BACKUP, ActionType.DIRECTORY_FLATTENER,
         ActionType.NAMED_SUBDIR_COLLECTOR, ActionType.ARCHIVE_EXTRACTOR,
+        ActionType.TRASH_REMOVER,
     ],
 )
 def test_forces_test_true_regardless_of_draft_value(action_type):
@@ -26,6 +27,7 @@ def test_forces_test_true_regardless_of_draft_value(action_type):
     [
         ActionType.RENAMER, ActionType.BACKUP, ActionType.DIRECTORY_FLATTENER,
         ActionType.NAMED_SUBDIR_COLLECTOR, ActionType.ARCHIVE_EXTRACTOR,
+        ActionType.TRASH_REMOVER,
     ],
 )
 def test_forces_test_true_when_absent_from_draft(action_type):
@@ -36,6 +38,14 @@ def test_forces_test_true_when_absent_from_draft(action_type):
 def test_duplicate_remover_forces_dry_run_and_confirmation():
     result = apply_safety_defaults(
         ActionType.DUPLICATE_REMOVER, {"name": "x", "skip_confirm": True, "test": False}
+    )
+    assert result["skip_confirm"] is False
+    assert result["test"] is True
+
+
+def test_trash_remover_forces_dry_run_and_confirmation():
+    result = apply_safety_defaults(
+        ActionType.TRASH_REMOVER, {"name": "x", "skip_confirm": True, "test": False}
     )
     assert result["skip_confirm"] is False
     assert result["test"] is True

@@ -47,7 +47,7 @@ class _BatchJobSession:
             {
                 "type": op_type,
                 "source": os.path.normpath(source),
-                "dest": os.path.normpath(dest),
+                "dest": os.path.normpath(dest) if dest else "",
                 "reversible": bool(reversible and op_type in REVERSIBLE_OP_TYPES),
                 "reversed": False,
                 "meta": _merged_meta(meta),

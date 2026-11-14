@@ -71,4 +71,4 @@ def test_missing_location_is_skipped_in_dry_run_when_enabled(tmp_path):
 
 def test_batch_args_default_is_off():
     args = BatchArgs(configs={"configs/unused.yaml": True})
-    assert args.skip_missing_renamer_locations is False
+    assert args.skip_missing_locations is False

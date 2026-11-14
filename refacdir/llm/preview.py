@@ -14,6 +14,8 @@ type's own read-only scan mechanism already collects:
 - ARCHIVE_EXTRACTOR: ``preview()`` (wraps its ``_plan`` scan; reads archive
   directories only, never extracts).
 - BACKUP: ``setup()`` + the new ``BackupMapping.preview_changes()``.
+- TRASH_REMOVER: ``preview()`` (the same removal plan ``run()`` uses, plus a
+  read-only system trash summary when ``empty_system_trash`` is set).
 
 Nothing here executes or mutates, regardless of the draft's own
 ``test``/``skip_confirm`` value — every path below only calls a read-only
@@ -28,6 +30,7 @@ from typing import Any, Dict
 
 from refacdir.batch import ActionType
 from refacdir.llm.validation import construct_for_action_type
+from refacdir.trash_remover import format_size
 from refacdir.utils.translations import _, as_localized_text
 
 
@@ -114,12 +117,25 @@ def _preview_archive_extractor(action_type: ActionType, extractor) -> PreviewRes
     return PreviewResult(action_type=action_type, available=True, summary=summary, details=plan)
 
 
+def _preview_trash_remover(action_type: ActionType, remover) -> PreviewResult:
+    plan = remover.preview()
+    summary = _("{0} entries ({1}) would be removed from {2} directory(s).").format(
+        plan["entry_count"], format_size(plan["total_size"]), len(plan["directories"])
+    )
+    if plan["missing"]:
+        summary += " " + _("{0} directory(s) not found.").format(len(plan["missing"]))
+    if "system_trash" in plan:
+        summary += " " + _("The system trash would be emptied: {0}").format(plan["system_trash"]["description"])
+    return PreviewResult(action_type=action_type, available=True, summary=summary, details=plan)
+
+
 _PREVIEW_DISPATCH = {
     ActionType.DUPLICATE_REMOVER: _preview_duplicate_remover,
     ActionType.DIRECTORY_OBSERVER: _preview_directory_observer,
     ActionType.NAMED_SUBDIR_COLLECTOR: _preview_named_subdir_collector,
     ActionType.ARCHIVE_EXTRACTOR: _preview_archive_extractor,
     ActionType.BACKUP: _preview_backup,
+    ActionType.TRASH_REMOVER: _preview_trash_remover,
 }
 
 

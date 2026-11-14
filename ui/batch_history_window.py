@@ -104,9 +104,10 @@ def _format_job_detail(job: dict, *, mapping_filter: tuple[str, str] | None = No
                 status = " " + _("[missing at dest]")
         elif not op.get("reversible"):
             status = " " + _("[not reversible]")
+        dest_part = f" -> {op['dest']}" if op.get("dest") else ""
         lines.append(
             f"  {i}. [{op_config} / {mapping_label}] {op.get('type', '?')}: "
-            f"{op.get('source', '')} -> {op.get('dest', '')}{status}"
+            f"{op.get('source', '')}{dest_part}{status}"
         )
     return "\n".join(lines)
 

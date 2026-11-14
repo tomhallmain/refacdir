@@ -390,20 +390,21 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         )
         options_grid.addWidget(self.persist_definition_caches_check, 2, 0)
 
-        self.skip_missing_renamer_locations_check = QCheckBox(
-            _("Run renamers even if some directories are missing")
+        self.skip_missing_locations_check = QCheckBox(
+            _("Run actions even if some directories are missing")
         )
-        self.skip_missing_renamer_locations_check.setToolTip(
+        self.skip_missing_locations_check.setToolTip(
             _(
-                "Checked: a renamer mapping skips locations whose directory is not found "
-                "and runs on the others. It still fails if none of its directories are found. "
-                "Unchecked (default): a missing directory fails the whole renamer mapping."
+                "Applies to renamer and trash remover mappings. Checked: a mapping skips "
+                "directories that are not found and runs on the others. It still fails if "
+                "none of its directories are found. Unchecked (default): a missing directory "
+                "fails the whole mapping."
             )
         )
-        self.skip_missing_renamer_locations_check.stateChanged.connect(
+        self.skip_missing_locations_check.stateChanged.connect(
             lambda: self.schedule_store_ui_settings()
         )
-        options_grid.addWidget(self.skip_missing_renamer_locations_check, 2, 1)
+        options_grid.addWidget(self.skip_missing_locations_check, 2, 1)
 
         options_layout.addLayout(options_grid)
         parent_layout.addWidget(options_frame)
@@ -597,7 +598,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         run_args.persist_definition_caches_across_batch_runs = (
             self.persist_definition_caches_check.isChecked()
         )
-        run_args.skip_missing_renamer_locations = self.skip_missing_renamer_locations_check.isChecked()
+        run_args.skip_missing_locations = self.skip_missing_locations_check.isChecked()
         run_args.duplicate_policy = overrides.get("duplicate_policy")
         run_args.app_actions = self._mcp_run_app_actions if overrides.get("mcp") else self.app_actions
         self._running_batch_args = run_args
@@ -939,8 +940,13 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
             self.persist_definition_caches_check.setChecked(
                 operation_settings.get('persist_definition_caches_across_batch_runs', False)
             )
-            self.skip_missing_renamer_locations_check.setChecked(
-                operation_settings.get('skip_missing_renamer_locations', False)
+            # 'skip_missing_renamer_locations' is the key from when the option
+            # covered renamers only.
+            self.skip_missing_locations_check.setChecked(
+                operation_settings.get(
+                    'skip_missing_locations',
+                    operation_settings.get('skip_missing_renamer_locations', False),
+                )
             )
             timeout_minutes = operation_settings.get(
                 'inactivity_shutdown_timeout_minutes',
@@ -999,7 +1005,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
                 'skip_confirm': self.skip_confirm_check.isChecked(),
                 'only_observers': self.only_observers_check.isChecked(),
                 'persist_definition_caches_across_batch_runs': self.persist_definition_caches_check.isChecked(),
-                'skip_missing_renamer_locations': self.skip_missing_renamer_locations_check.isChecked(),
+                'skip_missing_locations': self.skip_missing_locations_check.isChecked(),
                 'inactivity_shutdown_timeout_minutes': self.inactivity_timeout_spin.value(),
                 'log_panel_level': self.log_panel.level(),
             }

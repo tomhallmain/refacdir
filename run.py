@@ -35,9 +35,9 @@ python run.py [args]
         Keep filename_mapping_functions / filetype_definitions registries across batch runs
         in the same process (default is to clear them at each run for a clean YAML-only view)
 
-    --skip-missing-renamer-locations
-        Let a renamer mapping skip locations whose directory is not found and run on the
-        others (it still fails if none are found)
+    --skip-missing-locations
+        Let renamer and trash remover mappings skip directories that are not found and run
+        on the others (a mapping still fails if none of its directories are found)
 """
     )
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 "only-observers",
                 "configs=",
                 "persist-definition-caches",
-                "skip-missing-renamer-locations",
+                "skip-missing-locations",
                 ])
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -96,8 +96,8 @@ if __name__ == "__main__":
             batch_args.only_observers = True
         elif o == "--persist-definition-caches":
             batch_args.persist_definition_caches_across_batch_runs = True
-        elif o == "--skip-missing-renamer-locations":
-            batch_args.skip_missing_renamer_locations = True
+        elif o == "--skip-missing-locations":
+            batch_args.skip_missing_locations = True
 
 
     main(batch_args)

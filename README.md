@@ -20,6 +20,7 @@ Available batch actions include:
   - `rename_by_mtime`
 - Directory flattening - take all files in recursive directories and flatten them into the base directory
 - Archive extraction - unpack ZIP files matching a name pattern and merge their contents into one directory
+- Trash removal - empty chosen directories, and optionally the system trash
 - Backups, with the following modes:
   - `PUSH_AND_REMOVE`
   - `PUSH`
@@ -34,7 +35,9 @@ Define custom named functions and sets of file types in the config YAML `filenam
 
 For the built-in `REP`/`DIGITS`/`HEX`/`ALNUM` pattern primitives, you don't need to declare a named `filename_mapping_functions` entry for every value — an inline `{{type:arg1:arg2}}` form works directly in a pattern, e.g. `{{digits:4}}` (four digits), `{{hex:64}}` (64 uppercase hex chars), or `{{alnum:8:true:_}}` (8 lowercase alphanumeric chars plus underscore). This is purely additive: existing named `filename_mapping_functions` declarations keep working unchanged.
 
-Once all configurations are defined, run `run.py` to perform the actions. The actions will be run in the order they are listed in the config file. Each configuration file will create a batch job which will run in sequence sorted by the name of the config file.
+Once all configurations are defined, run `run.py` to perform the actions. The actions will be run in the order they are listed in the config file. Each configuration file will create a batch job which will run in sequence sorted by the name of the config file. Run `python run.py --help` for its options.
+
+To let renamer and trash removal mappings skip missing directories instead of failing, enable "Run actions even if some directories are missing" under Operation Settings, or pass `--skip-missing-locations`.
 
 # UI
 

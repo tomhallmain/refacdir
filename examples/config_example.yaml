@@ -233,3 +233,30 @@ actions:
     pattern: "*.zip"
     preserve_structure: true
     delete_sources: false
+
+
+- type: "TRASH_REMOVER"
+  mappings:
+
+  # Empties each directory: its contents are deleted for good (delete_mode
+  # defaults to permanent), the directories themselves are kept. exclude_dirs
+  # are kept with their contents.
+  - name: "Empty my trash folders"
+    test: true
+    directories:
+    - "D:\\_to_delete"
+    - root: "{{USER_HOME}}\\Downloads\\quarantine"
+      exclude_dirs: ["keep"]
+
+  # Only files older than 30 days, moved to the system trash instead of being
+  # deleted; max_total_size stops the run, removing nothing, if more than
+  # 20 GB would go. empty_system_trash also empties the OS trash afterwards.
+  - name: "Old temp files"
+    test: true
+    directories:
+    - "D:\\scratch"
+    older_than_days: 30
+    patterns: ["*.tmp", "*.bak"]
+    delete_mode: "system_trash"
+    max_total_size: "20GB"
+    empty_system_trash: false

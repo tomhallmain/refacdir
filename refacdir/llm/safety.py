@@ -23,6 +23,7 @@ _TEST_FIELD_ACTION_TYPES = frozenset((
     ActionType.NAMED_SUBDIR_COLLECTOR,
     ActionType.ARCHIVE_EXTRACTOR,
     ActionType.DUPLICATE_REMOVER,
+    ActionType.TRASH_REMOVER,
 ))
 
 
@@ -32,12 +33,12 @@ def apply_safety_defaults(action_type: ActionType, action_dict: dict) -> dict:
     field forced for ``action_type``:
 
     - RENAMER, BACKUP, DIRECTORY_FLATTENER, NAMED_SUBDIR_COLLECTOR,
-      ARCHIVE_EXTRACTOR, DUPLICATE_REMOVER: top-level ``test`` forced to
-      ``True``.
-    - DUPLICATE_REMOVER also has ``skip_confirm`` forced to ``False``, so once
-      ``test`` is cleared for a live run, ``DuplicateRemover.run()``'s
-      interactive / ``app_actions.review_duplicates`` confirmation step is
-      still not bypassed.
+      ARCHIVE_EXTRACTOR, DUPLICATE_REMOVER, TRASH_REMOVER: top-level ``test``
+      forced to ``True``.
+    - DUPLICATE_REMOVER and TRASH_REMOVER also have ``skip_confirm`` forced to
+      ``False``, so once ``test`` is cleared for a live run, their
+      confirmation step (``app_actions.review_duplicates`` / the emptying
+      prompt) is still not bypassed.
     - DIRECTORY_OBSERVER: read-only reporting, no destructive operation
       exists at all — returned unchanged.
 
@@ -54,6 +55,6 @@ def apply_safety_defaults(action_type: ActionType, action_dict: dict) -> dict:
     safe_dict = dict(action_dict)
     if action_type in _TEST_FIELD_ACTION_TYPES:
         safe_dict["test"] = True
-    if action_type == ActionType.DUPLICATE_REMOVER:
+    if action_type in (ActionType.DUPLICATE_REMOVER, ActionType.TRASH_REMOVER):
         safe_dict["skip_confirm"] = False
     return safe_dict

@@ -124,7 +124,11 @@ class LocalizedText(str):
 
     def localized(self) -> str:
         translated = I18N._(self.template)
-        return translated.format(*self.template_args) if self.template_args else translated
+        if not self.template_args:
+            return translated
+        # A LocalizedText argument (one message embedding another) is translated too.
+        args = [a.localized() if isinstance(a, LocalizedText) else a for a in self.template_args]
+        return translated.format(*args)
 
 
 def as_localized_text(value):

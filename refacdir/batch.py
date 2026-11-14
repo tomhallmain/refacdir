@@ -14,6 +14,7 @@ from refacdir.duplicate_remover import DuplicateRemover
 from refacdir.filename_ops import FilenameMappingDefinition, FiletypesDefinition
 from refacdir.image_categorizer import ImageCategorizer
 from refacdir.named_subdir_collector import NamedSubdirCollector
+from refacdir.trash_remover import TrashRemover
 from refacdir import user_search_funcs
 from refacdir.utils.app_paths import app_data_dir
 from refacdir.utils.translations import LocalizedText, _, localized_str
@@ -45,9 +46,10 @@ class BatchArgs:
         self.backup_warn_duplicates = False
         self.backup_mapping_will_run_default = True
         self.renamer_mapping_will_run_default = True
-        # When True, a RENAMER group skips locations whose directory is missing
-        # and runs on the rest, instead of failing the whole group.
-        self.skip_missing_renamer_locations = False
+        # When True, RENAMER groups and TRASH_REMOVER mappings skip locations
+        # whose directory is missing and run on the rest; they still fail when
+        # every one of their directories is missing.
+        self.skip_missing_locations = False
         # MCP's duplicate_policy for a live run: "cancel" keeps duplicates (the
         # remover only finds and logs them), "remove_all" removes them. None
         # leaves the remover's own confirmation and skip_confirm in charge.
@@ -191,6 +193,7 @@ class ActionType(Enum):
     IMAGE_CATEGORIZER = 'IMAGE_CATEGORIZER'
     NAMED_SUBDIR_COLLECTOR = 'NAMED_SUBDIR_COLLECTOR'
     ARCHIVE_EXTRACTOR = 'ARCHIVE_EXTRACTOR'
+    TRASH_REMOVER = 'TRASH_REMOVER'
 
     def get_varname(self):
         return self.value.lower()
@@ -226,7 +229,7 @@ class BatchJob:
         self.backup_warn_duplicates = args.backup_warn_duplicates
         self.backup_mapping_will_run_default = args.backup_mapping_will_run_default
         self.renamer_mapping_will_run_default = args.renamer_mapping_will_run_default
-        self.skip_missing_renamer_locations = getattr(args, "skip_missing_renamer_locations", False)
+        self.skip_missing_locations = getattr(args, "skip_missing_locations", False)
         self.cancelled = False
         
         # Progress tracking
@@ -506,7 +509,14 @@ class BatchJob:
                 self.app_actions.progress_text(_("Config {0}/{1}: Running {2} {3}/{4} in {5}").format(self.current_config_index, self.total_configs, action_type, action_index + 1, total_actions, config))
 
             try:
-                action.run()
+                from refacdir.batch_job_history import recording_context
+
+                with recording_context(
+                    config=config,
+                    mapping_name=getattr(action, "name", None),
+                    action_type=action_type.get_varname(),
+                ):
+                    action.run()
             except Exception as e:
                 self.failure_counts_map[action_type] += 1
                 self._record_failure(
@@ -670,7 +680,7 @@ class BatchJob:
             make_dirs=make_dirs,
             find_unused_filenames=find_unused_filenames,
             app_actions=self.app_actions,
-            skip_missing_locations=self.skip_missing_renamer_locations,
+            skip_missing_locations=self.skip_missing_locations,
         )
         return renamer, renamer_function
 
@@ -964,3 +974,64 @@ class BatchJob:
 
 
 
+
+    def construct_trash_remover(self, yaml_dict={}):
+        """
+        Build a TrashRemover from a TRASH_REMOVER action's YAML dict. Empties
+        the given trash directories: their contents are removed, the
+        directories themselves are kept.
+
+        Required keys:
+          - ``name`` (str)
+          - ``directories`` (list): one or more locations — see
+            ``Location.construct``. ``exclude_dirs`` entries are kept with
+            their contents. Required unless ``empty_system_trash`` is true.
+            Refused when a directory is a drive root, the home directory or
+            one of its parents, a system directory, or this application's
+            own data, config or install directory, and when two of them
+            overlap.
+
+        Optional keys:
+          - ``delete_mode`` (str, default ``"permanent"``): ``"permanent"``
+            deletes for good; ``"system_trash"`` moves entries to the
+            operating system's trash instead.
+          - ``remove_subdirectories`` (bool, default True): also remove
+            subdirectories once emptied. False removes files only and keeps
+            the directory tree.
+          - ``older_than_days`` (number, default none): only remove entries
+            whose modification time is at least this many days old. A
+            subdirectory is removed only if everything in it was removed and
+            it is old enough itself.
+          - ``patterns`` (list of str, default: every file): fnmatch patterns,
+            case-insensitive, tested against file names, e.g. ``"*.tmp"``.
+          - ``empty_system_trash`` (bool, default False): also empty the
+            current user's operating-system trash, whole (``older_than_days``
+            and ``patterns`` do not apply to it).
+          - ``max_entries`` (int) / ``max_total_size`` (bytes, or a string
+            such as ``"5GB"``): fail without removing anything when the
+            planned removal is larger than this.
+          - ``will_run`` (bool, default True): skip this mapping when false.
+          - ``test`` / ``skip_confirm``: default to the batch-level setting.
+        """
+        name = yaml_dict["name"]
+        directories = [Location.construct(d) for d in (yaml_dict.get("directories") or [])]
+        test = Utils.get_from_dict(yaml_dict, "test", self.test)
+        skip_confirm = Utils.get_from_dict(yaml_dict, "skip_confirm", self.skip_confirm)
+        logger.info(f"Constructing trash remover: {name} with {len(directories)} directories")
+        return TrashRemover(
+            name,
+            directories,
+            delete_mode=Utils.get_from_dict(yaml_dict, "delete_mode", "permanent"),
+            remove_subdirectories=Utils.get_from_dict(yaml_dict, "remove_subdirectories", True),
+            older_than_days=yaml_dict.get("older_than_days"),
+            patterns=yaml_dict.get("patterns"),
+            empty_system_trash=Utils.get_from_dict(yaml_dict, "empty_system_trash", False),
+            max_entries=yaml_dict.get("max_entries"),
+            max_total_size=yaml_dict.get("max_total_size"),
+            will_run=Utils.get_from_dict(yaml_dict, "will_run", True),
+            test=test,
+            skip_confirm=skip_confirm,
+            skip_missing_locations=self.skip_missing_locations,
+            cancel_event=getattr(self.args, "cancel_event", None),
+            app_actions=self.app_actions,
+        )

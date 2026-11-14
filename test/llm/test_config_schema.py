@@ -26,6 +26,7 @@ _EXPECTED_SUPPORTED = {
     ActionType.DIRECTORY_FLATTENER,
     ActionType.NAMED_SUBDIR_COLLECTOR,
     ActionType.ARCHIVE_EXTRACTOR,
+    ActionType.TRASH_REMOVER,
 }
 
 
@@ -105,6 +106,14 @@ def test_archive_extractor_schema_mentions_required_fields():
     description = get_schema_description(ActionType.ARCHIVE_EXTRACTOR)
     for keyword in (
         "search_dir", "target_dir", "pattern", "preserve_structure", "delete_sources",
+    ):
+        assert keyword in description
+
+
+def test_trash_remover_schema_mentions_required_fields():
+    description = get_schema_description(ActionType.TRASH_REMOVER)
+    for keyword in (
+        "directories", "delete_mode", "older_than_days", "patterns", "empty_system_trash",
     ):
         assert keyword in description
 
