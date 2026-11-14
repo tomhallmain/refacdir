@@ -43,6 +43,8 @@ To let renamer and trash removal mappings skip missing directories instead of fa
 
 Start the UI by running `app_qt.py`.
 
+"Replace Paths" changes or removes a directory path in all config files at once, and lists referenced directories that no longer exist.
+
 The UI exits automatically after a period without keyboard or mouse activity (default 30 minutes; configurable under Operation Settings).
 
 # Server

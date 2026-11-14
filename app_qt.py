@@ -45,6 +45,7 @@ from ui import (
 )
 from ui.inactivity_shutdown import DEFAULT_INACTIVITY_TIMEOUT_MINUTES, InactivityShutdown
 from ui.log_panel import LogPanel
+from ui.path_replace_dialog import PathReplaceDialog
 from ui.qt_message_log import install_qt_message_handler, qt_message_reaches_logging
 
 # Set up logger for UI
@@ -101,6 +102,7 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.recurring_action_config = RecurringActionConfig()
         self._toast = ToastNotification(screen_anchor=self)
         self._config_editor_window = None
+        self._path_replace_dialog = None
         # Flags for runs accepted from the MCP front end, kept by run id so a
         # queued run still carries them when the queue reaches it.
         self._run_overrides = {}
@@ -249,6 +251,12 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self.config_editor_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
         self.config_editor_btn.clicked.connect(self.open_config_editor)
         actions_layout.addWidget(self.config_editor_btn)
+
+        self.path_replace_btn = QPushButton(_("Replace Paths"))
+        self.path_replace_btn.setIcon(self.style().standardIcon(QStyle.SP_DirLinkIcon))
+        self.path_replace_btn.setToolTip(_("Change or remove a directory path in all config files at once."))
+        self.path_replace_btn.clicked.connect(self.open_path_replace)
+        actions_layout.addWidget(self.path_replace_btn)
 
         self.history_btn = QPushButton(_("Job History"))
         self.history_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
@@ -753,6 +761,32 @@ class MainWindow(FramelessWindowMixin, SmartMainWindow):
         self._config_editor_window.show()
         self._config_editor_window.raise_()
         self._config_editor_window.activateWindow()
+
+    def open_path_replace(self):
+        """Open (or focus) the Replace Paths dialog."""
+        if self._path_replace_dialog is None:
+            self._path_replace_dialog = PathReplaceDialog(
+                self,
+                is_run_active=lambda: self.job_queue.job_running or self.progress_bar.isVisible(),
+                unsaved_configs=self._configs_with_unsaved_edits,
+                on_applied=self._on_paths_replaced,
+            )
+        self._path_replace_dialog.show()
+        self._path_replace_dialog.raise_()
+        self._path_replace_dialog.activateWindow()
+
+    def _configs_with_unsaved_edits(self) -> set:
+        editor = self._config_editor_window
+        if editor is not None and editor.current_config_path and editor.has_unsaved_changes():
+            return {editor.current_config_path}
+        return set()
+
+    def _on_paths_replaced(self, changed: list):
+        """Reload config state, and the open editor unless it has unsaved edits."""
+        self._refresh_configs()
+        editor = self._config_editor_window
+        if editor is not None and editor.current_config_path and not editor.has_unsaved_changes():
+            editor.reload_current_config()
 
     def open_batch_history(self):
         """Open (or focus) the batch job history window."""

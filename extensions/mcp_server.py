@@ -32,9 +32,10 @@ so the session sets ``skip_confirm`` and supplies ``confirm`` and
 ``review_duplicates`` that decline rather than wait. This module does no
 thread-marshaling of its own.
 
-Three tools need no session at all -- describing, validating and previewing an
-action are pure functions over the action's own schema -- so they answer even
-with no window open.
+Several tools need no session at all, so they answer even with no window
+open: describing, validating and previewing an action are pure functions over
+the action's own schema, and the two path tools (previewing a path
+replacement, listing missing directories) only read the config files on disk.
 
 Everything except :meth:`MCPServerExtension._serve` is ordinary code and is
 tested as such. ``_serve`` is the only part that touches the MCP SDK, kept
@@ -90,6 +91,8 @@ SESSIONLESS_TOOLS = frozenset((
     "describe_action_type",
     "validate_action",
     "preview_action",
+    "preview_path_replacement",
+    "list_missing_directories",
 ))
 
 
@@ -163,6 +166,27 @@ def tool_descriptors() -> list:
                 "type's own read-only scan. Nothing is moved, renamed or "
                 "deleted. Use this to check intent, which validation cannot: a "
                 "backup with source and target swapped validates cleanly."
+            ),
+        },
+        {
+            "name": "preview_path_replacement",
+            "description": (
+                "Every place in every config file (enabled or not) where a "
+                "directory path, or a path under it, is used, and what "
+                "replacing it with new_path -- or, with mode=remove, removing "
+                "it -- would change. Only directory fields are considered. "
+                "Hits of kind manual or note cannot be applied automatically. "
+                "Nothing is written; applying and undoing are done in the "
+                "window's Replace Paths dialog."
+            ),
+        },
+        {
+            "name": "list_missing_directories",
+            "description": (
+                "Directories referenced by any config file that do not exist, "
+                "each with the configs, mappings and fields that use it. "
+                "status is unreachable when the path is on a drive that is not "
+                "connected rather than deleted."
             ),
         },
         {
@@ -345,6 +369,8 @@ class MCPServerExtension:
         """Run one tool call and return what the client should see."""
         arguments = arguments or {}
 
+        if tool_name in ("preview_path_replacement", "list_missing_directories"):
+            return self._dispatch_path_tool(tool_name, arguments)
         if tool_name in SESSIONLESS_TOOLS:
             return self._dispatch_schema_tool(tool_name, arguments)
 
@@ -458,6 +484,35 @@ class MCPServerExtension:
             "reason": str(result.reason),
             "details": result.details,
         }
+
+    @staticmethod
+    def _dispatch_path_tool(tool_name: str, arguments: dict) -> dict:
+        """Read-only path tools over the config files on disk; they need no session."""
+        from refacdir import path_replace
+
+        try:
+            return MCPServerExtension._path_tool_result(path_replace, tool_name, arguments)
+        except path_replace.MissingDependencyError as e:
+            raise MCPToolError(str(e.args[0]))
+
+    @staticmethod
+    def _path_tool_result(path_replace, tool_name: str, arguments: dict) -> dict:
+        if tool_name == "list_missing_directories":
+            missing, errors = path_replace.find_missing_directories()
+            return {
+                "missing": [entry.to_dict() for entry in missing],
+                "unreadable_configs": [{"config": c, "error": str(e)} for c, e in errors],
+            }
+        mode = str(arguments.get("mode") or path_replace.MODE_REPLACE).strip().lower()
+        old_path = arguments.get("old_path")
+        if not old_path:
+            raise MCPToolError("preview_path_replacement needs an old_path")
+        try:
+            plan = path_replace.plan_path_change(mode, str(old_path), arguments.get("new_path"))
+        except ValueError as e:
+            # Plain English str, as for validate_action.
+            raise MCPToolError(str(e.args[0]) if e.args else str(e))
+        return plan.to_dict()
 
     @staticmethod
     def _resolve_action_type(raw):
@@ -677,6 +732,17 @@ class MCPServerExtension:
             return self.dispatch(
                 "preview_action", {"action_type": action_type, "action": action}
             )
+
+        @server.tool(name="preview_path_replacement", description=described["preview_path_replacement"])
+        def preview_path_replacement(old_path: str, new_path: str = "", mode: str = "replace") -> dict:
+            return self.dispatch(
+                "preview_path_replacement",
+                {"old_path": old_path, "new_path": new_path or None, "mode": mode},
+            )
+
+        @server.tool(name="list_missing_directories", description=described["list_missing_directories"])
+        def list_missing_directories() -> dict:
+            return self.dispatch("list_missing_directories")
 
         @server.tool(name="run_batch", description=described["run_batch"])
         async def run_batch(

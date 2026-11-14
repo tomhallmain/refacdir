@@ -49,6 +49,8 @@ class ConfigEditorWindow(SmartWindow):
         self.app_actions = app_actions
         self.current_config_path = None
         self.current_config_data = self._new_config_template()
+        # The config as last loaded or saved, for has_unsaved_changes().
+        self._saved_snapshot = copy.deepcopy(self.current_config_data)
 
         self._build_ui()
         self.reload_config_list()
@@ -243,6 +245,7 @@ class ConfigEditorWindow(SmartWindow):
                 raise ValueError(_("Top-level YAML must be a dictionary."))
             self.current_config_data = loaded
             self.current_config_path = config_rel_path
+            self._saved_snapshot = copy.deepcopy(loaded)
             self._sync_ui_from_data()
         except Exception as exc:
             logger.error(f"Failed loading config {abs_path}: {exc}")
@@ -251,7 +254,35 @@ class ConfigEditorWindow(SmartWindow):
     def new_config(self):
         self.current_config_data = self._new_config_template()
         self.current_config_path = None
+        self._saved_snapshot = copy.deepcopy(self.current_config_data)
         self._sync_ui_from_data()
+
+    @staticmethod
+    def _comparable(data: dict) -> dict:
+        data = copy.deepcopy(data)
+        data.setdefault("will_run", True)
+        for key in ("filename_mapping_functions", "filetype_definitions"):
+            if not data.get(key):
+                data[key] = []
+        return data
+
+    def has_unsaved_changes(self) -> bool:
+        """Whether the open config differs from the file as last loaded or saved."""
+        if self.current_config_path is None:
+            return False
+        candidate = copy.deepcopy(self.current_config_data)
+        candidate["will_run"] = self.will_run_checkbox.isChecked()
+        try:
+            candidate["filename_mapping_functions"] = yaml.safe_load(self.filename_funcs_editor.toPlainText()) or []
+            candidate["filetype_definitions"] = yaml.safe_load(self.filetypes_editor.toPlainText()) or []
+        except Exception:
+            return True
+        return self._comparable(candidate) != self._comparable(self._saved_snapshot)
+
+    def reload_current_config(self):
+        """Reload the open config from disk, e.g. after another tool changed it."""
+        if self.current_config_path is not None:
+            self.load_config(self.current_config_path)
 
     def _sync_ui_from_data(self):
         self.path_label.setText(self.current_config_path or _("(new config)"))
@@ -403,6 +434,7 @@ class ConfigEditorWindow(SmartWindow):
             QMessageBox.critical(self, _("Save As Error"), str(exc))
 
     def _after_save(self, config_rel_path: str):
+        self._saved_snapshot = copy.deepcopy(self.current_config_data)
         self.path_label.setText(config_rel_path)
         self.reload_config_list()
         self.config_saved.emit(config_rel_path)

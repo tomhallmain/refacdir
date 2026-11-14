@@ -155,3 +155,12 @@ def test_fault_log_check(monkeypatch, tmp_path):
     smoke = SmokeTest()
     smoke.check_fault_log()
     assert smoke.failures == []
+
+
+def test_yaml_round_trip_fails_by_name_without_ruamel(monkeypatch):
+    import sys
+
+    monkeypatch.setitem(sys.modules, "ruamel.yaml", None)  # makes the import fail
+    smoke = SmokeTest()
+    smoke.check_yaml_round_trip()
+    assert smoke.failures == ["ruamel.yaml round trip"]

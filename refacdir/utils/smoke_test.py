@@ -9,6 +9,7 @@ without its distribution metadata raises.
 """
 
 import contextlib
+import io
 import os
 
 from refacdir.utils.app_paths import resource_path
@@ -88,10 +89,25 @@ class SmokeTest:
                 self.check("MCP SDK", False, str(e))
         self.check_import("uvicorn (MCP HTTP transport)", "uvicorn")
 
+    def check_yaml_round_trip(self) -> None:
+        """ruamel.yaml, which Replace Paths (window and MCP) needs, keeps a comment
+        through load and dump; a package bundled incompletely fails here."""
+        with self.guarded("ruamel.yaml round trip"):
+            try:
+                from ruamel.yaml import YAML
+                from ruamel.yaml.util import load_yaml_guess_indent  # noqa: F401
+            except ImportError as e:
+                self.check("ruamel.yaml round trip", False, str(e))
+                return
+            yaml = YAML()
+            stream = io.StringIO()
+            yaml.dump(yaml.load("key: value  # kept\n"), stream)
+            self.check("ruamel.yaml round trip", "# kept" in stream.getvalue())
+
     def check_common(self, expect_oqs: bool = False) -> None:
         """Version, config, translations, example configs, config discovery,
-        keyring backend, and OQS: required with *expect_oqs*, otherwise only
-        reported."""
+        the YAML round trip, keyring backend, and OQS: required with
+        *expect_oqs*, otherwise only reported."""
         with self.guarded("version"):
             self.check_version()
         with self.guarded("config"):
@@ -112,6 +128,7 @@ class SmokeTest:
 
             BatchArgs.discover_configs_from_disk()
             self.check("config discovery", True)
+        self.check_yaml_round_trip()
         with self.guarded("keyring backend"):
             import keyring
             import keyring.backends.fail

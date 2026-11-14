@@ -232,3 +232,42 @@ def test_timed_logs_a_failed_step(build_exe, caplog):
             with build_exe._timed("Compiling"):
                 raise SystemExit("broken")
     assert caplog.messages[-1].startswith("Compiling failed after ")
+
+
+def test_runtime_requirements_skip_comments_options_and_urls(build_exe, tmp_path):
+    path = tmp_path / "requirements.txt"
+    path.write_text(
+        "# comment\r\n-r other.txt\r\npyyaml\r\nsend2trash>=1.8.0 \r\n"
+        'pywin32; sys_platform == "win32"\r\nruamel.yaml  # inline\r\n'
+        "git+https://example.invalid/pkg.git\r\n\r\n",
+        encoding="utf-8",
+    )
+    assert build_exe._runtime_requirements(str(path)) == [
+        "pyyaml", "send2trash>=1.8.0", 'pywin32; sys_platform == "win32"', "ruamel.yaml",
+    ]
+
+
+def test_the_real_requirements_name_ruamel(build_exe):
+    assert "ruamel.yaml" in build_exe._runtime_requirements()
+
+
+def test_missing_requirements_are_reported_and_inapplicable_markers_skipped(build_exe):
+    missing = build_exe._missing_requirements(sys.executable, [
+        "pip",
+        "refacdir-no-such-distribution",
+        'refacdir-no-such-distribution-either; sys_platform == "no-such-platform"',
+        "pip<0.1",
+    ])
+    assert missing[0] == "refacdir-no-such-distribution"
+    assert missing[1].startswith("pip<0.1 (installed: ")
+    assert len(missing) == 2
+
+
+def test_build_stops_when_a_lock_file_lacks_a_requirement(build_exe, monkeypatch):
+    monkeypatch.setattr(build_exe, "_missing_requirements", lambda python, reqs: ["ruamel.yaml"])
+    with pytest.raises(SystemExit, match="predates"):
+        build_exe._check_runtime_requirements(sys.executable, lock="old.lock.txt")
+    with pytest.raises(SystemExit, match="pip install -r requirements-build.txt"):
+        build_exe._check_runtime_requirements(sys.executable, current_env=True)
+    monkeypatch.setattr(build_exe, "_missing_requirements", lambda python, reqs: [])
+    build_exe._check_runtime_requirements(sys.executable, lock="old.lock.txt")
